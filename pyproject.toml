@@ -1,0 +1,28 @@
+[project]
+name = "criticbox-sd"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Marco Antonio",email = "marcokjjkk@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "grpcio (>=1.60.0)",
+    "grpcio-tools (>=1.60.0)",
+    "protobuf (>=4.25.0)",
+    "tmdbsimple (>=2.9.0)",
+    "python-dotenv (>=1.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "criticbox_sd", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.16.4,<0.17.0)"
+]
