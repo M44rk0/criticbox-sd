@@ -6,7 +6,7 @@ import grpc
 from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.extend([os.path.join(BASE_DIR, "generated"), os.path.join(BASE_DIR, "service_b_server")])
+sys.path.extend([os.path.join(BASE_DIR, "generated"), os.path.join(BASE_DIR, "server")])
 
 import criticbox_pb2 as pb2
 import criticbox_pb2_grpc as pb2_grpc
