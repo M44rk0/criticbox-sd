@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "criticbox_sd", from = "src"}]
+packages = [{include = "criticbox_sd"}]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
