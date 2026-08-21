@@ -51,16 +51,21 @@ class CriticboxServicer(pb2_grpc.CriticboxServiceServicer):
 
     def SearchMovies(self, request, context):
         page = max(request.page, 1)
+        print(f"[RPC LOG] SearchMovies -> Buscando: '{request.query}' (Pagina {page})")
         data = tmdb_service.search_movies(request.query, page)
         summaries = [_to_summary_pb(m) for m in data["results"]]
+        print(f"[RPC LOG] SearchMovies -> Encontrados {data['total_results']} resultados.")
         return pb2.SearchMoviesResponse(movies=summaries, page=data["page"], total_results=data["total_results"])
 
     def GetMovieDetails(self, request, context):
+        print(f"[RPC LOG] GetMovieDetails -> tmdb_id={request.tmdb_id}")
         details = tmdb_service.get_movie_details(request.tmdb_id)
         if not details:
+            print(f"[RPC ERRO] GetMovieDetails -> Filme {request.tmdb_id} nao encontrado.")
             context.abort(grpc.StatusCode.NOT_FOUND, f"Filme com ID {request.tmdb_id} nao encontrado.")
 
         reviews = [_to_review_pb(r) for r in database.get_reviews_by_movie(request.tmdb_id)]
+        print(f"[RPC LOG] GetMovieDetails -> Filme '{details.get('title')}' com {len(reviews)} reviews retornado.")
         return pb2.MovieDetailsResponse(
             movie=_to_summary_pb(details),
             genres=details["genres"],
@@ -69,9 +74,14 @@ class CriticboxServicer(pb2_grpc.CriticboxServiceServicer):
         )
 
     def CreateReview(self, request, context):
+        print(
+            f"[RPC LOG] CreateReview -> Usuario: @{request.user_id} | Filme ID: {request.tmdb_id} | Nota: {request.rating}"
+        )
         if not (0.5 <= request.rating <= 5.0):
+            print("  [-] Validacao falhou: Nota fora do limite (0.5 a 5.0)")
             return pb2.ReviewResponse(success=False, message="A nota deve estar entre 0.5 e 5.0 estrelas.")
         if not request.user_id.strip():
+            print("  [-] Validacao falhou: user_id vazio")
             return pb2.ReviewResponse(success=False, message="O campo user_id nao pode estar vazio.")
 
         res = database.add_review(
@@ -81,11 +91,14 @@ class CriticboxServicer(pb2_grpc.CriticboxServiceServicer):
             comment=request.comment.strip(),
             contains_spoilers=request.contains_spoilers,
         )
+        print(f"[RPC LOG] CreateReview -> Review gravada com sucesso no SQLite (ID: {res['review_id']})")
         return _to_review_pb(res)
 
     def GetMovieReviews(self, request, context):
+        print(f"[RPC LOG] GetMovieReviews -> tmdb_id={request.tmdb_id}")
         reviews = [_to_review_pb(r) for r in database.get_reviews_by_movie(request.tmdb_id)]
         stats = database.get_movie_stats(request.tmdb_id)
+        print(f"[RPC LOG] GetMovieReviews -> Retornando {stats['total_count']} reviews (Media: {stats['average_rating']})")
         return pb2.MovieReviewsResponse(
             tmdb_id=request.tmdb_id,
             reviews=reviews,
