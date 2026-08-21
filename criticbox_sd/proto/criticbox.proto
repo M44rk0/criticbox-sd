@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package criticbox;
+
+service CriticboxService {
+
+  rpc SearchMovies (SearchMoviesRequest) returns (SearchMoviesResponse);
+
+
+  rpc GetMovieDetails (GetMovieDetailsRequest) returns (MovieDetailsResponse);
+
+  rpc CreateReview (CreateReviewRequest) returns (ReviewResponse);
+
+  rpc GetMovieReviews (GetMovieReviewsRequest) returns (MovieReviewsResponse);
+}
+
+// ------------------- Estruturas de Dados -------------------
+
+message MovieSummary {
+  int32 tmdb_id = 1;
+  string title = 2;
+  string release_date = 3;
+  string poster_url = 4;
+  string overview = 5;
+  float tmdb_vote_average = 6;
+  float criticbox_rating = 7;
+  int32 criticbox_review_count = 8;
+}
+
+message SearchMoviesRequest {
+  string query = 1;
+  int32 page = 2;
+}
+
+message SearchMoviesResponse {
+  repeated MovieSummary movies = 1;
+  int32 page = 2;
+  int32 total_results = 3;
+}
+
+message GetMovieDetailsRequest {
+  int32 tmdb_id = 1;
+}
+
+message MovieDetailsResponse {
+  MovieSummary movie = 1;
+  repeated string genres = 2;
+  int32 runtime = 3;
+  repeated ReviewResponse reviews = 4;
+}
+
+message CreateReviewRequest {
+  int32 tmdb_id = 1;
+  string user_id = 2;
+  float rating = 3;             // De 0.5 a 5.0 estrelas
+  string comment = 4;
+  bool contains_spoilers = 5;
+}
+
+message ReviewResponse {
+  string review_id = 1;
+  int32 tmdb_id = 2;
+  string user_id = 3;
+  float rating = 4;
+  string comment = 5;
+  bool contains_spoilers = 6;
+  string created_at = 7;
+  bool success = 8;
+  string message = 9;
+}
+
+message GetMovieReviewsRequest {
+  int32 tmdb_id = 1;
+}
+
+message MovieReviewsResponse {
+  int32 tmdb_id = 1;
+  repeated ReviewResponse reviews = 2;
+  int32 total_count = 3;
+  float average_rating = 4;
+}
