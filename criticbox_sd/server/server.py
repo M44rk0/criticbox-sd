@@ -57,22 +57,6 @@ class CriticboxServicer(pb2_grpc.CriticboxServiceServicer):
         print(f"[RPC LOG] SearchMovies -> Encontrados {data['total_results']} resultados.")
         return pb2.SearchMoviesResponse(movies=summaries, page=data["page"], total_results=data["total_results"])
 
-    def GetMovieDetails(self, request, context):
-        print(f"[RPC LOG] GetMovieDetails -> tmdb_id={request.tmdb_id}")
-        details = tmdb_service.get_movie_details(request.tmdb_id)
-        if not details:
-            print(f"[RPC ERRO] GetMovieDetails -> Filme {request.tmdb_id} nao encontrado.")
-            context.abort(grpc.StatusCode.NOT_FOUND, f"Filme com ID {request.tmdb_id} nao encontrado.")
-
-        reviews = [_to_review_pb(r) for r in database.get_reviews_by_movie(request.tmdb_id)]
-        print(f"[RPC LOG] GetMovieDetails -> Filme '{details.get('title')}' com {len(reviews)} reviews retornado.")
-        return pb2.MovieDetailsResponse(
-            movie=_to_summary_pb(details),
-            genres=details["genres"],
-            runtime=details["runtime"],
-            reviews=reviews,
-        )
-
     def CreateReview(self, request, context):
         print(
             f"[RPC LOG] CreateReview -> Usuario: @{request.user_id} | Filme ID: {request.tmdb_id} | Nota: {request.rating}"
@@ -94,16 +78,28 @@ class CriticboxServicer(pb2_grpc.CriticboxServiceServicer):
         print(f"[RPC LOG] CreateReview -> Review gravada com sucesso no SQLite (ID: {res['review_id']})")
         return _to_review_pb(res)
 
-    def GetMovieReviews(self, request, context):
-        print(f"[RPC LOG] GetMovieReviews -> tmdb_id={request.tmdb_id}")
-        reviews = [_to_review_pb(r) for r in database.get_reviews_by_movie(request.tmdb_id)]
-        stats = database.get_movie_stats(request.tmdb_id)
-        print(f"[RPC LOG] GetMovieReviews -> Retornando {stats['total_count']} reviews (Media: {stats['average_rating']})")
-        return pb2.MovieReviewsResponse(
-            tmdb_id=request.tmdb_id,
+    def GetAllReviews(self, request, context):
+        print("[RPC LOG] GetAllReviews -> Listando reviews de todos os usuarios.")
+        raw_reviews = database.get_all_reviews()
+        reviews = []
+        for r in raw_reviews:
+            movie_title = tmdb_service.get_movie_title(r["tmdb_id"])
+            reviews.append(
+                pb2.UserReviewItem(
+                    review_id=r["review_id"],
+                    tmdb_id=r["tmdb_id"],
+                    movie_title=movie_title,
+                    user_id=r["user_id"],
+                    rating=r["rating"],
+                    comment=r["comment"],
+                    contains_spoilers=r["contains_spoilers"],
+                    created_at=r["created_at"],
+                )
+            )
+        print(f"[RPC LOG] GetAllReviews -> Retornando {len(reviews)} reviews de todos os usuarios.")
+        return pb2.GetAllReviewsResponse(
             reviews=reviews,
-            total_count=stats["total_count"],
-            average_rating=stats["average_rating"],
+            total_count=len(reviews),
         )
 
 

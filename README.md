@@ -107,9 +107,8 @@ poetry run python criticbox_sd/client/client.py
 ```
 > Um menu interativo no terminal será aberto permitindo:
 > 1. **Buscar Filmes:** Pesquisa filmes no TMDb.
-> 2. **Detalhes e Reviews:** Consulta dados completos e notas registradas.
-> 3. **Escrever Review:** Envia nota (0.5 a 5.0), comentário e flag de spoiler.
-> 4. **Listar Reviews:** Exibe a média das notas do Criticbox e últimos comentários.
+> 2. **Escrever Review:** Envia nota (0.5 a 5.0), comentário e flag de spoiler.
+> 3. **Listar Reviews de Todos os Usuários:** Exibe todas as reviews cadastradas no sistema, com usuário, filme e conteúdo da avaliação.
 
 ---
 
@@ -118,6 +117,5 @@ poetry run python criticbox_sd/client/client.py
 | RPC | Descrição |
 | :--- | :--- |
 | `SearchMovies` | Realiza busca paginada de filmes por título. |
-| `GetMovieDetails` | Retorna detalhes do filme (gênero, duração) e lista de reviews. |
 | `CreateReview` | Registra uma nova crítica/avaliação no banco SQLite. |
-| `GetMovieReviews` | Retorna o resumo das notas e críticas do Criticbox para um filme. |
+| `GetAllReviews` | Retorna todas as reviews de todos os usuários com o título do filme associado. |

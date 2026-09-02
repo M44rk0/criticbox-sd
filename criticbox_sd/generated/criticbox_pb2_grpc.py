@@ -42,20 +42,15 @@ class CriticboxServiceStub:
                 request_serializer=criticbox__pb2.SearchMoviesRequest.SerializeToString,
                 response_deserializer=criticbox__pb2.SearchMoviesResponse.FromString,
                 _registered_method=True)
-        self.GetMovieDetails = channel.unary_unary(
-                '/criticbox.CriticboxService/GetMovieDetails',
-                request_serializer=criticbox__pb2.GetMovieDetailsRequest.SerializeToString,
-                response_deserializer=criticbox__pb2.MovieDetailsResponse.FromString,
-                _registered_method=True)
         self.CreateReview = channel.unary_unary(
                 '/criticbox.CriticboxService/CreateReview',
                 request_serializer=criticbox__pb2.CreateReviewRequest.SerializeToString,
                 response_deserializer=criticbox__pb2.ReviewResponse.FromString,
                 _registered_method=True)
-        self.GetMovieReviews = channel.unary_unary(
-                '/criticbox.CriticboxService/GetMovieReviews',
-                request_serializer=criticbox__pb2.GetMovieReviewsRequest.SerializeToString,
-                response_deserializer=criticbox__pb2.MovieReviewsResponse.FromString,
+        self.GetAllReviews = channel.unary_unary(
+                '/criticbox.CriticboxService/GetAllReviews',
+                request_serializer=criticbox__pb2.GetAllReviewsRequest.SerializeToString,
+                response_deserializer=criticbox__pb2.GetAllReviewsResponse.FromString,
                 _registered_method=True)
 
 
@@ -68,19 +63,13 @@ class CriticboxServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetMovieDetails(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def CreateReview(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetMovieReviews(self, request, context):
+    def GetAllReviews(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -94,20 +83,15 @@ def add_CriticboxServiceServicer_to_server(servicer, server):
                     request_deserializer=criticbox__pb2.SearchMoviesRequest.FromString,
                     response_serializer=criticbox__pb2.SearchMoviesResponse.SerializeToString,
             ),
-            'GetMovieDetails': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetMovieDetails,
-                    request_deserializer=criticbox__pb2.GetMovieDetailsRequest.FromString,
-                    response_serializer=criticbox__pb2.MovieDetailsResponse.SerializeToString,
-            ),
             'CreateReview': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateReview,
                     request_deserializer=criticbox__pb2.CreateReviewRequest.FromString,
                     response_serializer=criticbox__pb2.ReviewResponse.SerializeToString,
             ),
-            'GetMovieReviews': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetMovieReviews,
-                    request_deserializer=criticbox__pb2.GetMovieReviewsRequest.FromString,
-                    response_serializer=criticbox__pb2.MovieReviewsResponse.SerializeToString,
+            'GetAllReviews': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAllReviews,
+                    request_deserializer=criticbox__pb2.GetAllReviewsRequest.FromString,
+                    response_serializer=criticbox__pb2.GetAllReviewsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -148,33 +132,6 @@ class CriticboxService:
             _registered_method=True)
 
     @staticmethod
-    def GetMovieDetails(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/criticbox.CriticboxService/GetMovieDetails',
-            criticbox__pb2.GetMovieDetailsRequest.SerializeToString,
-            criticbox__pb2.MovieDetailsResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
     def CreateReview(request,
             target,
             options=(),
@@ -202,7 +159,7 @@ class CriticboxService:
             _registered_method=True)
 
     @staticmethod
-    def GetMovieReviews(request,
+    def GetAllReviews(request,
             target,
             options=(),
             channel_credentials=None,
@@ -215,9 +172,9 @@ class CriticboxService:
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/criticbox.CriticboxService/GetMovieReviews',
-            criticbox__pb2.GetMovieReviewsRequest.SerializeToString,
-            criticbox__pb2.MovieReviewsResponse.FromString,
+            '/criticbox.CriticboxService/GetAllReviews',
+            criticbox__pb2.GetAllReviewsRequest.SerializeToString,
+            criticbox__pb2.GetAllReviewsResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -48,31 +48,6 @@ class CriticboxClient:
             print(f"   * Sinopse: {m.overview[:120]}..." if len(m.overview) > 120 else f"   * Sinopse: {m.overview}")
             print("-" * 75)
 
-    def get_details(self, tmdb_id: int):
-        print(f"\n[GetMovieDetails] Consultando filme ID {tmdb_id}...")
-        res = self._call(self.stub.GetMovieDetails, pb2.GetMovieDetailsRequest(tmdb_id=tmdb_id))
-        if not res:
-            return
-        m = res.movie
-        print("\n" + "=" * 75)
-        print(f"Filme: {m.title} ({m.release_date})")
-        print(f"Generos: {', '.join(res.genres)} | Duracao: {res.runtime} min")
-        print(
-            f"TMDb: {m.tmdb_vote_average:.1f}/10 | Criticbox: {m.criticbox_rating:.1f}/5.0 ({m.criticbox_review_count} reviews)"
-        )
-        print(f"Sinopse:\n   {m.overview}")
-        print("=" * 75)
-        if res.reviews:
-            print(f"\nUltimas Reviews ({len(res.reviews)}):")
-            for r in res.reviews:
-                spoiler = " [ALERTA DE SPOILER]" if r.contains_spoilers else ""
-                print(f"  * @{r.user_id} ({r.rating:.1f} estrelas - {r.created_at}){spoiler}")
-                if r.comment:
-                    print(f'    "{r.comment}"')
-        else:
-            print("\nNenhuma critica registrada no Criticbox para este filme ainda.")
-        print("-" * 75)
-
     def create_review(
         self,
         tmdb_id: int,
@@ -99,18 +74,25 @@ class CriticboxClient:
         else:
             print(f"[-] Falha na validacao: {res.message}")
 
-    def list_reviews(self, tmdb_id: int):
-        print(f"\n[GetMovieReviews] Listando reviews do filme ID {tmdb_id}...")
-        res = self._call(self.stub.GetMovieReviews, pb2.GetMovieReviewsRequest(tmdb_id=tmdb_id))
+    def list_all_reviews(self):
+        print("\n[GetAllReviews] Listando todas as reviews cadastradas no Criticbox...")
+        res = self._call(self.stub.GetAllReviews, pb2.GetAllReviewsRequest())
         if not res:
             return
-        print(f"\nTotal: {res.total_count} reviews | Media Criticbox: {res.average_rating:.1f}")
-        print("-" * 75)
+        if not res.reviews:
+            print("\nNenhuma review registrada no sistema ainda.")
+            return
+
+        print(f"\n[+] Total de reviews encontradas: {res.total_count}")
+        print("=" * 75)
         for r in res.reviews:
             spoiler = " [ALERTA DE SPOILER]" if r.contains_spoilers else ""
-            print(f"@{r.user_id} | {r.rating:.1f} estrelas | {r.created_at}{spoiler}")
+            print(f"🎬 Filme: {r.movie_title} (ID TMDb: {r.tmdb_id})")
+            print(f"👤 Usuario: @{r.user_id} | Nota: {r.rating:.1f}/5.0 | Data: {r.created_at}{spoiler}")
             if r.comment:
-                print(f'   "{r.comment}"')
+                print(f'💬 Review: "{r.comment}"')
+            else:
+                print("💬 Review: (Sem comentario)")
             print("-" * 75)
 
 
@@ -120,9 +102,8 @@ def interactive_menu(client: CriticboxClient):
         "[*] [Microsservico A] Criticbox gRPC Client\n"
         "==================================================\n"
         "1. Buscar Filmes\n"
-        "2. Detalhes e Reviews\n"
-        "3. Escrever Review\n"
-        "4. Listar Reviews\n"
+        "2. Escrever Review\n"
+        "3. Listar Reviews de Todos os Usuarios\n"
         "0. Sair\n"
         "=================================================="
     )
@@ -132,10 +113,6 @@ def interactive_menu(client: CriticboxClient):
         if choice == "1":
             client.search_movies(input("Titulo: ").strip())
         elif choice == "2":
-            val = input("ID TMDb: ").strip()
-            if val.isdigit():
-                client.get_details(int(val))
-        elif choice == "3":
             val = input("ID TMDb: ").strip()
             if not val.isdigit():
                 continue
@@ -147,10 +124,8 @@ def interactive_menu(client: CriticboxClient):
             comment = input("Comentario: ").strip()
             spoiler = input("Spoiler? (s/N): ").strip().lower() in ("s", "sim")
             client.create_review(int(val), user, rating, comment, spoiler)
-        elif choice == "4":
-            val = input("ID TMDb: ").strip()
-            if val.isdigit():
-                client.list_reviews(int(val))
+        elif choice == "3":
+            client.list_all_reviews()
         elif choice == "0":
             break
 
@@ -160,17 +135,14 @@ def main():
     parser.add_argument("--host", default=DEFAULT_HOST)
     parser.add_argument("--port", default=DEFAULT_PORT)
     parser.add_argument("--search", type=str)
-    parser.add_argument("--details", type=int)
-    parser.add_argument("--list-reviews", type=int)
+    parser.add_argument("--all-reviews", action="store_true", help="Listar reviews de todos os usuarios")
     args = parser.parse_args()
 
     client = CriticboxClient(host=args.host, port=args.port)
     if args.search:
         client.search_movies(args.search)
-    elif args.details:
-        client.get_details(args.details)
-    elif args.list_reviews:
-        client.list_reviews(args.list_reviews)
+    elif args.all_reviews:
+        client.list_all_reviews()
     else:
         interactive_menu(client)
 

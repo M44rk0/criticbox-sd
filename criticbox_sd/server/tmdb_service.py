@@ -59,3 +59,17 @@ def get_movie_details(tmdb_id: int) -> dict:
         except (requests.RequestException, KeyError, ValueError):
             pass
     return None
+
+
+_TITLE_CACHE: dict[int, str] = {}
+
+
+def get_movie_title(tmdb_id: int) -> str:
+    if tmdb_id in _TITLE_CACHE:
+        return _TITLE_CACHE[tmdb_id]
+    details = get_movie_details(tmdb_id)
+    if details and details.get("title"):
+        _TITLE_CACHE[tmdb_id] = details["title"]
+        return details["title"]
+    fallback = f"Filme #{tmdb_id}"
+    return fallback
