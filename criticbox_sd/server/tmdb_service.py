@@ -18,13 +18,16 @@ TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
 def _fmt(m: dict) -> dict:
     poster = m.get("poster_path")
+    backdrop = m.get("backdrop_path")
     return {
         "id": m.get("id", 0),
         "title": m.get("title", ""),
         "release_date": m.get("release_date", ""),
         "poster_url": f"{TMDB_IMAGE_BASE}{poster}" if poster else "",
+        "backdrop_url": f"https://image.tmdb.org/t/p/w1280{backdrop}" if backdrop else "",
         "overview": m.get("overview", ""),
         "tmdb_vote_average": float(m.get("vote_average", 0.0)),
+        "genre_ids": m.get("genre_ids", []),
     }
 
 
@@ -42,6 +45,30 @@ def search_movies(query: str, page: int = 1) -> dict:
             pass
     return {"page": 1, "total_results": 0, "results": []}
 
+
+def get_trending_movies(time_window: str = "week", page: int = 1) -> dict:
+    if API_KEY:
+        try:
+            data = tmdb.Trending(media_type="movie", time_window=time_window).info(page=page, language="pt-BR")
+            results = [_fmt(m) for m in data.get("results", [])]
+            return {
+                "page": data.get("page", 1),
+                "total_results": len(results),
+                "results": results,
+            }
+        except (requests.RequestException, KeyError, ValueError):
+            pass
+    return {"page": 1, "total_results": 0, "results": []}
+
+
+def get_genres() -> list[dict]:
+    if API_KEY:
+        try:
+            data = tmdb.Genres().movie_list(language="pt-BR")
+            return data.get("genres", [])
+        except (requests.RequestException, KeyError, ValueError):
+            pass
+    return []
 
 
 def get_movie_details(tmdb_id: int) -> dict:

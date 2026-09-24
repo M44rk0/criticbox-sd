@@ -12,11 +12,17 @@ dependencies = [
     "grpcio-tools (>=1.60.0)",
     "protobuf (>=4.25.0)",
     "tmdbsimple (>=2.9.0)",
-    "python-dotenv (>=1.0.0)"
+    "python-dotenv (>=1.0.0)",
+    "fastapi (>=0.141.1,<0.142.0)",
+    "uvicorn (>=0.53.0,<0.54.0)"
 ]
 
 [tool.poetry]
 packages = [{include = "criticbox_sd"}]
+
+[tool.poetry.scripts]
+api = "criticbox_sd.api.main:start"
+
 
 [tool.ruff]
 line-length = 120
@@ -40,5 +46,6 @@ build-backend = "poetry.core.masonry.api"
 
 [dependency-groups]
 dev = [
-    "ruff (>=0.16.4,<0.17.0)"
+    "ruff (>=0.16.4,<0.17.0)",
+    "httpx (>=0.28.1,<0.29.0)"
 ]

@@ -3,12 +3,14 @@ import sys
 import unittest
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.extend([
-    os.path.join(BASE_DIR, "criticbox_sd"),
-    os.path.join(BASE_DIR, "criticbox_sd", "server"),
-    os.path.join(BASE_DIR, "criticbox_sd", "generated"),
-    os.path.join(BASE_DIR, "criticbox_sd", "client"),
-])
+sys.path.extend(
+    [
+        os.path.join(BASE_DIR, "criticbox_sd"),
+        os.path.join(BASE_DIR, "criticbox_sd", "server"),
+        os.path.join(BASE_DIR, "criticbox_sd", "generated"),
+        os.path.join(BASE_DIR, "criticbox_sd", "client"),
+    ]
+)
 
 import criticbox_pb2 as pb2
 import database

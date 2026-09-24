@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Criticbox — Showcase de Conceitos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07080c;
+      --accent-orange: #ff9900;
+      --text-white: #ffffff;
+      --text-gray: #9ca3af;
+      --text-muted: #6b7280;
+      --border-white: #ffffff;
+      --border-gray: #374151;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================
+       TOP SWITCHER BAR
+       ============================================================ */
+    .top-bar {
+      position: sticky; top: 0; z-index: 1000;
+      background: rgba(7, 8, 12, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 2px solid var(--border-white);
+      padding: 10px 20px;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .brand-group { display: flex; align-items: center; gap: 12px; }
+    .brand-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800; font-size: 1.1rem;
+      background: var(--accent-orange); color: #000;
+      padding: 2px 10px; border: 1.5px solid #fff;
+    }
+    .brand-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; color: var(--text-gray);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .tabs-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+    .tab-btn {
+      background: #12141c; color: var(--text-gray);
+      border: 1.5px solid #272a38;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.75rem; font-weight: 700;
+      padding: 7px 12px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.15s ease; user-select: none;
+    }
+    .tab-btn:hover { color: #fff; border-color: #fff; background: #1c1f2e; }
+    .tab-btn.active {
+      background: var(--accent-orange); color: #000;
+      border-color: #fff; box-shadow: 3px 3px 0px 0px #fff;
+    }
+    .tab-btn .badge-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; background: rgba(0,0,0,0.25);
+      color: inherit; padding: 1px 5px; border: 1px solid currentColor;
+    }
+
+    /* Showcase Viewport */
+    .showcase-viewport {
+      flex: 1; display: flex; align-items: center;
+      justify-content: center; padding: 48px 24px;
+    }
+    .concept-panel {
+      display: none; width: 100%; max-width: 1060px;
+      animation: fadeInScale 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .concept-panel.active { display: block; }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: translateY(8px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ============================================================
+       COMPARTILHADO: ESTRELAS
+       ============================================================ */
+    .stars-flex {
+      display: inline-flex; align-items: center;
+      gap: 6px; cursor: pointer; user-select: none;
+    }
+    .star-glyph {
+      width: 26px; height: 26px;
+      display: inline-block; transition: transform 0.1s ease;
+    }
+    .star-glyph:hover { transform: scale(1.18); }
+    .star-glyph svg { width: 100%; height: 100%; fill: rgba(255,255,255,0.15); }
+    .star-glyph.full svg { fill: var(--accent-orange); }
+    .star-glyph.half svg { fill: url(#halfGrad); }
+
+
+    /* ============================================================
+       V1: BRUTALISTA PURA
+       ============================================================ */
+    .v1-card {
+      width: 100%; background: #07080c;
+      border: 2px solid #fff;
+      box-shadow: 10px 10px 0px 0px var(--accent-orange);
+      display: grid; grid-template-columns: 330px 1fr;
+    }
+    .v1-card, .v1-card * { border-radius: 0 !important; }
+    .v1-poster-col {
+      position: relative; background: #000;
+      border-right: 2px solid #fff;
+      display: flex; flex-direction: column;
+      justify-content: flex-end; overflow: hidden; min-height: 590px;
+    }
+    .v1-poster-col img {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    }
+    .v1-poster-overlay {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.25) 45%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.98) 100%);
+    }
+    .v1-poster-info { position: relative; z-index: 2; padding: 24px 20px; }
+    .v1-poster-chip {
+      background: var(--accent-orange); color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; font-weight: 800;
+      letter-spacing: 0.04em; padding: 3px 8px;
+      display: inline-block; margin-bottom: 8px; text-transform: uppercase;
+    }
+    .v1-poster-title {
+      font-family: 'Outfit', sans-serif; font-size: 1.55rem;
+      font-weight: 800; line-height: 1.15;
+      text-transform: uppercase; color: #fff;
+    }
+    .v1-poster-director { font-size: 0.8rem; color: var(--text-gray); margin-top: 4px; }
+    .v1-content-col {
+      padding: 36px 44px; display: flex; flex-direction: column;
+      justify-content: space-between; gap: 22px;
+    }
+    .v1-meta-row { display: flex; align-items: center; gap: 12px; }
+    .v1-chip-lancamento {
+      background: #fff; color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; font-weight: 800;
+      letter-spacing: 0.05em; padding: 3px 8px; text-transform: uppercase;
+    }
+    .v1-meta-duration {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.8rem; font-weight: 700;
+      color: var(--text-gray); text-transform: uppercase;
+    }
+    .v1-movie-title {
+      font-family: 'Outfit', sans-serif; font-size: 2.3rem;
+      font-weight: 800; letter-spacing: -0.02em;
+      color: #fff; line-height: 1.1; margin-top: 4px;
+    }
+    .v1-movie-tagline {
+      font-size: 0.95rem; font-weight: 600;
+      color: var(--accent-orange); line-height: 1.4; margin-top: 2px;
+    }
+    .v1-movie-synopsis {
+      font-size: 0.88rem; color: var(--text-gray);
+      line-height: 1.6; margin-top: 6px;
+    }
+    .v1-divider { border: none; border-top: 1px solid rgba(255,255,255,0.1); }
+    .v1-field-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem; font-weight: 800;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: #fff; margin-bottom: 8px; display: block;
+    }
+    .v1-rating-row { display: flex; align-items: center; gap: 14px; }
+    .v1-score-badge {
+      background: var(--accent-orange); color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.05rem; font-weight: 800;
+      padding: 2px 10px; border: 1px solid #fff;
+    }
+    .v1-textarea {
+      width: 100%; min-height: 120px; background: #000;
+      border: 1px solid #374151; padding: 14px 16px;
+      color: #fff; font-family: inherit;
+      font-size: 0.92rem; line-height: 1.55; resize: vertical;
+    }
+    .v1-textarea::placeholder { color: var(--text-muted); }
+    .v1-textarea:focus { outline: none; border-color: var(--accent-orange); }
+    .v1-char-counter {
+      display: block; text-align: right; font-size: 0.75rem;
+      color: var(--text-muted); margin-top: 6px;
+      font-family: 'Space Grotesk', monospace;
+    }
+    .v1-actions-row {
+      display: flex; justify-content: space-between;
+      align-items: center; gap: 16px; margin-top: 4px;
+    }
+    .v1-spoiler-wrap { display: flex; align-items: center; cursor: pointer; user-select: none; }
+    .v1-spoiler-wrap input { display: none; }
+    .v1-custom-checkbox {
+      width: 18px; height: 18px; border: 2px solid #fff;
+      background: transparent; display: inline-flex;
+      align-items: center; justify-content: center; margin-right: 10px;
+    }
+    .v1-spoiler-wrap input:checked + .v1-custom-checkbox { background: var(--accent-orange); border-color: var(--accent-orange); }
+    .v1-spoiler-wrap input:checked + .v1-custom-checkbox::after { content: "✓"; color: #000; font-weight: 900; font-size: 13px; }
+    .v1-submit-btn {
+      background: var(--accent-orange); color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800; font-size: 0.85rem;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      border: 2px solid var(--border-white);
+      box-shadow: 4px 4px 0px 0px #fff;
+      padding: 11px 24px; cursor: pointer; transition: all 0.15s ease;
+    }
+    .v1-submit-btn:hover { background: #fff; color: #000; box-shadow: 4px 4px 0px 0px var(--accent-orange); }
+    .v1-submit-btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0px 0px #fff; }
+
+
+    /* ============================================================
+       V2: BRUTALISTA V2 — Idêntica à referência de imagem do usuário
+       Mais limpa: borda mais sutil, sombra lateral direita,
+       sem a sombra offset agressiva. Poster com moldura interna.
+       ============================================================ */
+    .v2-card {
+      width: 100%; background: #0c0d12;
+      border: 1px solid #2a2d38;
+      border-right: 5px solid var(--accent-orange);
+      display: grid; grid-template-columns: 340px 1fr;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .v2-card, .v2-card * { border-radius: 0 !important; }
+
+    .v2-poster-col {
+      position: relative; background: #000;
+      border-right: 1px solid #2a2d38;
+      display: flex; flex-direction: column;
+      justify-content: flex-end; overflow: hidden;
+      min-height: 590px; padding: 14px;
+    }
+    .v2-poster-inner {
+      position: absolute; inset: 14px;
+      overflow: hidden; border: 1px solid rgba(255,255,255,0.12);
+    }
+    .v2-poster-inner img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .v2-poster-overlay {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 45%, rgba(0,0,0,0.88) 78%, rgba(0,0,0,0.99) 100%);
+    }
+    .v2-poster-info { position: relative; z-index: 2; padding: 10px 8px 0; }
+    .v2-poster-chip {
+      background: var(--accent-orange); color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.7rem; font-weight: 800;
+      letter-spacing: 0.04em; padding: 3px 8px;
+      display: inline-block; margin-bottom: 8px; text-transform: uppercase;
+    }
+    .v2-poster-title {
+      font-family: 'Outfit', sans-serif; font-size: 1.5rem;
+      font-weight: 800; line-height: 1.15;
+      text-transform: uppercase; color: #fff;
+    }
+    .v2-poster-director { font-size: 0.78rem; color: var(--text-gray); margin-top: 4px; }
+
+    .v2-content-col {
+      padding: 36px 44px; display: flex; flex-direction: column;
+      justify-content: space-between; gap: 22px;
+    }
+    .v2-meta-row { display: flex; align-items: center; gap: 12px; }
+    .v2-chip-lancamento {
+      background: transparent; color: var(--accent-orange);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; font-weight: 800;
+      letter-spacing: 0.05em; padding: 3px 8px;
+      text-transform: uppercase;
+      border: 1.5px solid var(--accent-orange);
+    }
+    .v2-meta-duration {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.8rem; font-weight: 700;
+      color: var(--text-gray); text-transform: uppercase;
+    }
+    .v2-movie-title {
+      font-family: 'Outfit', sans-serif; font-size: 2.3rem;
+      font-weight: 800; letter-spacing: -0.02em;
+      color: #fff; line-height: 1.1; margin-top: 4px;
+    }
+    .v2-movie-tagline {
+      font-size: 0.95rem; font-weight: 600;
+      color: var(--accent-orange); line-height: 1.4; margin-top: 2px;
+    }
+    .v2-movie-synopsis {
+      font-size: 0.88rem; color: var(--text-gray);
+      line-height: 1.6; margin-top: 6px;
+    }
+    .v2-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); }
+    .v2-field-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem; font-weight: 800;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: #fff; margin-bottom: 8px; display: block;
+    }
+    .v2-rating-row { display: flex; align-items: center; gap: 14px; }
+    .v2-score-badge {
+      color: var(--accent-orange);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.05rem; font-weight: 800;
+      padding: 2px 10px; border: 1.5px solid var(--accent-orange);
+      background: transparent;
+    }
+    .v2-textarea {
+      width: 100%; min-height: 120px; background: #08090d;
+      border: 1px solid #2a2d38; padding: 14px 16px;
+      color: #fff; font-family: inherit;
+      font-size: 0.92rem; line-height: 1.55; resize: vertical;
+    }
+    .v2-textarea::placeholder { color: var(--text-muted); }
+    .v2-textarea:focus { outline: none; border-color: var(--accent-orange); }
+    .v2-char-counter {
+      display: block; text-align: right; font-size: 0.75rem;
+      color: var(--text-muted); margin-top: 6px;
+      font-family: 'Space Grotesk', monospace;
+    }
+    .v2-actions-row {
+      display: flex; justify-content: space-between;
+      align-items: center; gap: 16px; margin-top: 4px;
+    }
+    .v2-spoiler-wrap { display: flex; align-items: center; cursor: pointer; user-select: none; }
+    .v2-spoiler-wrap input { display: none; }
+    .v2-custom-checkbox {
+      width: 18px; height: 18px; border: 2px solid #fff;
+      background: transparent; display: inline-flex;
+      align-items: center; justify-content: center; margin-right: 10px;
+    }
+    .v2-spoiler-wrap input:checked + .v2-custom-checkbox { background: var(--accent-orange); border-color: var(--accent-orange); }
+    .v2-spoiler-wrap input:checked + .v2-custom-checkbox::after { content: "✓"; color: #000; font-weight: 900; font-size: 13px; }
+    .v2-submit-btn {
+      background: var(--accent-orange); color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800; font-size: 0.85rem;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      border: 1.5px solid var(--accent-orange);
+      padding: 11px 24px; cursor: pointer; transition: all 0.15s ease;
+    }
+    .v2-submit-btn:hover { background: #fff; color: #000; border-color: #fff; }
+
+
+    /* ============================================================
+       V3: EDITORIAL CLÁSSICA (ELEGANTE / SOFT GLASS)
+       ============================================================ */
+    .v3-card {
+      width: 100%; background: rgba(14,16,24,0.95);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 50px rgba(255,153,0,0.08);
+      display: grid; grid-template-columns: 340px 1fr;
+      overflow: hidden; backdrop-filter: blur(20px);
+    }
+    .v3-poster-col {
+      position: relative; background: #000;
+      min-height: 580px; display: flex;
+      flex-direction: column; justify-content: flex-end; overflow: hidden;
+    }
+    .v3-poster-col img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .v3-poster-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(10,12,18,0.4) 40%, rgba(10,12,18,0.95) 85%);
+    }
+    .v3-poster-info { position: relative; z-index: 2; padding: 28px 24px; }
+    .v3-pill-badge {
+      background: rgba(255,153,0,0.15); border: 1px solid rgba(255,153,0,0.35);
+      color: #ffaa00; font-size: 0.72rem; font-weight: 700;
+      padding: 4px 10px; border-radius: 20px;
+      display: inline-block; margin-bottom: 10px;
+    }
+    .v3-poster-title { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; color: #fff; }
+    .v3-poster-director { font-size: 0.82rem; color: rgba(255,255,255,0.6); margin-top: 4px; }
+    .v3-content-col {
+      padding: 40px 48px; display: flex;
+      flex-direction: column; justify-content: space-between; gap: 22px;
+    }
+    .v3-meta-row { display: flex; align-items: center; gap: 12px; }
+    .v3-chip-white {
+      background: #fff; color: #000;
+      font-size: 0.72rem; font-weight: 800;
+      padding: 4px 10px; border-radius: 6px;
+    }
+    .v3-duration { font-size: 0.8rem; color: rgba(255,255,255,0.45); font-weight: 600; }
+    .v3-title {
+      font-family: 'Outfit', sans-serif; font-size: 2.3rem;
+      font-weight: 800; color: #fff; letter-spacing: -0.02em; margin-top: 4px;
+    }
+    .v3-tagline { font-size: 0.95rem; color: #ffaa00; font-weight: 500; font-style: italic; margin-top: 4px; }
+    .v3-synopsis { font-size: 0.88rem; color: rgba(255,255,255,0.6); line-height: 1.6; margin-top: 6px; }
+    .v3-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); }
+    .v3-field-label {
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: rgba(255,255,255,0.45); margin-bottom: 8px;
+    }
+    .v3-score-pill {
+      background: rgba(255,153,0,0.15); border: 1px solid rgba(255,153,0,0.3);
+      color: #ffaa00; font-weight: 800; padding: 4px 12px;
+      border-radius: 20px; font-size: 0.95rem;
+    }
+    .v3-textarea {
+      width: 100%; min-height: 110px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 14px 16px;
+      color: #fff; font-family: inherit; font-size: 0.9rem;
+      line-height: 1.55; resize: vertical; transition: border-color 0.2s;
+    }
+    .v3-textarea:focus { outline: none; border-color: rgba(255,153,0,0.6); background: rgba(255,153,0,0.02); }
+    .v3-actions { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .v3-toggle-wrap {
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; font-size: 0.85rem; color: rgba(255,255,255,0.7);
+    }
+    .v3-toggle-wrap input { accent-color: #ffaa00; width: 16px; height: 16px; }
+    .v3-btn-submit {
+      background: linear-gradient(135deg, #ff9900, #ff6600);
+      color: #000; font-family: 'Outfit', sans-serif;
+      font-weight: 800; font-size: 0.92rem;
+      padding: 12px 28px; border-radius: 10px; border: none;
+      cursor: pointer; box-shadow: 0 4px 20px rgba(255,153,0,0.35);
+      transition: all 0.2s;
+    }
+    .v3-btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(255,153,0,0.5); }
+
+
+    /* ============================================================
+       V4: CONCRETE POSTER — Pôster hero horizontal no topo
+       ============================================================ */
+    .v4-card {
+      width: 100%; background: #0a0a0a;
+      border: 2px solid #fff; box-shadow: 10px 10px 0px 0px #fff;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .v4-card, .v4-card * { border-radius: 0 !important; }
+    .v4-hero { position: relative; height: 340px; overflow: hidden; }
+    .v4-hero img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+    .v4-hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(10,10,10,0.95) 90%);
+    }
+    .v4-hero-content {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 28px 36px; z-index: 2;
+      display: flex; justify-content: space-between; align-items: flex-end;
+    }
+    .v4-hero-title {
+      font-family: 'Outfit', sans-serif; font-size: 2.8rem;
+      font-weight: 900; color: #fff; line-height: 1.05;
+      text-transform: uppercase; letter-spacing: -0.03em;
+    }
+    .v4-hero-meta { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+    .v4-hero-pill {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; font-weight: 800;
+      padding: 3px 8px; text-transform: uppercase; border: 1.5px solid #fff;
+    }
+    .v4-hero-pill.filled { background: #fff; color: #000; }
+    .v4-hero-pill.outline { color: #fff; }
+    .v4-hero-tagline { color: var(--accent-orange); font-size: 0.9rem; font-weight: 600; margin-top: 6px; }
+    .v4-hero-score { text-align: right; }
+    .v4-hero-num {
+      font-family: 'Outfit', sans-serif; font-size: 4.5rem;
+      font-weight: 900; color: var(--accent-orange); line-height: 0.85;
+    }
+    .v4-hero-score-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; color: #888;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .v4-form-strip {
+      padding: 28px 36px; display: grid;
+      grid-template-columns: 1fr 1fr; gap: 24px;
+      border-top: 2px solid #fff;
+    }
+    .v4-form-left, .v4-form-right { display: flex; flex-direction: column; gap: 14px; }
+    .v4-form-right { border-left: 1px solid #272a38; padding-left: 24px; }
+    .v4-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; font-weight: 800;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: #fff; margin-bottom: 4px;
+    }
+    .v4-star-row { display: flex; align-items: center; gap: 10px; }
+    .v4-score-box {
+      background: var(--accent-orange); color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem; font-weight: 800;
+      padding: 3px 10px; border: 1px solid #fff;
+    }
+    .v4-synopsis-text { font-size: 0.82rem; color: #888; line-height: 1.6; }
+    .v4-textarea {
+      width: 100%; min-height: 100px; background: #000;
+      border: 1px solid #333; padding: 12px;
+      color: #fff; font-family: inherit; font-size: 0.88rem; resize: vertical;
+    }
+    .v4-textarea:focus { outline: none; border-color: var(--accent-orange); }
+    .v4-textarea::placeholder { color: #444; }
+    .v4-bottom-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .v4-check-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.82rem; color: #aaa; cursor: pointer;
+    }
+    .v4-check-label input { accent-color: var(--accent-orange); width: 16px; height: 16px; }
+    .v4-submit {
+      background: var(--accent-orange); color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800; font-size: 0.82rem;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      border: 2px solid #fff; box-shadow: 4px 4px 0px #fff;
+      padding: 11px 24px; cursor: pointer; transition: all 0.15s;
+    }
+    .v4-submit:hover { background: #fff; color: #000; box-shadow: 4px 4px 0px var(--accent-orange); }
+
+
+    /* ============================================================
+       V5: MONO SIDEBAR — Barra lateral estreita, área principal larga
+       ============================================================ */
+    .v5-card {
+      width: 100%; background: #08090d;
+      border: 2px solid #fff;
+      box-shadow: 14px 14px 0px 0px var(--accent-orange);
+      display: grid; grid-template-columns: 200px 1fr;
+    }
+    .v5-card, .v5-card * { border-radius: 0 !important; }
+    .v5-sidebar {
+      border-right: 2px solid #fff;
+      display: flex; flex-direction: column; background: #050608;
+    }
+    .v5-sidebar-poster {
+      position: relative; height: 260px;
+      overflow: hidden; border-bottom: 2px solid #fff;
+    }
+    .v5-sidebar-poster img { width: 100%; height: 100%; object-fit: cover; }
+    .v5-sidebar-poster::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 50%, rgba(5,6,8,0.95) 100%);
+    }
+    .v5-sidebar-info {
+      padding: 16px 14px; display: flex;
+      flex-direction: column; gap: 12px; flex: 1;
+    }
+    .v5-sidebar-title {
+      font-family: 'Outfit', sans-serif; font-size: 1.05rem;
+      font-weight: 800; color: #fff; text-transform: uppercase; line-height: 1.15;
+    }
+    .v5-sidebar-detail {
+      font-size: 0.72rem; color: #666;
+      font-family: 'JetBrains Mono', monospace; line-height: 1.8;
+    }
+    .v5-sidebar-detail span { color: var(--accent-orange); }
+    .v5-sidebar-score-block {
+      margin-top: auto; padding: 14px;
+      border-top: 1px solid #1a1d28; text-align: center;
+    }
+    .v5-sidebar-score-num {
+      font-family: 'Outfit', sans-serif; font-size: 2.8rem;
+      font-weight: 900; color: var(--accent-orange); line-height: 1;
+    }
+    .v5-sidebar-score-label {
+      font-size: 0.68rem; color: #666;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .v5-main { padding: 32px 40px; display: flex; flex-direction: column; gap: 20px; }
+    .v5-headline {
+      font-family: 'Outfit', sans-serif; font-size: 2rem;
+      font-weight: 800; color: #fff; line-height: 1.1;
+    }
+    .v5-headline-sub {
+      font-size: 0.9rem; color: var(--accent-orange);
+      font-weight: 600; margin-top: 4px;
+    }
+    .v5-synopsis { font-size: 0.85rem; color: #888; line-height: 1.6; }
+    .v5-sep { border: none; border-top: 1px solid #1e2030; }
+    .v5-form-label {
+      font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem;
+      font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.06em; color: #fff; margin-bottom: 6px; display: block;
+    }
+    .v5-star-row { display: flex; align-items: center; gap: 12px; }
+    .v5-score-tag {
+      background: var(--accent-orange); color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem; font-weight: 800;
+      padding: 2px 10px; border: 1px solid #fff;
+    }
+    .v5-textarea {
+      width: 100%; min-height: 120px; background: #000;
+      border: 1.5px solid #272a38; padding: 14px;
+      color: #fff; font-family: inherit; font-size: 0.88rem;
+      line-height: 1.55; resize: vertical;
+    }
+    .v5-textarea:focus { outline: none; border-color: var(--accent-orange); }
+    .v5-textarea::placeholder { color: #444; }
+    .v5-actions { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .v5-spoiler-label { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; cursor: pointer; }
+    .v5-spoiler-label input { display: none; }
+    .v5-spoiler-box {
+      width: 18px; height: 18px; border: 2px solid #fff;
+      background: transparent; display: inline-flex;
+      align-items: center; justify-content: center;
+    }
+    .v5-spoiler-label input:checked + .v5-spoiler-box { background: var(--accent-orange); border-color: var(--accent-orange); }
+    .v5-spoiler-label input:checked + .v5-spoiler-box::after { content: "✓"; color: #000; font-weight: 900; font-size: 13px; }
+    .v5-submit {
+      background: var(--accent-orange); color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800; font-size: 0.82rem;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      border: none; box-shadow: 4px 4px 0px #fff;
+      padding: 12px 26px; cursor: pointer; transition: all 0.15s;
+    }
+    .v5-submit:hover { background: #fff; box-shadow: 4px 4px 0px var(--accent-orange); }
+
+
+    /* ============================================================
+       TOAST FEEDBACK
+       ============================================================ */
+    .toast-box {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #000; border: 2px solid #fff;
+      box-shadow: 6px 6px 0px 0px var(--accent-orange);
+      color: #fff; font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 0.85rem;
+      padding: 14px 22px; z-index: 2000;
+      transform: translateY(120px); opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast-box.show { transform: translateY(0); opacity: 1; }
+
+    /* ============================================================
+       RESPONSIVIDADE
+       ============================================================ */
+    @media (max-width: 960px) {
+      .v1-card, .v2-card, .v3-card, .v5-card { grid-template-columns: 1fr !important; }
+      .v4-form-strip { grid-template-columns: 1fr !important; }
+      .v1-poster-col, .v2-poster-col, .v3-poster-col, .v5-sidebar {
+        min-height: 320px !important; border-right: none !important;
+        border-bottom: 2px solid #fff !important;
+      }
+      .v5-sidebar { display: flex; flex-direction: row; flex-wrap: wrap; }
+      .v5-sidebar-poster { height: 200px; width: 100%; }
+      .v1-content-col, .v2-content-col, .v3-content-col,
+      .v5-main { padding: 24px 20px !important; }
+      .v4-form-strip { padding: 24px 20px !important; }
+      .v4-form-right { border-left: none !important; padding-left: 0 !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SVG Gradient Defs -->
+  <svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+    <defs>
+      <linearGradient id="halfGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="50%" stop-color="#ff9900"/>
+        <stop offset="50%" stop-color="rgba(255,255,255,0.15)"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- Barra Superior -->
+  <header class="top-bar">
+    <div class="brand-group">
+      <span class="brand-logo">CRITICBOX</span>
+      <span class="brand-tag">// SHOWCASE</span>
+    </div>
+    <nav class="tabs-nav">
+      <button class="tab-btn active" onclick="sw('v1',this)"><span class="badge-num">01</span> Brutalista</button>
+      <button class="tab-btn" onclick="sw('v2',this)"><span class="badge-num">02</span> Brutalista V2</button>
+      <button class="tab-btn" onclick="sw('v3',this)"><span class="badge-num">03</span> Editorial</button>
+      <button class="tab-btn" onclick="sw('v4',this)"><span class="badge-num">04</span> Concrete Poster</button>
+      <button class="tab-btn" onclick="sw('v5',this)"><span class="badge-num">05</span> Mono Sidebar</button>
+    </nav>
+  </header>
+
+  <main class="showcase-viewport">
+
+    <!-- =========== V1: BRUTALISTA PURA =========== -->
+    <section id="panel-v1" class="concept-panel active">
+      <div class="v1-card">
+        <div class="v1-poster-col">
+          <img src="./Captura%20de%20tela%202026-09-19%20133844.png" alt="Pôster"/>
+          <div class="v1-poster-overlay"></div>
+          <div class="v1-poster-info">
+            <span class="v1-poster-chip">2026 • FICÇÃO CIENTÍFICA</span>
+            <h2 class="v1-poster-title">PROJECT HAIL MARY</h2>
+            <p class="v1-poster-director">Dir. Phil Lord & Christopher Miller</p>
+          </div>
+        </div>
+        <div class="v1-content-col">
+          <div>
+            <div class="v1-meta-row">
+              <span class="v1-chip-lancamento">LANÇAMENTO</span>
+              <span class="v1-meta-duration">2H 36MIN</span>
+            </div>
+            <h1 class="v1-movie-title">Project Hail Mary</h1>
+            <p class="v1-movie-tagline">"A humanidade tem apenas uma chance. E ela está a 12 anos-luz de distância."</p>
+            <p class="v1-movie-synopsis">O astronauta Ryland Grace é o único sobrevivente em uma missão desesperada para salvar a Terra de uma catástrofe solar. Com a memória em recuperação gradual, ele precisa usar a ciência pura para solucionar o impossível.</p>
+          </div>
+          <hr class="v1-divider"/>
+          <div>
+            <label class="v1-field-label">SUA CLASSIFICAÇÃO</label>
+            <div class="v1-rating-row">
+              <div class="stars-flex" id="stars-v1" data-rating="5.0"></div>
+              <span class="v1-score-badge" id="score-v1">5.0</span>
+            </div>
+          </div>
+          <div>
+            <label class="v1-field-label">SUA CRÍTICA</label>
+            <textarea class="v1-textarea" id="comment-v1" placeholder="Escreva sua análise detalhada sobre o filme..." maxlength="1500" oninput="uc('v1',1500)"></textarea>
+            <span class="v1-char-counter" id="chars-v1">0 / 1500</span>
+          </div>
+          <div class="v1-actions-row">
+            <label class="v1-spoiler-wrap">
+              <input type="checkbox" id="spoiler-v1"/>
+              <span class="v1-custom-checkbox"></span>
+              <span style="font-size:0.85rem;font-weight:600;">Contém spoilers</span>
+            </label>
+            <button class="v1-submit-btn" onclick="sub('v1','Brutalista')">PUBLICAR AVALIAÇÃO</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========== V2: BRUTALISTA V2 =========== -->
+    <section id="panel-v2" class="concept-panel">
+      <div class="v2-card">
+        <div class="v2-poster-col">
+          <div class="v2-poster-inner">
+            <img src="./Captura%20de%20tela%202026-09-19%20133844.png" alt="Pôster"/>
+            <div class="v2-poster-overlay"></div>
+          </div>
+          <div class="v2-poster-info">
+            <span class="v2-poster-chip">2026 • FICÇÃO CIENTÍFICA</span>
+            <h2 class="v2-poster-title">PROJECT HAIL MARY</h2>
+            <p class="v2-poster-director">Dir. Phil Lord & Christopher Miller</p>
+          </div>
+        </div>
+        <div class="v2-content-col">
+          <div>
+            <div class="v2-meta-row">
+              <span class="v2-chip-lancamento">LANÇAMENTO</span>
+              <span class="v2-meta-duration">2H 36MIN</span>
+            </div>
+            <h1 class="v2-movie-title">Project Hail Mary</h1>
+            <p class="v2-movie-tagline">"A humanidade tem apenas uma chance. E ela está a 12 anos-luz de distância."</p>
+            <p class="v2-movie-synopsis">O astronauta Ryland Grace é o único sobrevivente em uma missão desesperada para salvar a Terra de uma catástrofe solar. Com a memória em recuperação gradual, ele precisa usar a ciência pura para solucionar o impossível.</p>
+          </div>
+          <hr class="v2-divider"/>
+          <div>
+            <label class="v2-field-label">SUA CLASSIFICAÇÃO</label>
+            <div class="v2-rating-row">
+              <div class="stars-flex" id="stars-v2" data-rating="5.0"></div>
+              <span class="v2-score-badge" id="score-v2">5.0</span>
+            </div>
+          </div>
+          <div>
+            <label class="v2-field-label">SUA CRÍTICA</label>
+            <textarea class="v2-textarea" id="comment-v2" placeholder="Escreva sua análise detalhada sobre o filme..." maxlength="1500" oninput="uc('v2',1500)"></textarea>
+            <span class="v2-char-counter" id="chars-v2">0 / 1500</span>
+          </div>
+          <div class="v2-actions-row">
+            <label class="v2-spoiler-wrap">
+              <input type="checkbox" id="spoiler-v2"/>
+              <span class="v2-custom-checkbox"></span>
+              <span style="font-size:0.85rem;font-weight:600;">Contém spoilers</span>
+            </label>
+            <button class="v2-submit-btn" onclick="sub('v2','Brutalista V2')">PUBLICAR AVALIAÇÃO</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========== V3: EDITORIAL CLÁSSICA =========== -->
+    <section id="panel-v3" class="concept-panel">
+      <div class="v3-card">
+        <div class="v3-poster-col">
+          <img src="./Captura%20de%20tela%202026-09-19%20133844.png" alt="Pôster"/>
+          <div class="v3-poster-overlay"></div>
+          <div class="v3-poster-info">
+            <span class="v3-pill-badge">2026 • FICÇÃO CIENTÍFICA</span>
+            <h2 class="v3-poster-title">Project Hail Mary</h2>
+            <p class="v3-poster-director">Dirigido por Phil Lord & Christopher Miller</p>
+          </div>
+        </div>
+        <div class="v3-content-col">
+          <div>
+            <div class="v3-meta-row">
+              <span class="v3-chip-white">LANÇAMENTO</span>
+              <span class="v3-duration">2H 36MIN</span>
+            </div>
+            <h1 class="v3-title">Project Hail Mary</h1>
+            <p class="v3-tagline">"A humanidade tem apenas uma chance. E ela está a 12 anos-luz de distância."</p>
+            <p class="v3-synopsis">O astronauta Ryland Grace acorda sem memórias como único sobrevivente de uma arriscada missão interestelar. Conforme reconstitui seu passado, ele aplica métodos científicos rigorosos para superar desafios intransponíveis.</p>
+          </div>
+          <hr class="v3-divider"/>
+          <div>
+            <div class="v3-field-label">Sua Classificação</div>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div class="stars-flex" id="stars-v3" data-rating="5.0"></div>
+              <span class="v3-score-pill" id="score-v3">5.0 ★</span>
+            </div>
+          </div>
+          <div>
+            <div class="v3-field-label">Sua Crítica</div>
+            <textarea class="v3-textarea" id="comment-v3" placeholder="Compartilhe seus pensamentos e reflexões sobre a obra..." maxlength="1500" oninput="uc('v3',1500)"></textarea>
+            <div style="text-align:right;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:6px;" id="chars-v3">0 / 1500</div>
+          </div>
+          <div class="v3-actions">
+            <label class="v3-toggle-wrap">
+              <input type="checkbox" id="spoiler-v3"/>
+              <span>Contém spoilers</span>
+            </label>
+            <button class="v3-btn-submit" onclick="sub('v3','Editorial')">Publicar Avaliação</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========== V4: CONCRETE POSTER =========== -->
+    <section id="panel-v4" class="concept-panel">
+      <div class="v4-card">
+        <div class="v4-hero">
+          <img src="./Captura%20de%20tela%202026-09-19%20133844.png" alt="Hero"/>
+          <div class="v4-hero-overlay"></div>
+          <div class="v4-hero-content">
+            <div>
+              <h1 class="v4-hero-title">Project<br>Hail Mary</h1>
+              <div class="v4-hero-meta">
+                <span class="v4-hero-pill filled">2026</span>
+                <span class="v4-hero-pill outline">SCI-FI</span>
+                <span class="v4-hero-pill outline">2H 36MIN</span>
+              </div>
+              <p class="v4-hero-tagline">"A humanidade tem apenas uma chance."</p>
+            </div>
+            <div class="v4-hero-score">
+              <div class="v4-hero-num" id="score-v4-big">5.0</div>
+              <div class="v4-hero-score-label">SUA NOTA</div>
+            </div>
+          </div>
+        </div>
+        <div class="v4-form-strip">
+          <div class="v4-form-left">
+            <div>
+              <div class="v4-label">SUA CLASSIFICAÇÃO</div>
+              <div class="v4-star-row">
+                <div class="stars-flex" id="stars-v4" data-rating="5.0"></div>
+                <span class="v4-score-box" id="score-v4">5.0</span>
+              </div>
+            </div>
+            <div>
+              <div class="v4-label">SINOPSE</div>
+              <p class="v4-synopsis-text">O astronauta Ryland Grace é o único sobrevivente em uma missão desesperada para salvar a Terra. Ele precisa usar a ciência pura para solucionar o impossível.</p>
+            </div>
+          </div>
+          <div class="v4-form-right">
+            <div>
+              <div class="v4-label">SUA CRÍTICA</div>
+              <textarea class="v4-textarea" id="comment-v4" placeholder="O que você achou do filme?" maxlength="1500" oninput="uc('v4',1500)"></textarea>
+              <div style="text-align:right;font-size:0.72rem;color:#555;margin-top:4px;" id="chars-v4">0 / 1500</div>
+            </div>
+            <div class="v4-bottom-bar">
+              <label class="v4-check-label">
+                <input type="checkbox" id="spoiler-v4"/>
+                <span>Contém spoilers</span>
+              </label>
+              <button class="v4-submit" onclick="sub('v4','Concrete Poster')">PUBLICAR AVALIAÇÃO</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========== V5: MONO SIDEBAR =========== -->
+    <section id="panel-v5" class="concept-panel">
+      <div class="v5-card">
+        <div class="v5-sidebar">
+          <div class="v5-sidebar-poster">
+            <img src="./Captura%20de%20tela%202026-09-19%20133844.png" alt="Pôster"/>
+          </div>
+          <div class="v5-sidebar-info">
+            <h2 class="v5-sidebar-title">PROJECT HAIL MARY</h2>
+            <div class="v5-sidebar-detail">
+              ANO: <span>2026</span><br>
+              DUR: <span>2H 36MIN</span><br>
+              DIR: <span>LORD & MILLER</span><br>
+              GÊN: <span>FICÇÃO CIENTÍFICA</span>
+            </div>
+          </div>
+          <div class="v5-sidebar-score-block">
+            <div class="v5-sidebar-score-num" id="score-v5-side">5.0</div>
+            <div class="v5-sidebar-score-label">SUA NOTA</div>
+          </div>
+        </div>
+        <div class="v5-main">
+          <div>
+            <h1 class="v5-headline">Project Hail Mary</h1>
+            <p class="v5-headline-sub">"A humanidade tem apenas uma chance. E ela está a 12 anos-luz de distância."</p>
+          </div>
+          <p class="v5-synopsis">O astronauta Ryland Grace é o único sobrevivente em uma missão desesperada para salvar a Terra de uma catástrofe solar. Com a memória em recuperação gradual, ele precisa usar a ciência pura para solucionar o impossível.</p>
+          <hr class="v5-sep"/>
+          <div>
+            <label class="v5-form-label">SUA CLASSIFICAÇÃO</label>
+            <div class="v5-star-row">
+              <div class="stars-flex" id="stars-v5" data-rating="5.0"></div>
+              <span class="v5-score-tag" id="score-v5">5.0</span>
+            </div>
+          </div>
+          <div>
+            <label class="v5-form-label">SUA CRÍTICA</label>
+            <textarea class="v5-textarea" id="comment-v5" placeholder="Escreva sua análise sobre o filme..." maxlength="1500" oninput="uc('v5',1500)"></textarea>
+            <div style="text-align:right;font-size:0.72rem;color:#555;margin-top:4px;" id="chars-v5">0 / 1500</div>
+          </div>
+          <div class="v5-actions">
+            <label class="v5-spoiler-label">
+              <input type="checkbox" id="spoiler-v5"/>
+              <span class="v5-spoiler-box"></span>
+              <span style="font-size:0.85rem;font-weight:600;">Contém spoilers</span>
+            </label>
+            <button class="v5-submit" onclick="sub('v5','Mono Sidebar')">PUBLICAR AVALIAÇÃO</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast -->
+  <div class="toast-box" id="toast">Avaliação enviada!</div>
+
+  <script>
+    function sw(id, btn) {
+      document.querySelectorAll('.concept-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('panel-' + id)?.classList.add('active');
+      btn?.classList.add('active');
+    }
+
+    window.addEventListener('keydown', e => {
+      if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+      const n = parseInt(e.key);
+      if (n >= 1 && n <= 5) {
+        const btns = document.querySelectorAll('.tab-btn');
+        if (btns[n - 1]) btns[n - 1].click();
+      }
+    });
+
+    function initStars(cId, sId, val, fmt) {
+      const c = document.getElementById(cId);
+      if (!c) return;
+      c.innerHTML = '';
+      const svg = `<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+      for (let i = 1; i <= 5; i++) {
+        const s = document.createElement('span');
+        s.className = 'star-glyph';
+        s.innerHTML = svg;
+        s.addEventListener('click', e => {
+          const r = s.getBoundingClientRect();
+          const rating = (e.clientX - r.left) < (r.width / 2) ? (i - 0.5) : i;
+          setRating(cId, sId, rating, fmt);
+        });
+        s.addEventListener('mousemove', e => {
+          const r = s.getBoundingClientRect();
+          paint(c, (e.clientX - r.left) < (r.width / 2) ? (i - 0.5) : i);
+        });
+        c.appendChild(s);
+      }
+      c.addEventListener('mouseleave', () => paint(c, parseFloat(c.dataset.rating)));
+      setRating(cId, sId, val, fmt);
+    }
+
+    function paint(c, v) {
+      c.querySelectorAll('.star-glyph').forEach((s, i) => {
+        s.classList.remove('full', 'half');
+        if (v >= i + 1) s.classList.add('full');
+        else if (v >= i + 0.5) s.classList.add('half');
+      });
+    }
+
+    function setRating(cId, sId, v, fmt) {
+      const c = document.getElementById(cId);
+      if (!c) return;
+      c.dataset.rating = v;
+      paint(c, v);
+      const el = document.getElementById(sId);
+      if (el) el.textContent = fmt ? fmt(v) : Number(v).toFixed(1);
+      if (cId === 'stars-v4') {
+        const big = document.getElementById('score-v4-big');
+        if (big) big.textContent = Number(v).toFixed(1);
+      }
+      if (cId === 'stars-v5') {
+        const side = document.getElementById('score-v5-side');
+        if (side) side.textContent = Number(v).toFixed(1);
+      }
+    }
+
+    function uc(v, max) {
+      const t = document.getElementById('comment-' + v);
+      const c = document.getElementById('chars-' + v);
+      if (t && c) c.textContent = t.value.length + ' / ' + max;
+    }
+
+    function sub(v, name) {
+      const toast = document.getElementById('toast');
+      const sp = document.getElementById('spoiler-' + v)?.checked;
+      toast.textContent = '✓ [' + name + '] Avaliação enviada!' + (sp ? ' (Spoilers)' : '');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initStars('stars-v1', 'score-v1', 5.0);
+      initStars('stars-v2', 'score-v2', 5.0);
+      initStars('stars-v3', 'score-v3', 5.0, v => v.toFixed(1) + ' ★');
+      initStars('stars-v4', 'score-v4', 5.0);
+      initStars('stars-v5', 'score-v5', 5.0);
+    });
+  </script>
+</body>
+</html>

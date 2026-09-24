@@ -1,4 +1,4 @@
-
+import contextlib
 import os
 import sqlite3
 import uuid
@@ -7,10 +7,15 @@ from datetime import datetime, timezone
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "criticbox.db")
 
 
-def get_connection() -> sqlite3.Connection:
+@contextlib.contextmanager
+def get_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        with conn:
+            yield conn
+    finally:
+        conn.close()
 
 
 def init_db():

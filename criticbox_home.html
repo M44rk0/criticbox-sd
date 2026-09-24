@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Criticbox — Sua caixa de críticas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-body: #06070a;
+      --bg-card: #0a0c11;
+      --bg-elevated: #11141d;
+      --accent: #ff9900;
+      --accent-hover: #ffaa22;
+      --accent-dim: rgba(255, 153, 0, 0.08);
+      --accent-border: rgba(255, 153, 0, 0.25);
+      --white: #ffffff;
+      --gray-100: #f3f4f6;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #2a2f3d;
+      --gray-800: #1b1f2b;
+      --gray-900: #0f121a;
+      --border-subtle: 1px solid #1c202c;
+      --border-medium: 1px solid #2a2f3d;
+      --shadow-elevation: 0 16px 40px rgba(0, 0, 0, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
+    }
+
+    body {
+      background: var(--bg-body);
+      color: var(--white);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================
+       NAVBAR
+       ============================================================ */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(6, 7, 10, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 2px solid #ffffff;
+      padding: 0 32px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .nav-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 1.12rem;
+      background: transparent;
+      color: var(--white);
+      padding: 4px 10px;
+      border: 1px solid var(--gray-700);
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s;
+    }
+
+    .nav-logo::after {
+      content: '■';
+      color: var(--accent);
+      font-size: 0.65rem;
+      margin-left: 2px;
+    }
+
+    .nav-logo:hover {
+      border-color: var(--white);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 6px;
+      list-style: none;
+    }
+
+    .nav-link {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--gray-400);
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid transparent;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      transition: all 0.15s;
+    }
+
+    .nav-link:hover {
+      color: var(--white);
+      border-color: var(--gray-700);
+    }
+
+    .nav-link.active {
+      color: var(--accent);
+      border-color: var(--accent-border);
+      background: var(--accent-dim);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-search {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--gray-700);
+      background: #090b10;
+      padding: 0 12px;
+      height: 34px;
+      gap: 8px;
+      width: 240px;
+      transition: border-color 0.15s;
+    }
+
+    .nav-search:focus-within {
+      border-color: var(--accent);
+    }
+
+    .nav-search-icon {
+      color: var(--gray-500);
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .nav-search input {
+      background: transparent;
+      border: none;
+      color: var(--white);
+      font-family: inherit;
+      font-size: 0.82rem;
+      width: 100%;
+      outline: none;
+    }
+
+    .nav-search input::placeholder {
+      color: var(--gray-500);
+    }
+
+    .nav-search-shortcut {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--gray-500);
+      border: 1px solid var(--gray-700);
+      padding: 1px 5px;
+      flex-shrink: 0;
+    }
+
+    .nav-btn {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 7px 16px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      transition: all 0.15s;
+      border: 1px solid var(--gray-700);
+    }
+
+    .nav-btn-ghost {
+      background: transparent;
+      color: var(--gray-400);
+    }
+
+    .nav-btn-ghost:hover {
+      background: var(--white);
+      border-color: var(--white);
+      color: #000;
+    }
+
+    .nav-btn-accent {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+
+    .nav-btn-accent:hover {
+      background: var(--white);
+      border-color: var(--white);
+      box-shadow: 2px 2px 0px 0px var(--accent);
+    }
+
+    /* ============================================================
+       HERO SECTION
+       ============================================================ */
+    .hero {
+      position: relative;
+      min-height: 520px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--gray-700);
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+    }
+
+    .hero-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 20%;
+      filter: brightness(0.28) saturate(1.05);
+    }
+
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(6, 7, 10, 0.96) 0%, rgba(6, 7, 10, 0.65) 50%, rgba(6, 7, 10, 0.96) 100%),
+        linear-gradient(180deg, rgba(6, 7, 10, 0.3) 0%, rgba(6, 7, 10, 0.98) 90%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 64px 40px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .hero-poster-frame {
+      border: 2px solid #ffffff;
+      box-shadow: var(--shadow-elevation);
+      overflow: hidden;
+      position: relative;
+      background: #090b10;
+    }
+
+    .hero-poster-frame img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+    }
+
+    .hero-poster-rank {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: rgba(6, 7, 10, 0.92);
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-right: 1px solid var(--accent-border);
+      border-bottom: 1px solid var(--accent-border);
+    }
+
+    .hero-info {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero-eyebrow-chip {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-eyebrow-chip.orange {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+    }
+
+    .hero-eyebrow-chip.white {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--gray-300);
+      border: 1px solid var(--gray-700);
+    }
+
+    .hero-eyebrow-chip.outline {
+      border: 1px solid var(--gray-700);
+      color: var(--gray-400);
+    }
+
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+    }
+
+    .hero-tagline {
+      font-size: 1.02rem;
+      color: var(--accent);
+      font-weight: 500;
+      line-height: 1.4;
+      opacity: 0.95;
+    }
+
+    .hero-synopsis {
+      font-size: 0.9rem;
+      color: var(--gray-400);
+      line-height: 1.65;
+      max-width: 560px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .hero-stat-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .hero-stat-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .hero-stat-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--gray-700);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .hero-btn {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 11px 26px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-btn-primary {
+      background: var(--accent);
+      color: #000;
+      border: 1px solid var(--accent);
+      box-shadow: 2px 2px 0px 0px rgba(255, 255, 255, 0.3);
+    }
+
+    .hero-btn-primary:hover {
+      background: var(--white);
+      border-color: var(--white);
+      box-shadow: 3px 3px 0px 0px var(--accent);
+    }
+
+    .hero-btn-secondary {
+      background: #0d0f16;
+      color: var(--gray-300);
+      border: 1px solid var(--gray-700);
+    }
+
+    .hero-btn-secondary:hover {
+      background: var(--gray-800);
+      border-color: var(--gray-600);
+      color: var(--white);
+    }
+
+
+    /* ============================================================
+       SECTION SHARED
+       ============================================================ */
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--gray-700);
+      padding-bottom: 14px;
+    }
+
+    .section-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 2px 8px;
+      border: 1px solid var(--accent-border);
+      letter-spacing: 0.04em;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+    }
+
+    .section-link {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--gray-400);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border: 1px solid var(--gray-700);
+      padding: 6px 14px;
+      transition: all 0.15s;
+    }
+
+    .section-link:hover {
+      color: var(--white);
+      border-color: var(--gray-500);
+    }
+
+
+    /* ============================================================
+       TRENDING MOVIES GRID
+       ============================================================ */
+    .movies-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: var(--gray-700);
+      border: 1px solid var(--gray-700);
+      box-shadow: var(--shadow-elevation);
+    }
+
+    .movie-card {
+      background: var(--bg-card);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background 0.15s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .movie-card:hover {
+      background: var(--bg-elevated);
+    }
+
+    .movie-card:hover .movie-card-poster img {
+      transform: scale(1.04);
+    }
+
+    .movie-card-poster {
+      position: relative;
+      aspect-ratio: 2/3;
+      overflow: hidden;
+      border-bottom: 1px solid var(--gray-700);
+      background: #090b10;
+    }
+
+    .movie-card-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .movie-card-rank {
+      position: absolute;
+      top: 0;
+      left: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      background: rgba(6, 7, 10, 0.92);
+      color: var(--gray-300);
+      padding: 3px 8px;
+      border-right: 1px solid var(--gray-700);
+      border-bottom: 1px solid var(--gray-700);
+    }
+
+    .movie-card-score {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(6, 7, 10, 0.92);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-left: 1px solid var(--gray-700);
+      border-top: 1px solid var(--gray-700);
+    }
+
+    .movie-card-info {
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .movie-card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.2;
+    }
+
+    .movie-card-meta {
+      font-size: 0.7rem;
+      color: var(--gray-500);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+
+    /* ============================================================
+       RECENT REVIEWS
+       ============================================================ */
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--gray-700);
+      border: 1px solid var(--gray-700);
+      box-shadow: var(--shadow-elevation);
+    }
+
+    .review-card {
+      background: var(--bg-card);
+      padding: 24px;
+      display: flex;
+      gap: 18px;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .review-card:hover {
+      background: var(--bg-elevated);
+    }
+
+    .review-card-poster {
+      width: 78px;
+      flex-shrink: 0;
+      border: 1px solid var(--gray-700);
+      overflow: hidden;
+      background: #090b10;
+    }
+
+    .review-card-poster img {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      display: block;
+    }
+
+    .review-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .review-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .review-card-movie {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .review-card-score-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 2px 8px;
+      border: 1px solid var(--accent-border);
+      flex-shrink: 0;
+    }
+
+    .review-card-stars {
+      display: flex;
+      gap: 3px;
+      margin-top: -2px;
+    }
+
+    .review-star {
+      color: var(--accent);
+      font-size: 0.8rem;
+    }
+
+    .review-star.off {
+      color: var(--gray-700);
+    }
+
+    .review-card-text {
+      font-size: 0.85rem;
+      color: var(--gray-400);
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .review-card-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .review-card-avatar {
+      width: 24px;
+      height: 24px;
+      background: #141722;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: var(--gray-300);
+      border: 1px solid var(--gray-700);
+    }
+
+    .review-card-username {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--gray-400);
+    }
+
+    .review-card-date {
+      font-size: 0.7rem;
+      color: var(--gray-500);
+      font-family: 'JetBrains Mono', monospace;
+      margin-left: auto;
+    }
+
+
+    /* ============================================================
+       GENRES STRIP
+       ============================================================ */
+    .genres-strip {
+      display: flex;
+      gap: 1px;
+      background: var(--gray-700);
+      border: 1px solid var(--gray-700);
+      box-shadow: var(--shadow-elevation);
+    }
+
+    .genre-card {
+      flex: 1;
+      background: var(--bg-card);
+      padding: 26px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-align: center;
+    }
+
+    .genre-card:hover {
+      background: var(--bg-elevated);
+    }
+
+    .genre-icon {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      margin-bottom: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .genre-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 1.75;
+    }
+
+    .genre-card:hover .genre-icon {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .genre-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--white);
+    }
+
+    .genre-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--gray-500);
+    }
+
+
+    /* ============================================================
+       CTA BANNER
+       ============================================================ */
+    .cta-banner {
+      border: 1px solid var(--gray-700);
+      background: #090b10;
+      box-shadow: var(--shadow-elevation);
+      padding: 44px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .cta-text h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.9rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+    }
+
+    .cta-text p {
+      font-size: 0.9rem;
+      color: var(--gray-400);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .cta-btn {
+      background: var(--accent);
+      color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 0.88rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border: 1px solid var(--accent);
+      box-shadow: 2px 2px 0px 0px rgba(255, 255, 255, 0.3);
+      padding: 13px 32px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .cta-btn:hover {
+      background: var(--white);
+      border-color: var(--white);
+      box-shadow: 3px 3px 0px 0px var(--accent);
+    }
+
+
+    /* ============================================================
+       FOOTER
+       ============================================================ */
+    .footer {
+      border-top: 1px solid var(--gray-700);
+      background: var(--bg-card);
+      padding: 32px 40px;
+      max-width: 100%;
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .footer-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 0.95rem;
+      background: transparent;
+      color: var(--white);
+      padding: 3px 8px;
+      border: 1px solid var(--gray-700);
+      letter-spacing: 0.05em;
+    }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    .footer-tech {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--gray-600);
+    }
+
+    /* ============================================================
+       RESPONSIVIDADE
+       ============================================================ */
+    @media (max-width: 1024px) {
+      .movies-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .hero-content {
+        grid-template-columns: 220px 1fr;
+        gap: 32px;
+        padding: 48px 28px;
+      }
+
+      .hero-title {
+        font-size: 2.6rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .movies-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .reviews-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .genres-strip {
+        flex-wrap: wrap;
+      }
+
+      .genre-card {
+        min-width: calc(33% - 2px);
+      }
+
+      .hero-content {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-poster-frame {
+        max-width: 240px;
+      }
+
+      .hero-title {
+        font-size: 2.2rem;
+      }
+
+      .section {
+        padding: 40px 20px;
+      }
+
+      .navbar {
+        padding: 0 16px;
+      }
+
+      .nav-search {
+        display: none;
+      }
+
+      .cta-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 32px 20px;
+      }
+    }
+
+    /* ============================================================
+       REVIEW MODAL (V1 BRUTALISTA - HOMEM-ARANHA)
+       ============================================================ */
+    .review-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 5, 8, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .review-modal-overlay.active {
+      display: flex;
+    }
+
+    .v1-card {
+      width: 100%;
+      max-width: 980px;
+      background: #07080c;
+      border: 2px solid #ffffff;
+      box-shadow: 6px 6px 0px 0px var(--accent);
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      animation: modalSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: relative;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .v1-poster-col {
+      position: relative;
+      background: #000;
+      border-right: 2px solid #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+      min-height: 560px;
+    }
+
+    .v1-poster-col img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .v1-poster-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(6, 7, 10, 0.1) 0%, rgba(6, 7, 10, 0.4) 40%, rgba(6, 7, 10, 0.9) 75%, rgba(6, 7, 10, 0.99) 100%);
+    }
+
+    .v1-poster-info {
+      position: relative;
+      z-index: 2;
+      padding: 24px 20px;
+    }
+
+    .v1-poster-chip {
+      background: var(--accent);
+      color: #000;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      display: inline-block;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .v1-poster-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      line-height: 1.15;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .v1-poster-director {
+      font-size: 0.78rem;
+      color: var(--gray-400);
+      margin-top: 5px;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .v1-content-col {
+      padding: 36px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+      background: #090b10;
+    }
+
+    .v1-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .v1-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .v1-chip-lancamento {
+      background: #ffffff;
+      color: #000000;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      text-transform: uppercase;
+    }
+
+    .v1-meta-duration {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .v1-close-btn {
+      background: transparent;
+      border: 1px solid var(--gray-700);
+      color: var(--gray-400);
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .v1-close-btn:hover {
+      background: var(--white);
+      color: #000;
+      border-color: var(--white);
+    }
+
+    .v1-movie-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      line-height: 1.15;
+      margin-top: 4px;
+    }
+
+    .v1-movie-tagline {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1.4;
+      margin-top: 4px;
+    }
+
+    .v1-movie-synopsis {
+      font-size: 0.85rem;
+      color: var(--gray-400);
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+
+    .v1-divider {
+      border: none;
+      border-top: 1px solid var(--gray-700);
+    }
+
+    .v1-field-label {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gray-300);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .v1-rating-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .stars-flex {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .star-glyph {
+      width: 26px;
+      height: 26px;
+      display: inline-block;
+      transition: transform 0.1s ease;
+    }
+
+    .star-glyph:hover {
+      transform: scale(1.18);
+    }
+
+    .star-glyph svg {
+      width: 100%;
+      height: 100%;
+      fill: rgba(255, 255, 255, 0.15);
+    }
+
+    .star-glyph.full svg {
+      fill: var(--accent);
+    }
+
+    .star-glyph.half svg {
+      fill: url(#halfGrad);
+    }
+
+    .v1-score-badge {
+      background: var(--accent);
+      color: #000;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 1rem;
+      font-weight: 800;
+      padding: 2px 10px;
+      border: 1px solid #ffffff;
+      box-shadow: 2px 2px 0px 0px rgba(255, 255, 255, 0.4);
+    }
+
+    .v1-textarea {
+      width: 100%;
+      min-height: 110px;
+      background: #050608;
+      border: 1px solid var(--gray-700);
+      padding: 12px 14px;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      resize: vertical;
+      transition: border-color 0.15s ease;
+    }
+
+    .v1-textarea::placeholder {
+      color: var(--gray-600);
+    }
+
+    .v1-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .v1-char-counter {
+      display: block;
+      text-align: right;
+      font-size: 0.72rem;
+      color: var(--gray-500);
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .v1-actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-top: 4px;
+    }
+
+    .v1-spoiler-wrap {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--gray-300);
+    }
+
+    .v1-spoiler-wrap input {
+      display: none;
+    }
+
+    .v1-custom-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--gray-500);
+      background: #050608;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      transition: all 0.15s;
+    }
+
+    .v1-spoiler-wrap input:checked + .v1-custom-checkbox {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .v1-spoiler-wrap input:checked + .v1-custom-checkbox::after {
+      content: "✓";
+      color: #000;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .v1-submit-btn {
+      background: var(--accent);
+      color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border: 1px solid var(--accent);
+      box-shadow: 3px 3px 0px 0px rgba(255, 255, 255, 0.35);
+      padding: 11px 24px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .v1-submit-btn:hover {
+      background: var(--white);
+      color: #000;
+      border-color: var(--white);
+      box-shadow: 3px 3px 0px 0px var(--accent);
+    }
+
+    .v1-submit-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px 0px var(--accent);
+    }
+
+    .toast-box {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 1000000;
+      background: #0e111a;
+      border: 1px solid var(--accent);
+      color: #fff;
+      padding: 14px 20px;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: 4px 4px 0px 0px var(--accent);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast-box.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 820px) {
+      .v1-card {
+        grid-template-columns: 1fr;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .v1-poster-col {
+        min-height: 240px;
+        border-right: none;
+        border-bottom: 2px solid #ffffff;
+      }
+      .v1-content-col {
+        padding: 24px 20px;
+      }
+      .v1-movie-title {
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       NAVBAR
+       ============================================================ -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <span class="nav-logo">CRITICBOX</span>
+      <ul class="nav-links">
+        <li><a href="#" class="nav-link active">INÍCIO</a></li>
+        <li><a href="#" class="nav-link">FILMES</a></li>
+        <li><a href="#" class="nav-link">LISTAS</a></li>
+        <li><a href="#" class="nav-link">COMUNIDADE</a></li>
+      </ul>
+    </div>
+    <div class="nav-right">
+      <div class="nav-search">
+        <span class="nav-search-icon">⌕</span>
+        <input type="text" placeholder="Buscar filmes, diretores..." />
+      </div>
+      <button class="nav-btn nav-btn-ghost">ENTRAR</button>
+      <button class="nav-btn nav-btn-accent">CRIAR CONTA</button>
+    </div>
+  </nav>
+
+
+  <!-- ============================================================
+       HERO: DESTAQUE PRINCIPAL (TMDB TRENDING WEEK #1)
+       ============================================================ -->
+  <section class="hero">
+    <div class="hero-bg">
+      <img src="https://image.tmdb.org/t/p/w1280/qeQJx07rK2xm8SD2sJxFKhE7gs0.jpg" alt="Destaque Homem-Aranha: Um Novo Dia" />
+    </div>
+    <div class="hero-content">
+      <div class="hero-poster-frame">
+        <img src="https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg" alt="Pôster Homem-Aranha: Um Novo Dia" />
+        <span class="hero-poster-rank">#1 EM ALTA</span>
+      </div>
+      <div class="hero-info">
+        <div class="hero-eyebrow">
+          <span class="hero-eyebrow-chip orange">EM ALTA NA SEMANA</span>
+          <span class="hero-eyebrow-chip outline">2026</span>
+          <span class="hero-eyebrow-chip outline">AÇÃO • SCI-FI</span>
+        </div>
+        <h1 class="hero-title">HOMEM-ARANHA:<br>UM NOVO DIA</h1>
+        <p class="hero-tagline">"É um novo dia para Peter Parker em um mundo sem memórias."</p>
+        <p class="hero-synopsis">
+          Combatendo o crime em tempo integral como Homem-Aranha em um mundo que não se lembra mais dele e lidando com a pressão de ver seus antigos amigos seguirem em frente, Peter passa por uma mudança imprevisível que pode ser a única chave para deter uma nova ameaça invisível à cidade.
+        </p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-value">7.9</span>
+            <span class="hero-stat-label">NOTA TMDB</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">2.8K</span>
+            <span class="hero-stat-label">AVALIAÇÕES</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">142</span>
+            <span class="hero-stat-label">MIN</span>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="hero-btn hero-btn-primary" onclick="openReviewModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            ESCREVER CRÍTICA
+          </button>
+          <button class="hero-btn hero-btn-secondary" onclick="openReviewModal()">VER DETALHES →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       TRENDING: FILMES EM ALTA (TMDB API)
+       ============================================================ -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title-group">
+        <span class="section-num">01</span>
+        <h2 class="section-title">Em Alta Esta Semana</h2>
+      </div>
+      <a href="#" class="section-link">VER TODOS NO TMDB →</a>
+    </div>
+
+    <div class="movies-grid">
+      <!-- 01 -->
+      <div class="movie-card" onclick="openReviewModal()" style="cursor: pointer;" title="Escrever crítica para Homem-Aranha: Um Novo Dia">
+        <div class="movie-card-poster">
+          <img src="https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg" alt="Homem-Aranha: Um Novo Dia" loading="lazy" />
+          <span class="movie-card-rank">#01</span>
+          <span class="movie-card-score">★ 7.9</span>
+        </div>
+        <div class="movie-card-info">
+          <span class="movie-card-title">Homem-Aranha: Um Novo Dia</span>
+          <span class="movie-card-meta">2026 • AÇÃO</span>
+        </div>
+      </div>
+
+      <!-- 02 -->
+      <div class="movie-card">
+        <div class="movie-card-poster">
+          <img src="https://image.tmdb.org/t/p/w500/hkWS0js6LyjNJDEipCifHDE0nMy.jpg" alt="O Fim da Rua" loading="lazy" />
+          <span class="movie-card-rank">#02</span>
+          <span class="movie-card-score">★ 6.9</span>
+        </div>
+        <div class="movie-card-info">
+          <span class="movie-card-title">O Fim da Rua</span>
+          <span class="movie-card-meta">2026 • SCI-FI</span>
+        </div>
+      </div>
+
+      <!-- 03 -->
+      <div class="movie-card">
+        <div class="movie-card-poster">
+          <img src="https://image.tmdb.org/t/p/w500/gQ76UL64RQe3oHwiwHwODTC23g4.jpg" alt="Resident Evil" loading="lazy" />
+          <span class="movie-card-rank">#03</span>
+          <span class="movie-card-score">★ 7.4</span>
+        </div>
+        <div class="movie-card-info">
+          <span class="movie-card-title">Resident Evil</span>
+          <span class="movie-card-meta">2026 • TERROR</span>
+        </div>
+      </div>
+
+      <!-- 04 -->
+      <div class="movie-card">
+        <div class="movie-card-poster">
+          <img src="https://image.tmdb.org/t/p/w500/92clN62AIYMOAKaSlkJyZmGQM4R.jpg" alt="Moana" loading="lazy" />
+          <span class="movie-card-rank">#04</span>
+          <span class="movie-card-score">★ 7.3</span>
+        </div>
+        <div class="movie-card-info">
+          <span class="movie-card-title">Moana</span>
+          <span class="movie-card-meta">2026 • AVENTURA</span>
+        </div>
+      </div>
+
+      <!-- 05 -->
+      <div class="movie-card">
+        <div class="movie-card-poster">
+          <img src="https://image.tmdb.org/t/p/w500/yDiw6WUpAdlidbQDtI09rWVvGtu.jpg" alt="Hope: O Primeiro Impacto" loading="lazy" />
+          <span class="movie-card-rank">#05</span>
+          <span class="movie-card-score">★ 7.4</span>
+        </div>
+        <div class="movie-card-info">
+          <span class="movie-card-title">Hope: O Primeiro Impacto</span>
+          <span class="movie-card-meta">2026 • SUSPENSE</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       GÊNEROS (TMDB API)
+       ============================================================ -->
+  <section class="section" style="padding-top: 0;">
+    <div class="section-header">
+      <div class="section-title-group">
+        <span class="section-num">02</span>
+        <h2 class="section-title">Explorar Gêneros</h2>
+      </div>
+    </div>
+
+    <div class="genres-strip">
+      <div class="genre-card">
+        <span class="genre-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(30 12 12)"/></svg>
+        </span>
+        <span class="genre-name">Ficção Científica</span>
+        <span class="genre-count">2.4K títulos</span>
+      </div>
+      <div class="genre-card">
+        <span class="genre-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </span>
+        <span class="genre-name">Ação</span>
+        <span class="genre-count">3.8K títulos</span>
+      </div>
+      <div class="genre-card">
+        <span class="genre-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v12l3-3 2.5 3 2.5-3 3 3 3-3 2 3V10a8 8 0 0 0-8-8z"/></svg>
+        </span>
+        <span class="genre-name">Terror</span>
+        <span class="genre-count">1.9K títulos</span>
+      </div>
+      <div class="genre-card">
+        <span class="genre-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="1"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/></svg>
+        </span>
+        <span class="genre-name">Drama</span>
+        <span class="genre-count">5.3K títulos</span>
+      </div>
+      <div class="genre-card">
+        <span class="genre-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        </span>
+        <span class="genre-name">Comédia</span>
+        <span class="genre-count">3.1K títulos</span>
+      </div>
+      <div class="genre-card">
+        <span class="genre-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <span class="genre-name">Suspense</span>
+        <span class="genre-count">2.1K títulos</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       REVIEWS RECENTES
+       ============================================================ -->
+  <section class="section" style="padding-top: 0;">
+    <div class="section-header">
+      <div class="section-title-group">
+        <span class="section-num">03</span>
+        <h2 class="section-title">Críticas Recentes</h2>
+      </div>
+      <a href="#" class="section-link">VER TODAS →</a>
+    </div>
+
+    <div class="reviews-grid">
+      <!-- Review 1: Real review from criticbox.db SQLite -->
+      <div class="review-card">
+        <div class="review-card-poster">
+          <img src="https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" alt="Interestelar" loading="lazy" />
+        </div>
+        <div class="review-card-body">
+          <div class="review-card-header">
+            <span class="review-card-movie">Interestelar</span>
+            <span class="review-card-score-badge">5.0</span>
+          </div>
+          <div class="review-card-stars">
+            <span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span>
+          </div>
+          <p class="review-card-text">
+            Uma obra-prima da ficção científica moderna. A forma como Nolan constrói a relação entre Cooper e Murph através das dimensões do tempo é simplesmente emocionante. Cinematografia e trilha sonora impecáveis.
+          </p>
+          <div class="review-card-user">
+            <span class="review-card-avatar">M</span>
+            <span class="review-card-username">@marco</span>
+            <span class="review-card-date">registrado no criticbox.db</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review 2 -->
+      <div class="review-card">
+        <div class="review-card-poster">
+          <img src="https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg" alt="Homem-Aranha" loading="lazy" />
+        </div>
+        <div class="review-card-body">
+          <div class="review-card-header">
+            <span class="review-card-movie">Homem-Aranha: Um Novo Dia</span>
+            <span class="review-card-score-badge">4.5</span>
+          </div>
+          <div class="review-card-stars">
+            <span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star off">★</span>
+          </div>
+          <p class="review-card-text">
+            Um tom muito mais maduro e melancólico para o Aranha. A direção acertou em cheio ao explorar a solidão de Peter Parker e o peso de suas escolhas. As sequências de ação estão entre as melhores da franquia.
+          </p>
+          <div class="review-card-user">
+            <span class="review-card-avatar">J</span>
+            <span class="review-card-username">@juliana_c</span>
+            <span class="review-card-date">há 3h</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review 3 -->
+      <div class="review-card">
+        <div class="review-card-poster">
+          <img src="https://image.tmdb.org/t/p/w500/gQ76UL64RQe3oHwiwHwODTC23g4.jpg" alt="Resident Evil" loading="lazy" />
+        </div>
+        <div class="review-card-body">
+          <div class="review-card-header">
+            <span class="review-card-movie">Resident Evil</span>
+            <span class="review-card-score-badge">4.0</span>
+          </div>
+          <div class="review-card-stars">
+            <span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star off">★</span>
+          </div>
+          <p class="review-card-text">
+            Finalmente uma adaptação que abraça o terror biológico e o isolamento de Raccoon City. A atmosfera claustrofóbica na estrada e as criaturas bioengenheiradas causam arrepios genuínos.
+          </p>
+          <div class="review-card-user">
+            <span class="review-card-avatar">R</span>
+            <span class="review-card-username">@rafael_m</span>
+            <span class="review-card-date">há 6h</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review 4 -->
+      <div class="review-card">
+        <div class="review-card-poster">
+          <img src="https://image.tmdb.org/t/p/w500/hkWS0js6LyjNJDEipCifHDE0nMy.jpg" alt="O Fim da Rua" loading="lazy" />
+        </div>
+        <div class="review-card-body">
+          <div class="review-card-header">
+            <span class="review-card-movie">O Fim da Rua</span>
+            <span class="review-card-score-badge">4.5</span>
+          </div>
+          <div class="review-card-stars">
+            <span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star">★</span><span class="review-star off">★</span>
+          </div>
+          <p class="review-card-text">
+            Premissa cósmica instigante que se desenvolve com ritmo tenso e envolvente. O mistério sobre o deslocamento do bairro mantém a atenção do começo ao fim. Ficção científica das boas.
+          </p>
+          <div class="review-card-user">
+            <span class="review-card-avatar">A</span>
+            <span class="review-card-username">@ana_luiza</span>
+            <span class="review-card-date">há 10h</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       CTA BANNER
+       ============================================================ -->
+  <section class="section" style="padding-top: 0;">
+    <div class="cta-banner">
+      <div class="cta-text">
+        <h2>COMECE A CRITICAR AGORA.</h2>
+        <p>Crie sua conta gratuita e compartilhe suas opiniões sobre os filmes que você ama (ou odeia).</p>
+      </div>
+      <button class="cta-btn">CRIAR CONTA GRÁTIS →</button>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="footer-logo">CRITICBOX</span>
+        <span class="footer-copy">© 2026 Todos os direitos reservados.</span>
+      </div>
+      <ul class="footer-links">
+        <li><a href="#">Sobre</a></li>
+        <li><a href="#">API</a></li>
+        <li><a href="#">Termos</a></li>
+        <li><a href="#">Contato</a></li>
+      </ul>
+      <span class="footer-tech">v0.1.0-alpha // built for critics</span>
+    </div>
+  </footer>
+
+  <!-- Hidden SVG defs for half-star linearGradient -->
+  <svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+    <defs>
+      <linearGradient id="halfGrad">
+        <stop offset="50%" stop-color="#ff9900" />
+        <stop offset="50%" stop-color="rgba(255,255,255,0.15)" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- ============================================================
+       REVIEW MODAL (V1 BRUTALISTA — HOMEM-ARANHA: UM NOVO DIA)
+       ============================================================ -->
+  <div id="review-modal-overlay" class="review-modal-overlay" onclick="handleOverlayClick(event)" role="dialog" aria-modal="true" aria-labelledby="modal-movie-title">
+    <div class="v1-card" onclick="event.stopPropagation()">
+      <div class="v1-poster-col">
+        <img src="https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg" alt="Pôster Homem-Aranha: Um Novo Dia" />
+        <div class="v1-poster-overlay"></div>
+        <div class="v1-poster-info">
+          <span class="v1-poster-chip">2026 • AÇÃO / SCI-FI</span>
+          <h2 class="v1-poster-title">HOMEM-ARANHA: UM NOVO DIA</h2>
+          <p class="v1-poster-director">Dir. Destin Daniel Cretton</p>
+        </div>
+      </div>
+      <div class="v1-content-col">
+        <div>
+          <div class="v1-header-bar">
+            <div class="v1-meta-row">
+              <span class="v1-chip-lancamento">LANÇAMENTO</span>
+              <span class="v1-meta-duration">2H 22MIN</span>
+            </div>
+            <button class="v1-close-btn" onclick="closeReviewModal()" aria-label="Fechar" title="Fechar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <h1 id="modal-movie-title" class="v1-movie-title">Homem-Aranha: Um Novo Dia</h1>
+          <p class="v1-movie-tagline">"É um novo dia para Peter Parker em um mundo sem memórias."</p>
+          <p class="v1-movie-synopsis">
+            Combatendo o crime em tempo integral como Homem-Aranha em um mundo que não se lembra mais dele e lidando com a pressão de ver seus antigos amigos seguirem em frente, Peter passa por uma mudança imprevisível que pode ser a única chave para deter uma nova ameaça à cidade.
+          </p>
+        </div>
+        <hr class="v1-divider" />
+        <div>
+          <label class="v1-field-label">SUA CLASSIFICAÇÃO</label>
+          <div class="v1-rating-row">
+            <div class="stars-flex" id="stars-modal" data-rating="5.0"></div>
+            <span class="v1-score-badge" id="score-modal">5.0</span>
+          </div>
+        </div>
+        <div>
+          <label class="v1-field-label">SUA CRÍTICA</label>
+          <textarea class="v1-textarea" id="comment-modal" placeholder="Escreva sua análise detalhada sobre o filme..." maxlength="1500" oninput="updateCharCount(1500)"></textarea>
+          <span class="v1-char-counter" id="chars-modal">0 / 1500</span>
+        </div>
+        <div class="v1-actions-row">
+          <label class="v1-spoiler-wrap">
+            <input type="checkbox" id="spoiler-modal" />
+            <span class="v1-custom-checkbox"></span>
+            <span>Contém spoilers</span>
+          </label>
+          <button class="v1-submit-btn" onclick="submitModalReview()">PUBLICAR AVALIAÇÃO</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast-box"></div>
+
+  <!-- Interactive Scripts -->
+  <script>
+    function openReviewModal() {
+      const modal = document.getElementById('review-modal-overlay');
+      if (!modal) return;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        const txt = document.getElementById('comment-modal');
+        if (txt) txt.focus();
+      }, 100);
+    }
+
+    function closeReviewModal() {
+      const modal = document.getElementById('review-modal-overlay');
+      if (!modal) return;
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target.id === 'review-modal-overlay') {
+        closeReviewModal();
+      }
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeReviewModal();
+      }
+    });
+
+    function initStars(cId, sId, val) {
+      const c = document.getElementById(cId);
+      if (!c) return;
+      c.innerHTML = '';
+      const svg = `<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+      for (let i = 1; i <= 5; i++) {
+        const s = document.createElement('span');
+        s.className = 'star-glyph';
+        s.innerHTML = svg;
+        s.addEventListener('click', e => {
+          const r = s.getBoundingClientRect();
+          const rating = (e.clientX - r.left) < (r.width / 2) ? (i - 0.5) : i;
+          setRating(cId, sId, rating);
+        });
+        s.addEventListener('mousemove', e => {
+          const r = s.getBoundingClientRect();
+          paint(c, (e.clientX - r.left) < (r.width / 2) ? (i - 0.5) : i);
+        });
+        c.appendChild(s);
+      }
+      c.addEventListener('mouseleave', () => paint(c, parseFloat(c.dataset.rating || '5.0')));
+      setRating(cId, sId, val);
+    }
+
+    function paint(c, v) {
+      c.querySelectorAll('.star-glyph').forEach((s, i) => {
+        s.classList.remove('full', 'half');
+        if (v >= i + 1) s.classList.add('full');
+        else if (v >= i + 0.5) s.classList.add('half');
+      });
+    }
+
+    function setRating(cId, sId, v) {
+      const c = document.getElementById(cId);
+      if (!c) return;
+      c.dataset.rating = v;
+      paint(c, v);
+      const el = document.getElementById(sId);
+      if (el) el.textContent = Number(v).toFixed(1);
+    }
+
+    function updateCharCount(max) {
+      const t = document.getElementById('comment-modal');
+      const c = document.getElementById('chars-modal');
+      if (t && c) c.textContent = t.value.length + ' / ' + max;
+    }
+
+    function submitModalReview() {
+      const toast = document.getElementById('toast');
+      const sp = document.getElementById('spoiler-modal')?.checked;
+      const score = document.getElementById('score-modal')?.textContent || '5.0';
+      if (toast) {
+        toast.textContent = '✓ [Homem-Aranha] Crítica publicada com nota ' + score + '!' + (sp ? ' (Contém Spoilers)' : '');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+      }
+      closeReviewModal();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initStars('stars-modal', 'score-modal', 5.0);
+    });
+  </script>
+</body>
+</html>

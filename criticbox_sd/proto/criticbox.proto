@@ -11,7 +11,6 @@ service CriticboxService {
   rpc GetAllReviews (GetAllReviewsRequest) returns (GetAllReviewsResponse);
 }
 
-// ------------------- Estruturas de Dados -------------------
 
 message MovieSummary {
   int32 tmdb_id = 1;

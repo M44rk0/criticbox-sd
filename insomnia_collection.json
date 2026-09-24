@@ -1,0 +1,157 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-09-24T22:30:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_criticbox",
+      "parentId": null,
+      "modified": 1727217000000,
+      "created": 1727217000000,
+      "name": "Criticbox SD - API REST",
+      "description": "Coleção de endpoints da API REST com FastAPI (Sistemas Distribuídos)",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_base",
+      "parentId": "wrk_criticbox",
+      "modified": 1727217000000,
+      "created": 1727217000000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8000"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1727217000000,
+      "_type": "environment"
+    },
+    {
+      "_id": "fld_reviews",
+      "parentId": "wrk_criticbox",
+      "modified": 1727217000000,
+      "created": 1727217000000,
+      "name": "Reviews",
+      "description": "Endpoints de avaliações de filmes",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1727217000000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_root",
+      "parentId": "wrk_criticbox",
+      "modified": 1727217000000,
+      "created": 1727217000000,
+      "url": "{{ _.base_url }}/",
+      "name": "0. Health Check",
+      "description": "Verifica se a API está online e link da documentação Swagger",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -100,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_review_ok",
+      "parentId": "fld_reviews",
+      "modified": 1727217000000,
+      "created": 1727217000000,
+      "url": "{{ _.base_url }}/reviews",
+      "name": "1. POST Criar Review (201 Created)",
+      "description": "Cadastra uma nova avaliação válida persistida no SQLite",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tmdb_id\": 550,\n  \"user_id\": \"marcodev\",\n  \"rating\": 4.5,\n  \"comment\": \"Clube da Luta é uma obra-prima!\",\n  \"contains_spoilers\": false\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -200,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_review_bad",
+      "parentId": "fld_reviews",
+      "modified": 1727217000000,
+      "created": 1727217000000,
+      "url": "{{ _.base_url }}/reviews",
+      "name": "2. POST Criar Review - Validação (400 Bad Request)",
+      "description": "Testa resposta de erro com nota inválida (> 5.0) e user_id em branco",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tmdb_id\": 550,\n  \"user_id\": \"   \",\n  \"rating\": 6.5,\n  \"comment\": \"Nota fora do limite (máximo 5.0)\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -300,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_list_reviews",
+      "parentId": "fld_reviews",
+      "modified": 1727217000000,
+      "created": 1727217000000,
+      "url": "{{ _.base_url }}/reviews",
+      "name": "3. GET Listar Reviews (200 OK)",
+      "description": "Retorna a listagem de todas as avaliações persistidas",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -400,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    }
+  ]
+}
