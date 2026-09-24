@@ -14,7 +14,9 @@ dependencies = [
     "tmdbsimple (>=2.9.0)",
     "python-dotenv (>=1.0.0)",
     "fastapi (>=0.141.1,<0.142.0)",
-    "uvicorn (>=0.53.0,<0.54.0)"
+    "uvicorn (>=0.53.0,<0.54.0)",
+    "pymysql (>=1.2.3,<2.0.0)",
+    "cryptography (>=50.0.1,<51.0.0)"
 ]
 
 [tool.poetry]
