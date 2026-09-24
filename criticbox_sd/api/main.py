@@ -33,36 +33,29 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Criticbox SD - API REST", lifespan=lifespan)
 
 
+ERROR_TEMPLATES = {
+    "missing": "Campo obrigatório e não informado.",
+    "string_too_short": "Deve conter no mínimo {min_length} caractere(s).",
+    "string_too_long": "Deve conter no máximo {max_length} caracteres.",
+    "greater_than": "O valor deve ser maior que {gt}.",
+    "greater_than_equal": "O valor deve ser no mínimo {ge}.",
+    "less_than_equal": "O valor deve ser no máximo {le}.",
+    "int_parsing": "Deve ser um número inteiro válido.",
+    "int_type": "Deve ser um número inteiro válido.",
+    "float_parsing": "Deve ser um número decimal válido.",
+    "float_type": "Deve ser um número decimal válido.",
+    "bool_parsing": "Deve ser verdadeiro (true) ou falso (false).",
+    "bool_type": "Deve ser verdadeiro (true) ou falso (false).",
+    "json_invalid": "O corpo da requisição deve ser um JSON válido.",
+}
+
+
 def _format_error_msg(err: dict) -> str:
     msg = err.get("msg", "Valor inválido").removeprefix("Value error, ")
-    err_type = err.get("type", "")
-    ctx = err.get("ctx", {})
-
     if msg != err.get("msg"):
         return msg
-
-    if err_type == "missing":
-        return "Campo obrigatório e não informado."
-    elif err_type == "string_too_short":
-        return f"Deve conter no mínimo {ctx.get('min_length', 1)} caractere(s)."
-    elif err_type == "string_too_long":
-        return f"Deve conter no máximo {ctx.get('max_length', 50)} caracteres."
-    elif err_type == "greater_than":
-        return f"O valor deve ser maior que {ctx.get('gt', 0)}."
-    elif err_type == "greater_than_equal":
-        return f"O valor deve ser no mínimo {ctx.get('ge', 0)}."
-    elif err_type == "less_than_equal":
-        return f"O valor deve ser no máximo {ctx.get('le', 5)}."
-    elif "int_parsing" in err_type or "int_type" in err_type:
-        return "Deve ser um número inteiro válido."
-    elif "float_parsing" in err_type or "float_type" in err_type:
-        return "Deve ser um número decimal válido."
-    elif "bool_parsing" in err_type or "bool_type" in err_type:
-        return "Deve ser verdadeiro (true) ou falso (false)."
-    elif "json_invalid" in err_type:
-        return "O corpo da requisição deve ser um JSON válido."
-
-    return msg
+    template = ERROR_TEMPLATES.get(err.get("type", ""))
+    return template.format(**err.get("ctx", {})) if template else msg
 
 
 @app.exception_handler(RequestValidationError)
