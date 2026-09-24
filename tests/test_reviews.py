@@ -12,10 +12,13 @@ sys.path.extend(
     ]
 )
 
+os.environ["DATABASE_PATH"] = os.path.join(BASE_DIR, "tests", "criticbox_test.db")
+
 import criticbox_pb2 as pb2
 import database
 import server
 import tmdb_service
+
 
 
 class TestGetAllReviews(unittest.TestCase):

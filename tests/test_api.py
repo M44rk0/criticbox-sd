@@ -1,9 +1,14 @@
+import os
 import unittest
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.environ["DATABASE_PATH"] = os.path.join(BASE_DIR, "tests", "criticbox_test.db")
 
 from fastapi.testclient import TestClient
 
 from criticbox_sd.api.main import app
 from criticbox_sd.server import database
+
 
 
 class TestCriticboxAPI(unittest.TestCase):
