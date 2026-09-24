@@ -77,6 +77,25 @@ class ReviewResponse(BaseModel):
     message: str = "Review registrada com sucesso!"
 
 
+class MovieSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    tmdb_id: int
+    title: str
+    release_date: str = ""
+    poster_url: str = ""
+    overview: str = ""
+    tmdb_vote_average: float = 0.0
+    criticbox_rating: float = 0.0
+    criticbox_review_count: int = 0
+
+
+class SearchMoviesResponse(BaseModel):
+    page: int = 1
+    total_results: int = 0
+    movies: list[MovieSummary] = []
+
+
 class ValidationErrorItem(BaseModel):
     campo: str
     mensagem: str

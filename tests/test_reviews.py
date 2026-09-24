@@ -20,7 +20,6 @@ import server
 import tmdb_service
 
 
-
 class TestGetAllReviews(unittest.TestCase):
     def setUp(self):
         database.init_db()
@@ -30,7 +29,7 @@ class TestGetAllReviews(unittest.TestCase):
         database.clear_db()
 
     def test_database_get_all_reviews(self):
-        # Insert a sample review
+
         res = database.add_review(
             tmdb_id=550,
             user_id="test_user_all",

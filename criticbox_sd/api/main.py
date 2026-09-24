@@ -4,7 +4,7 @@ import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -12,8 +12,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from criticbox_sd.api.schemas import ReviewCreateRequest, ReviewResponse
-from criticbox_sd.server import database
+from criticbox_sd.api.schemas import (
+    MovieSummary,
+    ReviewCreateRequest,
+    ReviewResponse,
+    SearchMoviesResponse,
+)
+from criticbox_sd.server import database, tmdb_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [API REST] %(message)s")
 logger = logging.getLogger("criticbox-api")
@@ -79,6 +84,44 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.get("/")
 def root():
     return {"status": "online", "docs_url": "/docs"}
+
+
+@app.get("/movies", response_model=SearchMoviesResponse)
+def search_movies(
+    query: str = Query(..., min_length=1, description="Termo de busca do filme"),
+    page: int = Query(default=1, ge=1, description="Página de resultados"),
+):
+    q = query.strip()
+    if not q:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "mensagem": "Dados inválidos",
+                "erros": [{"campo": "query", "mensagem": "O parâmetro de busca 'query' não pode estar em branco."}],
+            },
+        )
+    logger.info("GET /movies -> Buscando: '%s' (Página %d)", q, page)
+    data = tmdb_service.search_movies(q, page)
+    movies = []
+    for item in data.get("results", []):
+        stats = database.get_movie_stats(item["id"])
+        movies.append(
+            MovieSummary(
+                tmdb_id=item["id"],
+                title=item["title"],
+                release_date=item.get("release_date") or "",
+                poster_url=item.get("poster_url") or "",
+                overview=item.get("overview") or "",
+                tmdb_vote_average=round(float(item.get("tmdb_vote_average", 0.0)), 1),
+                criticbox_rating=stats["average_rating"],
+                criticbox_review_count=stats["total_count"],
+            )
+        )
+    return SearchMoviesResponse(
+        page=data.get("page", 1),
+        total_results=data.get("total_results", len(movies)),
+        movies=movies,
+    )
 
 
 @app.post("/reviews", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)

@@ -10,7 +10,6 @@ from criticbox_sd.api.main import app
 from criticbox_sd.server import database
 
 
-
 class TestCriticboxAPI(unittest.TestCase):
     def setUp(self):
         database.init_db()
@@ -118,6 +117,31 @@ class TestCriticboxAPI(unittest.TestCase):
         users = [r["user_id"] for r in data]
         self.assertIn("alice", users)
         self.assertIn("bob", users)
+
+    def test_search_movies_success_200(self):
+        response = self.client.get("/movies?query=Fight Club")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("movies", data)
+        self.assertIn("total_results", data)
+        self.assertIn("page", data)
+        self.assertIsInstance(data["movies"], list)
+
+    def test_search_movies_blank_query_400(self):
+        response = self.client.get("/movies?query=   ")
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertEqual(data.get("mensagem"), "Dados inválidos")
+        campos_com_erro = [e["campo"] for e in data.get("erros", [])]
+        self.assertIn("query", campos_com_erro)
+
+    def test_search_movies_missing_query_400(self):
+        response = self.client.get("/movies")
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertEqual(data.get("mensagem"), "Dados inválidos")
+        campos_com_erro = [e["campo"] for e in data.get("erros", [])]
+        self.assertIn("query", campos_com_erro)
 
 
 if __name__ == "__main__":

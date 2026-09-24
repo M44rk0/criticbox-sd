@@ -108,7 +108,15 @@ poetry run uvicorn criticbox_sd.api.main:app --reload --port 8000
 
 ### Rotas e Exemplos de Uso com `curl`
 
-#### 1. Criar Review com Sucesso (`POST /reviews` -> `201 Created`)
+#### 1. Buscar Filmes no TMDb (`GET /movies` -> `200 OK`)
+
+Realiza a busca de filmes por termo no TMDb com paginação e calcula a média de notas e total de reviews registradas no Criticbox:
+
+```bash
+curl -i -X GET "http://localhost:8000/movies?query=Clube%20da%20Luta&page=1"
+```
+
+#### 2. Criar Review com Sucesso (`POST /reviews` -> `201 Created`)
 
 ```bash
 curl -i -X POST http://localhost:8000/reviews \

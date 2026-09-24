@@ -4,6 +4,7 @@ import sqlite3
 import uuid
 from datetime import datetime, timezone
 
+
 def get_db_path() -> str:
     return os.getenv("DATABASE_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "criticbox.db"))
 

@@ -1,7 +1,7 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2026-09-24T22:30:00.000Z",
+  "__export_date": "2026-09-24T22:50:00.000Z",
   "__export_source": "insomnia.desktop.app:v2023.5.8",
   "resources": [
     {
@@ -34,11 +34,23 @@
       "_type": "environment"
     },
     {
+      "_id": "fld_movies",
+      "parentId": "wrk_criticbox",
+      "modified": 1727217000000,
+      "created": 1727217000000,
+      "name": "1. Filmes",
+      "description": "Endpoints de catálogo e busca no TMDb",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1727217000100,
+      "_type": "request_group"
+    },
+    {
       "_id": "fld_reviews",
       "parentId": "wrk_criticbox",
       "modified": 1727217000000,
       "created": 1727217000000,
-      "name": "Reviews",
+      "name": "2. Reviews",
       "description": "Endpoints de avaliações de filmes",
       "environment": {},
       "environmentPropertyOrder": null,
@@ -46,19 +58,30 @@
       "_type": "request_group"
     },
     {
-      "_id": "req_root",
-      "parentId": "wrk_criticbox",
+      "_id": "req_search_movies",
+      "parentId": "fld_movies",
       "modified": 1727217000000,
       "created": 1727217000000,
-      "url": "{{ _.base_url }}/",
-      "name": "0. Health Check",
-      "description": "Verifica se a API está online e link da documentação Swagger",
+      "url": "{{ _.base_url }}/movies",
+      "name": "1. GET Buscar Filmes no TMDb",
+      "description": "Busca filmes por título no TMDb com paginação e enriquecido com notas do Criticbox",
       "method": "GET",
       "body": {},
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "query",
+          "value": "Clube da Luta",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
       "headers": [],
       "authentication": {},
-      "metaSortKey": -100,
+      "metaSortKey": -50,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -74,7 +97,7 @@
       "modified": 1727217000000,
       "created": 1727217000000,
       "url": "{{ _.base_url }}/reviews",
-      "name": "1. POST Criar Review (201 Created)",
+      "name": "2. POST Criar Review (201 Created)",
       "description": "Cadastra uma nova avaliação válida persistida no SQLite",
       "method": "POST",
       "body": {
@@ -105,7 +128,7 @@
       "modified": 1727217000000,
       "created": 1727217000000,
       "url": "{{ _.base_url }}/reviews",
-      "name": "2. POST Criar Review - Validação (400 Bad Request)",
+      "name": "3. POST Criar Review - Validação (400 Bad Request)",
       "description": "Testa resposta de erro com nota inválida (> 5.0) e user_id em branco",
       "method": "POST",
       "body": {
@@ -136,7 +159,7 @@
       "modified": 1727217000000,
       "created": 1727217000000,
       "url": "{{ _.base_url }}/reviews",
-      "name": "3. GET Listar Reviews (200 OK)",
+      "name": "4. GET Listar Todas as Reviews (200 OK)",
       "description": "Retorna a listagem de todas as avaliações persistidas",
       "method": "GET",
       "body": {},
@@ -144,6 +167,29 @@
       "headers": [],
       "authentication": {},
       "metaSortKey": -400,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_root",
+      "parentId": "wrk_criticbox",
+      "modified": 1727217000000,
+      "created": 1727217000000,
+      "url": "{{ _.base_url }}/",
+      "name": "0. Health Check",
+      "description": "Verifica se a API está online e link da documentação Swagger",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -100,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
