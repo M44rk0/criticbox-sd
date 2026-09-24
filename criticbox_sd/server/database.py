@@ -7,6 +7,9 @@ from typing import Any
 
 import pymysql
 import pymysql.cursors
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def is_mysql() -> bool:

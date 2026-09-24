@@ -4,6 +4,7 @@ import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -11,6 +12,8 @@ from fastapi.responses import JSONResponse
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
+
+load_dotenv()
 
 from criticbox_sd.api.schemas import (
     MovieSummary,
@@ -27,6 +30,10 @@ logger = logging.getLogger("criticbox-api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     database.init_db()
+    if database.is_mysql():
+        logger.info("Banco ativo: MySQL (Cloud SQL) em %s:%s", os.getenv("DB_HOST"), os.getenv("DB_PORT", "3306"))
+    else:
+        logger.info("Banco ativo: SQLite local (%s)", database.get_sqlite_path())
     yield
 
 
