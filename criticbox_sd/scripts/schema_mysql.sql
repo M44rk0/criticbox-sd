@@ -1,5 +1,3 @@
--- Script DDL para criação do banco de dados e tabelas no MySQL (Google Cloud SQL)
--- Projeto: Criticbox SD
 
 CREATE DATABASE IF NOT EXISTS criticbox
   CHARACTER SET utf8mb4
@@ -7,7 +5,7 @@ CREATE DATABASE IF NOT EXISTS criticbox
 
 USE criticbox;
 
--- Tabela de Avaliações / Reviews
+
 CREATE TABLE IF NOT EXISTS reviews (
     id VARCHAR(36) NOT NULL,
     tmdb_id INT NOT NULL,

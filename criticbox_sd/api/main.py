@@ -28,12 +28,44 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Criticbox SD - API REST", lifespan=lifespan)
 
 
+def _format_error_msg(err: dict) -> str:
+    msg = err.get("msg", "Valor inválido").removeprefix("Value error, ")
+    err_type = err.get("type", "")
+    ctx = err.get("ctx", {})
+
+    if msg != err.get("msg"):
+        return msg
+
+    if err_type == "missing":
+        return "Campo obrigatório e não informado."
+    elif err_type == "string_too_short":
+        return f"Deve conter no mínimo {ctx.get('min_length', 1)} caractere(s)."
+    elif err_type == "string_too_long":
+        return f"Deve conter no máximo {ctx.get('max_length', 50)} caracteres."
+    elif err_type == "greater_than":
+        return f"O valor deve ser maior que {ctx.get('gt', 0)}."
+    elif err_type == "greater_than_equal":
+        return f"O valor deve ser no mínimo {ctx.get('ge', 0)}."
+    elif err_type == "less_than_equal":
+        return f"O valor deve ser no máximo {ctx.get('le', 5)}."
+    elif "int_parsing" in err_type or "int_type" in err_type:
+        return "Deve ser um número inteiro válido."
+    elif "float_parsing" in err_type or "float_type" in err_type:
+        return "Deve ser um número decimal válido."
+    elif "bool_parsing" in err_type or "bool_type" in err_type:
+        return "Deve ser verdadeiro (true) ou falso (false)."
+    elif "json_invalid" in err_type:
+        return "O corpo da requisição deve ser um JSON válido."
+
+    return msg
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     erros = [
         {
             "campo": str(err.get("loc", ())[-1]) if err.get("loc") else "corpo",
-            "mensagem": err.get("msg", "Valor inválido").removeprefix("Value error, "),
+            "mensagem": _format_error_msg(err),
         }
         for err in exc.errors()
     ]

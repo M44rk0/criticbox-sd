@@ -152,18 +152,18 @@ curl -i -X POST http://localhost:8000/reviews \
   }'
 ```
 
-**Resposta HTTP 400 (formato similar ao `ValidacaoExceptionHandler` da Aula 6):**
+**Resposta HTTP 400 (formato amigável e em português):**
 ```json
 {
   "mensagem": "Dados inválidos",
   "erros": [
     {
       "campo": "user_id",
-      "mensagem": "não deve estar em branco"
+      "mensagem": "O nome de usuário não pode estar em branco."
     },
     {
       "campo": "rating",
-      "mensagem": "Input should be less than or equal to 5"
+      "mensagem": "A nota deve estar entre 0.5 e 5.0 estrelas."
     }
   ]
 }
