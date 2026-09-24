@@ -13,7 +13,10 @@ load_dotenv()
 
 
 def is_mysql() -> bool:
+    if os.getenv("DATABASE_PATH"):
+        return False
     return bool(os.getenv("DB_HOST")) or os.getenv("DB_TYPE", "").lower() == "mysql"
+
 
 
 def get_sqlite_path() -> str:
