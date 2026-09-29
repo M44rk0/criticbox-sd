@@ -3,21 +3,14 @@ import sys
 import unittest
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.extend(
-    [
-        os.path.join(BASE_DIR, "criticbox_sd"),
-        os.path.join(BASE_DIR, "criticbox_sd", "server"),
-        os.path.join(BASE_DIR, "criticbox_sd", "generated"),
-        os.path.join(BASE_DIR, "criticbox_sd", "client"),
-    ]
-)
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 os.environ["DATABASE_PATH"] = os.path.join(BASE_DIR, "tests", "criticbox_test.db")
 
-import criticbox_pb2 as pb2
-import database
-import server
-import tmdb_service
+from criticbox_sd.generated import review_pb2 as r_pb2
+from criticbox_sd.server import database, tmdb_service
+from criticbox_sd.server.review_service import ReviewServiceServicer
 
 
 class TestGetAllReviews(unittest.TestCase):
@@ -29,7 +22,6 @@ class TestGetAllReviews(unittest.TestCase):
         database.clear_db()
 
     def test_database_get_all_reviews(self):
-
         res = database.add_review(
             tmdb_id=550,
             user_id="test_user_all",
@@ -58,10 +50,10 @@ class TestGetAllReviews(unittest.TestCase):
             contains_spoilers=False,
         )
 
-        servicer = server.CriticboxServicer()
-        request = pb2.GetAllReviewsRequest()
+        servicer = ReviewServiceServicer()
+        request = r_pb2.GetAllReviewsRequest()
         response = servicer.GetAllReviews(request, None)
-        self.assertIsInstance(response, pb2.GetAllReviewsResponse)
+        self.assertIsInstance(response, r_pb2.GetAllReviewsResponse)
         self.assertEqual(response.total_count, 1)
         self.assertEqual(len(response.reviews), 1)
 
