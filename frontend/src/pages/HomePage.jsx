@@ -253,39 +253,33 @@ export default function HomePage() {
                 src={heroMovie.poster_url || 'https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg'}
                 alt={heroMovie.title}
               />
-              <span className="hero-poster-rank">#1 EM ALTA</span>
+              <span className="hero-poster-rank">#01 // EM ALTA</span>
             </div>
             <div className="hero-info">
-              <div className="hero-eyebrow">
-                <span className="hero-eyebrow-chip orange">DESTAQUE DA SEMANA</span>
-                <span className="hero-eyebrow-chip outline">
-                  {heroMovie.release_date ? heroMovie.release_date.substring(0, 4) : '2026'}
-                </span>
-                <span className="hero-eyebrow-chip outline">
-                  {heroMovie.media_type === 'tv' ? 'SÉRIE' : 'CINEMA'}
-                </span>
+              <div className="hero-kicker">
+                <span>[ {heroMovie.release_date ? heroMovie.release_date.substring(0, 4) : '2026'} • {heroMovie.media_type === 'tv' ? 'SÉRIE' : 'LONGA-METRAGEM'} • DESTAQUE DO PROJETOR ]</span>
               </div>
               <h1 className="hero-title">{heroMovie.title}</h1>
-              <p className="hero-tagline">"Descubra análises completas, sinopse e avaliações da comunidade."</p>
               <p className="hero-synopsis">
-                {heroMovie.overview || 'Sinopse disponível na página do título.'}
+                {heroMovie.overview || 'Sinopse e ficha técnica disponíveis no registro oficial.'}
               </p>
-              <div className="hero-stats">
-                <div className="hero-stat">
-                  <span className="hero-stat-value">{heroMovie.tmdb_vote_average?.toFixed(1) || '-'}</span>
-                  <span className="hero-stat-label">NOTA TMDB</span>
+              <div className="hero-ledger">
+                <div className="hero-ledger-item">
+                  <span className="hero-ledger-score">★ {heroMovie.tmdb_vote_average?.toFixed(1) || '-'}</span>
+                  <div className="hero-ledger-meta">
+                    <span className="hero-ledger-label">ÍNDICE TMDB</span>
+                    <span className="hero-ledger-sub">BASE GLOBAL</span>
+                  </div>
                 </div>
-                <div className="hero-stat-divider"></div>
-                <div className="hero-stat">
-                  <span className="hero-stat-value">
-                    {heroMovie.criticbox_rating > 0 ? heroMovie.criticbox_rating.toFixed(1) : '-'}
+                <div className="hero-ledger-divider"></div>
+                <div className="hero-ledger-item">
+                  <span className="hero-ledger-score accent">
+                    {heroMovie.criticbox_rating > 0 ? heroMovie.criticbox_rating.toFixed(1) : '—'}
                   </span>
-                  <span className="hero-stat-label">NOTA CRITICBOX</span>
-                </div>
-                <div className="hero-stat-divider"></div>
-                <div className="hero-stat">
-                  <span className="hero-stat-value">{heroMovie.criticbox_review_count}</span>
-                  <span className="hero-stat-label">AVALIAÇÕES</span>
+                  <div className="hero-ledger-meta">
+                    <span className="hero-ledger-label">NOTA CRITICBOX</span>
+                    <span className="hero-ledger-sub">{heroMovie.criticbox_review_count || 0} AVALIAÇÕES</span>
+                  </div>
                 </div>
               </div>
               <div className="hero-actions">
@@ -293,8 +287,14 @@ export default function HomePage() {
                   className="hero-btn hero-btn-primary"
                   onClick={() => navigate(`/movie/${heroMovie.tmdb_id}?type=${heroMovie.media_type || 'movie'}`)}
                 >
-                  VER {heroMovie.media_type === 'tv' ? 'SÉRIE' : 'FILME'} & CRÍTICAS
-                  <ArrowRight size={15} />
+                  VER FICHA & CRÍTICAS
+                  <ArrowRight size={14} />
+                </button>
+                <button
+                  className="hero-btn hero-btn-ghost"
+                  onClick={() => navigate('/search')}
+                >
+                  EXPLORAR ACERVO
                 </button>
               </div>
             </div>
@@ -310,13 +310,13 @@ export default function HomePage() {
             <h2 className="section-title">Em Alta Esta Semana</h2>
           </div>
           <Link to="/search" className="section-link">
-            EXPLORAR CATÁLOGO
+            ACERVO COMPLETO
             <ArrowRight size={13} />
           </Link>
         </div>
 
         {isLoadingTrending ? (
-          <div className="loading-pulse">Carregando catálogo em destaque...</div>
+          <div className="loading-pulse">SINCRONIZANDO CATÁLOGO EM DESTAQUE...</div>
         ) : (
           <div className="movies-grid">
             {trendingMovies.slice(0, 10).map((m, idx) => (
@@ -329,20 +329,24 @@ export default function HomePage() {
                 <div className="movie-card-poster">
                   <img src={m.poster_url || 'https://via.placeholder.com/500x750?text=Sem+Poster'} alt={m.title} loading="lazy" />
                   <span className="movie-card-rank">#{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
-                  <span className={`media-type-chip ${m.media_type === 'tv' ? 'series' : ''}`}>
-                    {m.media_type === 'tv' ? 'SÉRIE' : 'FILME'}
-                  </span>
-                  <span className="movie-card-score">
-                    <Star size={11} fill="currentColor" stroke="none" />
-                    {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
-                  </span>
                 </div>
                 <div className="movie-card-info">
-                  <span className="movie-card-title">{m.title}</span>
-                  <span className="movie-card-meta">
-                    {m.release_date ? m.release_date.substring(0, 4) : '2026'} • Criticbox:{' '}
-                    {m.criticbox_rating > 0 ? `${m.criticbox_rating.toFixed(1)}/5.0` : 'Sem notas'}
-                  </span>
+                  <div className="movie-card-topline">
+                    <span className="movie-card-tag">
+                      {m.release_date ? m.release_date.substring(0, 4) : '2026'} • {m.media_type === 'tv' ? 'SÉRIE' : 'FILME'}
+                    </span>
+                    <span className="movie-card-score-pill">
+                      ★ {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
+                    </span>
+                  </div>
+                  <h3 className="movie-card-title">{m.title}</h3>
+                  <div className="movie-card-meta">
+                    {m.criticbox_rating > 0 ? (
+                      <span className="movie-card-cb-score">CRITICBOX: <strong>{m.criticbox_rating.toFixed(1)}</strong></span>
+                    ) : (
+                      <span className="movie-card-cb-empty">SEM CRÍTICAS</span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -358,13 +362,13 @@ export default function HomePage() {
             <h2 className="section-title">Em Cartaz nos Cinemas</h2>
           </div>
           <Link to="/search" className="section-link">
-            EXPLORAR CATÁLOGO
+            SESSÕES EM CARTAZ
             <ArrowRight size={13} />
           </Link>
         </div>
 
         {isLoadingNowPlaying ? (
-          <div className="loading-pulse">Carregando filmes em cartaz nos cinemas...</div>
+          <div className="loading-pulse">CONSULTANDO PROGRAMAÇÃO DAS SALAS...</div>
         ) : (
           <div className="movies-grid">
             {nowPlayingMovies.slice(0, 10).map((m, idx) => (
@@ -377,18 +381,24 @@ export default function HomePage() {
                 <div className="movie-card-poster">
                   <img src={m.poster_url || 'https://via.placeholder.com/500x750?text=Sem+Poster'} alt={m.title} loading="lazy" />
                   <span className="movie-card-rank">#{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
-                  <span className="media-type-chip">CINEMA</span>
-                  <span className="movie-card-score">
-                    <Star size={11} fill="currentColor" stroke="none" />
-                    {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
-                  </span>
                 </div>
                 <div className="movie-card-info">
-                  <span className="movie-card-title">{m.title}</span>
-                  <span className="movie-card-meta">
-                    {m.release_date ? m.release_date.substring(0, 4) : '2026'} • Criticbox:{' '}
-                    {m.criticbox_rating > 0 ? `${m.criticbox_rating.toFixed(1)}/5.0` : 'Sem notas'}
-                  </span>
+                  <div className="movie-card-topline">
+                    <span className="movie-card-tag">
+                      {m.release_date ? m.release_date.substring(0, 4) : '2026'} • CINEMA
+                    </span>
+                    <span className="movie-card-score-pill">
+                      ★ {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
+                    </span>
+                  </div>
+                  <h3 className="movie-card-title">{m.title}</h3>
+                  <div className="movie-card-meta">
+                    {m.criticbox_rating > 0 ? (
+                      <span className="movie-card-cb-score">CRITICBOX: <strong>{m.criticbox_rating.toFixed(1)}</strong></span>
+                    ) : (
+                      <span className="movie-card-cb-empty">SEM CRÍTICAS</span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -523,11 +533,11 @@ export default function HomePage() {
         <section className="section" style={{ paddingTop: 0 }}>
           <div className="cta-banner">
             <div className="cta-text">
-              <h2>COMECE A CRITICAR AGORA.</h2>
-              <p>Crie sua conta e compartilhe suas opiniões sobre os filmes que você assistiu.</p>
+              <h2>SUA VOZ NA CRÍTICA CINEMATOGRÁFICA.</h2>
+              <p>Junte-se à comunidade de cinéfilos. Registre seus votos, elabore ensaios e acompanhe os grandes lançamentos.</p>
             </div>
             <button className="cta-btn" onClick={() => openAuth('register')}>
-              CRIAR CONTA GRÁTIS
+              CRIAR CONTA DE CRÍTICO
               <ArrowRight size={16} />
             </button>
           </div>

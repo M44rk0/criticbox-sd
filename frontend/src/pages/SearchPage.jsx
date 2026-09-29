@@ -149,22 +149,26 @@ export default function SearchPage() {
                   title={`Ver detalhes de ${m.title}`}
                 >
                   <div className="movie-card-poster">
-                    <img src={m.poster_url} alt={m.title} loading="lazy" />
+                    <img src={m.poster_url || 'https://via.placeholder.com/500x750?text=Sem+Poster'} alt={m.title} loading="lazy" />
                     <span className="movie-card-rank">#{(pageParam - 1) * 20 + idx + 1}</span>
-                    <span className={`media-type-chip ${m.media_type === 'tv' ? 'series' : ''}`}>
-                      {m.media_type === 'tv' ? 'SÉRIE' : 'FILME'}
-                    </span>
-                    <span className="movie-card-score">
-                      <Star size={11} fill="currentColor" stroke="none" />
-                      {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
-                    </span>
                   </div>
                   <div className="movie-card-info">
-                    <span className="movie-card-title">{m.title}</span>
-                    <span className="movie-card-meta">
-                      {m.release_date ? m.release_date.substring(0, 4) : '2026'} • Criticbox:{' '}
-                      {m.criticbox_rating > 0 ? `${m.criticbox_rating.toFixed(1)}/5.0` : 'Sem notas'}
-                    </span>
+                    <div className="movie-card-topline">
+                      <span className="movie-card-tag">
+                        {m.release_date ? m.release_date.substring(0, 4) : '2026'} • {m.media_type === 'tv' ? 'SÉRIE' : 'FILME'}
+                      </span>
+                      <span className="movie-card-score-pill">
+                        ★ {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
+                      </span>
+                    </div>
+                    <h3 className="movie-card-title">{m.title}</h3>
+                    <div className="movie-card-meta">
+                      {m.criticbox_rating > 0 ? (
+                        <span className="movie-card-cb-score">CRITICBOX: <strong>{m.criticbox_rating.toFixed(1)}</strong></span>
+                      ) : (
+                        <span className="movie-card-cb-empty">SEM CRÍTICAS</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
