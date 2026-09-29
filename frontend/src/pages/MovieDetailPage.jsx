@@ -467,11 +467,10 @@ export default function MovieDetailPage() {
               </div>
             ) : (
               <button
-                className="hero-btn hero-btn-primary"
-                style={{ width: '100%', justifyContent: 'center' }}
+                className="movie-detail-eval-btn"
                 onClick={() => openReviewModal(movie, loadData)}
               >
-                <Star size={15} fill="currentColor" style={{ marginRight: '6px' }} />
+                <Star size={15} fill="currentColor" />
                 AVALIAR {movie.media_type === 'tv' ? 'ESTA SÉRIE / EPISÓDIO' : 'ESTE FILME'}
               </button>
             )}
@@ -507,38 +506,36 @@ export default function MovieDetailPage() {
               VOLTAR
             </button>
 
-            {/* BADGES: TIPO DE MÍDIA + CLASSIFICAÇÃO INDICATIVA + STATUS + GÊNEROS */}
-            <div className="movie-detail-genres">
-              {movie.media_type === 'tv' ? (
-                <span className="movie-genre-badge" style={{ background: '#38bdf8', color: '#000', borderColor: '#38bdf8', fontWeight: 800 }}>
-                  <Tv size={11} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-1px' }} />
-                  SÉRIE
-                </span>
-              ) : (
-                <span className="movie-genre-badge" style={{ background: 'var(--accent)', color: '#000', borderColor: 'var(--accent)', fontWeight: 800 }}>
-                  <Film size={11} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-1px' }} />
-                  FILME
-                </span>
+            {/* KICKER DE CABEÇALHO BRUTALISTA */}
+            <div className="movie-detail-kicker">
+              <span className={`movie-kicker-type ${movie.media_type === 'tv' ? 'series' : ''}`}>
+                {movie.media_type === 'tv' ? (
+                  <>
+                    <Tv size={11} /> SÉRIE
+                  </>
+                ) : (
+                  <>
+                    <Film size={11} /> FILME
+                  </>
+                )}
+              </span>
+              {movie.certification && (
+                <>
+                  <span className="movie-kicker-dot">•</span>
+                  {getClassIndBadge(movie.certification)}
+                </>
               )}
-
-              {/* Selo ClassInd Oficial */}
-              {movie.certification && getClassIndBadge(movie.certification)}
-
-              {/* Status da obra */}
+              {movie.genres && movie.genres.length > 0 && (
+                <>
+                  <span className="movie-kicker-dot">•</span>
+                  <span className="movie-kicker-genres">{movie.genres.slice(0, 3).join(' / ').toUpperCase()}</span>
+                </>
+              )}
               {movie.status && (
-                <span className="movie-status-badge">
-                  {translateStatus(movie.status)}
-                </span>
-              )}
-
-              {movie.genres && movie.genres.length > 0 ? (
-                movie.genres.map((g) => (
-                  <span key={g} className="movie-genre-badge">
-                    {g}
-                  </span>
-                ))
-              ) : (
-                <span className="movie-genre-badge">CATÁLOGO</span>
+                <>
+                  <span className="movie-kicker-dot">•</span>
+                  <span className="movie-kicker-status">{translateStatus(movie.status).toUpperCase()}</span>
+                </>
               )}
             </div>
 
@@ -621,36 +618,38 @@ export default function MovieDetailPage() {
               {movie.overview || 'Sinopse não disponível para este título.'}
             </p>
 
-            {/* NOTAS E POPULARIDADE */}
-            <div className="movie-detail-ratings-box">
-              <div className="movie-detail-rating-item">
-                <span className="movie-detail-rating-num">
-                  {movie.tmdb_vote_average ? movie.tmdb_vote_average.toFixed(1) : '-'}
-                </span>
-                <span className="movie-detail-rating-label">
-                  NOTA TMDB ({movie.vote_count ? `${movie.vote_count.toLocaleString('pt-BR')} votos` : 'TMDb'})
-                </span>
+            {/* LEDGER DE AVALIAÇÃO OFICIAL */}
+            <div className="movie-detail-ledger">
+              <div className="detail-ledger-item">
+                <span className="detail-ledger-score">★ {movie.tmdb_vote_average ? movie.tmdb_vote_average.toFixed(1) : '-'}</span>
+                <div className="detail-ledger-meta">
+                  <span className="detail-ledger-label">ÍNDICE TMDB</span>
+                  <span className="detail-ledger-sub">
+                    {movie.vote_count ? `${movie.vote_count.toLocaleString('pt-BR')} VOTOS` : 'BASE GLOBAL'}
+                  </span>
+                </div>
               </div>
-              <div className="hero-stat-divider"></div>
-              <div className="movie-detail-rating-item">
-                <span className="movie-detail-rating-num">
-                  {movie.criticbox_rating > 0 ? movie.criticbox_rating.toFixed(1) : '-'}
+              <div className="detail-ledger-divider" />
+              <div className="detail-ledger-item">
+                <span className="detail-ledger-score accent">
+                  {movie.criticbox_rating > 0 ? movie.criticbox_rating.toFixed(1) : '—'}
                 </span>
-                <span className="movie-detail-rating-label">NOTA CRITICBOX</span>
-              </div>
-              <div className="hero-stat-divider"></div>
-              <div className="movie-detail-rating-item">
-                <span className="movie-detail-rating-num">{movie.criticbox_review_count}</span>
-                <span className="movie-detail-rating-label">AVALIAÇÕES</span>
+                <div className="detail-ledger-meta">
+                  <span className="detail-ledger-label">NOTA CRITICBOX</span>
+                  <span className="detail-ledger-sub">{movie.criticbox_review_count || 0} CRÍTICAS</span>
+                </div>
               </div>
               {movie.popularity > 0 && (
                 <>
-                  <div className="hero-stat-divider"></div>
-                  <div className="movie-detail-rating-item">
-                    <span className="movie-detail-rating-num" style={{ color: 'var(--white)', fontSize: '1.2rem' }}>
+                  <div className="detail-ledger-divider" />
+                  <div className="detail-ledger-item">
+                    <span className="detail-ledger-score muted">
                       {Math.round(movie.popularity)}
                     </span>
-                    <span className="movie-detail-rating-label">POPULARIDADE</span>
+                    <div className="detail-ledger-meta">
+                      <span className="detail-ledger-label">POPULARIDADE</span>
+                      <span className="detail-ledger-sub">RANKING ATUAL</span>
+                    </div>
                   </div>
                 </>
               )}
