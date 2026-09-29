@@ -83,7 +83,7 @@ class CriticboxServicer(pb2_grpc.CriticboxServiceServicer):
         raw_reviews = database.get_all_reviews()
         reviews = []
         for r in raw_reviews:
-            movie_title = tmdb_service.get_movie_title(r["tmdb_id"])
+            movie_title = r.get("movie_title") or tmdb_service.get_movie_title(r["tmdb_id"])
             reviews.append(
                 pb2.UserReviewItem(
                     review_id=r["review_id"],

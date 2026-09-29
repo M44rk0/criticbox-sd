@@ -214,7 +214,7 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: center 20%;
-  filter: brightness(0.28) saturate(1.05);
+  filter: brightness(0.55) saturate(1.15);
 }
 
 .hero-bg::after {
@@ -222,8 +222,8 @@ body {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(6, 7, 10, 0.96) 0%, rgba(6, 7, 10, 0.65) 50%, rgba(6, 7, 10, 0.96) 100%),
-    linear-gradient(180deg, rgba(6, 7, 10, 0.3) 0%, rgba(6, 7, 10, 0.98) 90%);
+    linear-gradient(90deg, rgba(6, 7, 10, 0.9) 0%, rgba(6, 7, 10, 0.45) 45%, rgba(6, 7, 10, 0.8) 100%),
+    linear-gradient(180deg, rgba(6, 7, 10, 0.15) 0%, rgba(6, 7, 10, 0.4) 50%, rgba(6, 7, 10, 0.95) 100%);
 }
 
 .hero-content {
@@ -306,6 +306,7 @@ body {
   line-height: 1.05;
   letter-spacing: -0.03em;
   text-transform: uppercase;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.7);
 }
 
 .hero-tagline {
@@ -1438,7 +1439,7 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: center 25%;
-  filter: brightness(0.22) saturate(1.1);
+  filter: brightness(0.55) saturate(1.15);
 }
 
 .movie-detail-bg::after {
@@ -1446,8 +1447,8 @@ body {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(6, 7, 10, 0.98) 0%, rgba(6, 7, 10, 0.75) 45%, rgba(6, 7, 10, 0.98) 100%),
-    linear-gradient(180deg, rgba(6, 7, 10, 0.2) 0%, rgba(6, 7, 10, 0.98) 95%);
+    linear-gradient(90deg, rgba(6, 7, 10, 0.9) 0%, rgba(6, 7, 10, 0.45) 45%, rgba(6, 7, 10, 0.8) 100%),
+    linear-gradient(180deg, rgba(6, 7, 10, 0.15) 0%, rgba(6, 7, 10, 0.4) 50%, rgba(6, 7, 10, 0.95) 100%);
 }
 
 .movie-detail-content {
@@ -1547,6 +1548,7 @@ body {
   line-height: 1.05;
   color: var(--white);
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.7);
 }
 
 .movie-detail-synopsis {

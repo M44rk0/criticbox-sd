@@ -25,6 +25,39 @@ REVIEW_HOST = os.getenv("REVIEW_SERVICE_HOST", "localhost")
 REVIEW_PORT = os.getenv("REVIEW_SERVICE_PORT", "50052")
 
 
+def _pb_to_movie_dict(m) -> dict:
+    return {
+        "tmdb_id": m.tmdb_id,
+        "title": m.title,
+        "release_date": m.release_date,
+        "poster_url": m.poster_url,
+        "backdrop_url": m.backdrop_url,
+        "overview": m.overview,
+        "tmdb_vote_average": round(float(m.tmdb_vote_average), 1),
+        "criticbox_rating": round(float(m.criticbox_rating), 1),
+        "criticbox_review_count": m.criticbox_review_count,
+        "media_type": getattr(m, "media_type", "movie") or "movie",
+    }
+
+
+def _pb_to_review_dict(r) -> dict:
+    return {
+        "review_id": r.review_id,
+        "tmdb_id": r.tmdb_id,
+        "movie_title": getattr(r, "movie_title", "") or "",
+        "user_id": r.user_id,
+        "rating": round(float(r.rating), 1),
+        "comment": r.comment,
+        "contains_spoilers": r.contains_spoilers,
+        "created_at": r.created_at,
+        "media_type": getattr(r, "media_type", "movie") or "movie",
+        "season_number": r.season_number if getattr(r, "season_number", 0) > 0 else None,
+        "episode_number": r.episode_number if getattr(r, "episode_number", 0) > 0 else None,
+        "success": True,
+        "message": "",
+    }
+
+
 class GatewayGRPCManager:
     _instance = None
 
@@ -60,21 +93,7 @@ class GatewayGRPCManager:
             "page": res.page,
             "total_results": res.total_results,
             "total_pages": res.total_pages or 1,
-            "movies": [
-                {
-                    "tmdb_id": m.tmdb_id,
-                    "title": m.title,
-                    "release_date": m.release_date,
-                    "poster_url": m.poster_url,
-                    "backdrop_url": m.backdrop_url,
-                    "overview": m.overview,
-                    "tmdb_vote_average": round(float(m.tmdb_vote_average), 1),
-                    "criticbox_rating": round(float(m.criticbox_rating), 1),
-                    "criticbox_review_count": m.criticbox_review_count,
-                    "media_type": getattr(m, "media_type", "movie") or "movie",
-                }
-                for m in res.movies
-            ],
+            "movies": [_pb_to_movie_dict(m) for m in res.movies],
         }
 
     def get_trending_movies(self, time_window: str = "week", page: int = 1) -> dict:
@@ -84,21 +103,7 @@ class GatewayGRPCManager:
             "page": res.page,
             "total_results": res.total_results,
             "total_pages": res.total_pages or 1,
-            "movies": [
-                {
-                    "tmdb_id": m.tmdb_id,
-                    "title": m.title,
-                    "release_date": m.release_date,
-                    "poster_url": m.poster_url,
-                    "backdrop_url": m.backdrop_url,
-                    "overview": m.overview,
-                    "tmdb_vote_average": round(float(m.tmdb_vote_average), 1),
-                    "criticbox_rating": round(float(m.criticbox_rating), 1),
-                    "criticbox_review_count": m.criticbox_review_count,
-                    "media_type": getattr(m, "media_type", "movie") or "movie",
-                }
-                for m in res.movies
-            ],
+            "movies": [_pb_to_movie_dict(m) for m in res.movies],
         }
 
     def discover_movies(self, genre_id: int, page: int = 1) -> dict:
@@ -108,21 +113,7 @@ class GatewayGRPCManager:
             "page": res.page,
             "total_results": res.total_results,
             "total_pages": res.total_pages or 1,
-            "movies": [
-                {
-                    "tmdb_id": m.tmdb_id,
-                    "title": m.title,
-                    "release_date": m.release_date,
-                    "poster_url": m.poster_url,
-                    "backdrop_url": m.backdrop_url,
-                    "overview": m.overview,
-                    "tmdb_vote_average": round(float(m.tmdb_vote_average), 1),
-                    "criticbox_rating": round(float(m.criticbox_rating), 1),
-                    "criticbox_review_count": m.criticbox_review_count,
-                    "media_type": getattr(m, "media_type", "movie") or "movie",
-                }
-                for m in res.movies
-            ],
+            "movies": [_pb_to_movie_dict(m) for m in res.movies],
         }
 
     def get_now_playing_movies(self, page: int = 1) -> dict:
@@ -132,21 +123,7 @@ class GatewayGRPCManager:
             "page": res.page,
             "total_results": res.total_results,
             "total_pages": res.total_pages or 1,
-            "movies": [
-                {
-                    "tmdb_id": m.tmdb_id,
-                    "title": m.title,
-                    "release_date": m.release_date,
-                    "poster_url": m.poster_url,
-                    "backdrop_url": m.backdrop_url,
-                    "overview": m.overview,
-                    "tmdb_vote_average": round(float(m.tmdb_vote_average), 1),
-                    "criticbox_rating": round(float(m.criticbox_rating), 1),
-                    "criticbox_review_count": m.criticbox_review_count,
-                    "media_type": getattr(m, "media_type", "movie") or "movie",
-                }
-                for m in res.movies
-            ],
+            "movies": [_pb_to_movie_dict(m) for m in res.movies],
         }
 
     def get_movie_details(self, tmdb_id: int, media_type: str = "") -> dict | None:
@@ -191,7 +168,6 @@ class GatewayGRPCManager:
             ],
         }
 
-
     # ----------------- Review Service Operations ----------------- #
     def register_user(self, username: str, password: str) -> dict:
         req = r_pb2.RegisterUserRequest(username=username, password=password)
@@ -223,6 +199,7 @@ class GatewayGRPCManager:
         media_type: str = "movie",
         season_number: int | None = None,
         episode_number: int | None = None,
+        movie_title: str = "",
     ) -> dict:
         req = r_pb2.CreateReviewRequest(
             tmdb_id=tmdb_id,
@@ -233,11 +210,13 @@ class GatewayGRPCManager:
             media_type=media_type or "movie",
             season_number=season_number or 0,
             episode_number=episode_number or 0,
+            movie_title=movie_title or "",
         )
-        res = self.review_stub.CreateReview(req, timeout=5.0)
+        res = self.review_stub.CreateReview(req, timeout=10.0)
         return {
             "review_id": res.review_id,
             "tmdb_id": res.tmdb_id,
+            "movie_title": getattr(res, "movie_title", "") or movie_title,
             "user_id": res.user_id,
             "rating": round(float(res.rating), 1),
             "comment": res.comment,
@@ -252,47 +231,13 @@ class GatewayGRPCManager:
 
     def get_all_reviews(self, limit: int = 50) -> list[dict]:
         req = r_pb2.GetAllReviewsRequest(limit=limit)
-        res = self.review_stub.GetAllReviews(req, timeout=5.0)
-        return [
-            {
-                "review_id": r.review_id,
-                "tmdb_id": r.tmdb_id,
-                "movie_title": r.movie_title,
-                "user_id": r.user_id,
-                "rating": round(float(r.rating), 1),
-                "comment": r.comment,
-                "contains_spoilers": r.contains_spoilers,
-                "created_at": r.created_at,
-                "media_type": getattr(r, "media_type", "movie") or "movie",
-                "season_number": r.season_number if getattr(r, "season_number", 0) > 0 else None,
-                "episode_number": r.episode_number if getattr(r, "episode_number", 0) > 0 else None,
-                "success": True,
-                "message": "",
-            }
-            for r in res.reviews
-        ]
+        res = self.review_stub.GetAllReviews(req, timeout=10.0)
+        return [_pb_to_review_dict(r) for r in res.reviews]
 
     def get_reviews_by_movie(self, tmdb_id: int) -> list[dict]:
         req = r_pb2.MovieReviewsRequest(tmdb_id=tmdb_id)
-        res = self.review_stub.GetReviewsByMovie(req, timeout=5.0)
-        return [
-            {
-                "review_id": r.review_id,
-                "tmdb_id": r.tmdb_id,
-                "movie_title": r.movie_title,
-                "user_id": r.user_id,
-                "rating": round(float(r.rating), 1),
-                "comment": r.comment,
-                "contains_spoilers": r.contains_spoilers,
-                "created_at": r.created_at,
-                "media_type": getattr(r, "media_type", "movie") or "movie",
-                "season_number": r.season_number if getattr(r, "season_number", 0) > 0 else None,
-                "episode_number": r.episode_number if getattr(r, "episode_number", 0) > 0 else None,
-                "success": True,
-                "message": "",
-            }
-            for r in res.reviews
-        ]
+        res = self.review_stub.GetReviewsByMovie(req, timeout=10.0)
+        return [_pb_to_review_dict(r) for r in res.reviews]
 
 
 def get_grpc_manager() -> GatewayGRPCManager:

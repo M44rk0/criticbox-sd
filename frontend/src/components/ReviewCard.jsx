@@ -38,8 +38,6 @@ export default function ReviewCard({ review, posterUrl, showPoster = false }) {
                 </span>
               ) : review.season_number ? (
                 <span className="review-scope-chip">T{review.season_number}</span>
-              ) : review.media_type === 'tv' ? (
-                <span className="review-scope-chip">SÉRIE</span>
               ) : null}
             </span>
             <div className="review-card-stars">
@@ -83,8 +81,6 @@ export default function ReviewCard({ review, posterUrl, showPoster = false }) {
               </span>
             ) : review.season_number ? (
               <span className="review-scope-chip">T{review.season_number}</span>
-            ) : review.media_type === 'tv' ? (
-              <span className="review-scope-chip">SÉRIE</span>
             ) : null}
           </div>
           <div className="movie-review-rating-wrap">

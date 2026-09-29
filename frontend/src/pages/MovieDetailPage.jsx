@@ -124,8 +124,6 @@ export default function MovieDetailPage() {
               </span>
             ) : r.season_number ? (
               <span className="review-scope-chip">T{r.season_number}</span>
-            ) : r.media_type === 'tv' ? (
-              <span className="review-scope-chip">SÉRIE</span>
             ) : null}
           </div>
           <div className="movie-review-rating-wrap">

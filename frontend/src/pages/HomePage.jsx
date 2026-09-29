@@ -116,7 +116,10 @@ export default function HomePage() {
 
         const initialPosters = {};
         list.forEach((m) => {
-          if (m.tmdb_id && m.poster_url) initialPosters[m.tmdb_id] = m.poster_url;
+          if (m.tmdb_id && m.poster_url) {
+            initialPosters[`${m.tmdb_id}_${m.media_type || 'movie'}`] = m.poster_url;
+            initialPosters[m.tmdb_id] = m.poster_url;
+          }
         });
         setPosters((prev) => ({ ...initialPosters, ...prev }));
 
@@ -145,13 +148,18 @@ export default function HomePage() {
         setRecentReviews(list);
 
         const fetchedPosters = {};
-        const uniqueIds = [...new Set(list.map((r) => r.tmdb_id))].filter(Boolean);
+        const uniqueItems = Array.from(
+          new Map(list.map((r) => [`${r.tmdb_id}_${r.media_type || 'movie'}`, { id: r.tmdb_id, type: r.media_type || 'movie' }])).values()
+        );
         await Promise.all(
-          uniqueIds.map(async (mid) => {
+          uniqueItems.map(async ({ id, type }) => {
             try {
-              const mData = await getMovieDetails(mid);
+              const mData = await getMovieDetails(id, type);
               if (mData?.poster_url) {
-                fetchedPosters[mid] = mData.poster_url;
+                fetchedPosters[`${id}_${type}`] = mData.poster_url;
+                if (!fetchedPosters[id]) {
+                  fetchedPosters[id] = mData.poster_url;
+                }
               }
             } catch (e) {}
           })
@@ -415,13 +423,16 @@ export default function HomePage() {
                     onClick={() => navigate(`/movie/${r.tmdb_id}?type=${r.media_type || 'movie'}`)}
                     title={`Ver detalhes de ${r.movie_title || 'Título'}`}
                   >
-                    {posters[r.tmdb_id] ? (
-                      <img src={posters[r.tmdb_id]} alt={r.movie_title || 'Poster'} loading="lazy" />
-                    ) : (
-                      <div className="review-card-poster-placeholder">
-                        <Film size={26} color="var(--gray-500)" />
-                      </div>
-                    )}
+                    {(() => {
+                      const pUrl = posters[`${r.tmdb_id}_${r.media_type || 'movie'}`] || posters[r.tmdb_id];
+                      return pUrl ? (
+                        <img src={pUrl} alt={r.movie_title || 'Poster'} loading="lazy" />
+                      ) : (
+                        <div className="review-card-poster-placeholder">
+                          <Film size={26} color="var(--gray-500)" />
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="review-card-body">
                     <div className="review-card-header">
@@ -438,8 +449,6 @@ export default function HomePage() {
                           </span>
                         ) : r.season_number ? (
                           <span className="review-scope-chip">T{r.season_number}</span>
-                        ) : r.media_type === 'tv' ? (
-                          <span className="review-scope-chip">SÉRIE</span>
                         ) : null}
                       </span>
                       <span className="review-card-score-badge">{r.rating.toFixed(1)}</span>

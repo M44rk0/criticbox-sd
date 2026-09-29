@@ -56,8 +56,11 @@ def get_connection():
         finally:
             conn.close()
     else:
-        conn = sqlite3.connect(get_sqlite_path())
+        conn = sqlite3.connect(get_sqlite_path(), timeout=10.0)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode = WAL;")
+        conn.execute("PRAGMA synchronous = NORMAL;")
+        conn.execute("PRAGMA busy_timeout = 5000;")
         try:
             with conn:
                 yield DBClient(conn, is_mysql_conn=False)
@@ -107,6 +110,7 @@ def init_db():
                     media_type VARCHAR(20) NOT NULL DEFAULT 'movie',
                     season_number INT NULL,
                     episode_number INT NULL,
+                    movie_title VARCHAR(255) NOT NULL DEFAULT '',
                     PRIMARY KEY (id),
                     INDEX idx_reviews_tmdb_id (tmdb_id),
                     INDEX idx_reviews_user_id (user_id),
@@ -123,6 +127,10 @@ def init_db():
                 pass
             try:
                 client.execute("ALTER TABLE reviews ADD COLUMN episode_number INT NULL")
+            except Exception:
+                pass
+            try:
+                client.execute("ALTER TABLE reviews ADD COLUMN movie_title VARCHAR(255) NOT NULL DEFAULT ''")
             except Exception:
                 pass
         else:
@@ -146,7 +154,8 @@ def init_db():
                     created_at TEXT NOT NULL,
                     media_type TEXT NOT NULL DEFAULT 'movie',
                     season_number INTEGER,
-                    episode_number INTEGER
+                    episode_number INTEGER,
+                    movie_title TEXT NOT NULL DEFAULT ''
                 );
             """)
             client.execute("CREATE INDEX IF NOT EXISTS idx_tmdb_id ON reviews(tmdb_id);")
@@ -160,6 +169,8 @@ def init_db():
                     client.execute("ALTER TABLE reviews ADD COLUMN season_number INTEGER")
                 if "episode_number" not in cols:
                     client.execute("ALTER TABLE reviews ADD COLUMN episode_number INTEGER")
+                if "movie_title" not in cols:
+                    client.execute("ALTER TABLE reviews ADD COLUMN movie_title TEXT NOT NULL DEFAULT ''")
             except Exception:
                 pass
 
@@ -231,99 +242,57 @@ def add_review(
     media_type: str = "movie",
     season_number: int | None = None,
     episode_number: int | None = None,
+    movie_title: str = "",
 ) -> dict:
     media_type = media_type or "movie"
     with get_connection() as client:
-        # Validação de duplicidade contextual (filme vs série inteira vs temporada vs episódio)
+        # Validação unificada de duplicidade com COALESCE
         if media_type == "movie":
-            existing = client.execute(
-                "SELECT id FROM reviews WHERE tmdb_id = ? AND user_id = ? AND (media_type = 'movie' OR media_type IS NULL)",
-                (tmdb_id, user_id),
-            ).fetchone()
-            if existing:
-                return {
-                    "review_id": "",
-                    "tmdb_id": tmdb_id,
-                    "user_id": user_id,
-                    "rating": 0.0,
-                    "comment": "",
-                    "contains_spoilers": False,
-                    "created_at": "",
-                    "media_type": media_type,
-                    "season_number": 0,
-                    "episode_number": 0,
-                    "success": False,
-                    "message": "Você já avaliou este filme. Cada usuário pode enviar apenas uma avaliação por filme.",
-                }
+            dup_query = "SELECT id FROM reviews WHERE tmdb_id = ? AND user_id = ? AND (media_type = 'movie' OR media_type IS NULL)"
+            dup_params = (tmdb_id, user_id)
         else:
-            if season_number is None and episode_number is None:
-                existing = client.execute(
-                    "SELECT id FROM reviews WHERE tmdb_id = ? AND user_id = ? AND media_type = 'tv' AND season_number IS NULL AND episode_number IS NULL",
-                    (tmdb_id, user_id),
-                ).fetchone()
-                if existing:
-                    return {
-                        "review_id": "",
-                        "tmdb_id": tmdb_id,
-                        "user_id": user_id,
-                        "rating": 0.0,
-                        "comment": "",
-                        "contains_spoilers": False,
-                        "created_at": "",
-                        "media_type": media_type,
-                        "season_number": 0,
-                        "episode_number": 0,
-                        "success": False,
-                        "message": "Você já avaliou esta série completa.",
-                    }
-            elif season_number is not None and episode_number is None:
-                existing = client.execute(
-                    "SELECT id FROM reviews WHERE tmdb_id = ? AND user_id = ? AND media_type = 'tv' AND season_number = ? AND episode_number IS NULL",
-                    (tmdb_id, user_id, season_number),
-                ).fetchone()
-                if existing:
-                    return {
-                        "review_id": "",
-                        "tmdb_id": tmdb_id,
-                        "user_id": user_id,
-                        "rating": 0.0,
-                        "comment": "",
-                        "contains_spoilers": False,
-                        "created_at": "",
-                        "media_type": media_type,
-                        "season_number": season_number,
-                        "episode_number": 0,
-                        "success": False,
-                        "message": f"Você já avaliou a Temporada {season_number} desta série.",
-                    }
-            elif season_number is not None and episode_number is not None:
-                existing = client.execute(
-                    "SELECT id FROM reviews WHERE tmdb_id = ? AND user_id = ? AND media_type = 'tv' AND season_number = ? AND episode_number = ?",
-                    (tmdb_id, user_id, season_number, episode_number),
-                ).fetchone()
-                if existing:
-                    return {
-                        "review_id": "",
-                        "tmdb_id": tmdb_id,
-                        "user_id": user_id,
-                        "rating": 0.0,
-                        "comment": "",
-                        "contains_spoilers": False,
-                        "created_at": "",
-                        "media_type": media_type,
-                        "season_number": season_number,
-                        "episode_number": episode_number,
-                        "success": False,
-                        "message": f"Você já avaliou o Episódio {episode_number} da Temporada {season_number}.",
-                    }
+            dup_query = """
+                SELECT id FROM reviews
+                WHERE tmdb_id = ? AND user_id = ? AND media_type = 'tv'
+                  AND COALESCE(season_number, 0) = ?
+                  AND COALESCE(episode_number, 0) = ?
+            """
+            dup_params = (tmdb_id, user_id, season_number or 0, episode_number or 0)
+
+        existing = client.execute(dup_query, dup_params).fetchone()
+        if existing:
+            if media_type == "movie":
+                msg = "Você já avaliou este filme. Cada usuário pode enviar apenas uma avaliação por filme."
+            elif season_number and episode_number:
+                msg = f"Você já avaliou o Episódio {episode_number} da Temporada {season_number}."
+            elif season_number:
+                msg = f"Você já avaliou a Temporada {season_number} desta série."
+            else:
+                msg = "Você já avaliou esta série completa."
+
+            return {
+                "review_id": "",
+                "tmdb_id": tmdb_id,
+                "user_id": user_id,
+                "rating": 0.0,
+                "comment": "",
+                "contains_spoilers": False,
+                "created_at": "",
+                "media_type": media_type,
+                "season_number": season_number or 0,
+                "episode_number": episode_number or 0,
+                "movie_title": movie_title,
+                "success": False,
+                "message": msg,
+            }
 
         review_id = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
         client.execute(
-            "INSERT INTO reviews (id, tmdb_id, user_id, rating, comment, contains_spoilers, created_at, media_type, season_number, episode_number) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (review_id, tmdb_id, user_id, rating, comment, int(contains_spoilers), created_at, media_type, season_number, episode_number),
+            "INSERT INTO reviews (id, tmdb_id, user_id, rating, comment, contains_spoilers, created_at, media_type, season_number, episode_number, movie_title) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (review_id, tmdb_id, user_id, rating, comment, int(contains_spoilers), created_at, media_type, season_number, episode_number, movie_title or ""),
         )
     return {
         "review_id": review_id,
@@ -336,6 +305,7 @@ def add_review(
         "media_type": media_type,
         "season_number": season_number or 0,
         "episode_number": episode_number or 0,
+        "movie_title": movie_title,
         "success": True,
         "message": "Review registrada com sucesso!",
     }
@@ -352,15 +322,42 @@ def get_movie_stats(tmdb_id: int) -> dict:
         return {"average_rating": round(float(avg_rating), 1), "total_count": int(count)}
 
 
+def get_batch_movie_stats(tmdb_ids: list[int]) -> dict[int, dict]:
+    if not tmdb_ids:
+        return {}
+    unique_ids = list(set(tmdb_ids))
+    with get_connection() as client:
+        placeholders = ", ".join(["?"] * len(unique_ids))
+        query = f"""
+            SELECT tmdb_id, AVG(rating) AS avg_rating, COUNT(id) AS total_count
+            FROM reviews
+            WHERE tmdb_id IN ({placeholders})
+            GROUP BY tmdb_id
+        """
+        rows = client.execute(query, tuple(unique_ids)).fetchall()
+        stats_map = {}
+        for r in rows:
+            tid = r["tmdb_id"]
+            avg = r["avg_rating"] if r["avg_rating"] is not None else 0.0
+            cnt = r["total_count"] if r["total_count"] is not None else 0
+            stats_map[tid] = {"average_rating": round(float(avg), 1), "total_count": int(cnt)}
+        for tid in unique_ids:
+            if tid not in stats_map:
+                stats_map[tid] = {"average_rating": 0.0, "total_count": 0}
+        return stats_map
+
+
 def _format_review_row(r) -> dict:
     keys = r.keys() if hasattr(r, "keys") else []
     media_type = r["media_type"] if "media_type" in keys and r["media_type"] else "movie"
     season_number = r["season_number"] if "season_number" in keys and r["season_number"] is not None else 0
     episode_number = r["episode_number"] if "episode_number" in keys and r["episode_number"] is not None else 0
+    movie_title = r["movie_title"] if "movie_title" in keys and r["movie_title"] else ""
 
     return {
         "review_id": r["id"],
         "tmdb_id": r["tmdb_id"],
+        "movie_title": movie_title,
         "user_id": r["user_id"],
         "rating": float(r["rating"]),
         "comment": r["comment"] or "",

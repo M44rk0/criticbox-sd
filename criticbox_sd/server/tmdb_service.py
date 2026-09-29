@@ -1,12 +1,16 @@
-from concurrent.futures import ThreadPoolExecutor
+import logging
 import os
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import requests
 import tmdbsimple as tmdb
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger("criticbox-tmdb")
 
 API_KEY = os.getenv("TMDB_API_KEY", "").strip()
 if API_KEY.startswith("eyJ"):
@@ -17,22 +21,36 @@ tmdb.API_KEY = API_KEY
 
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
-# In-memory TTL Cache (TTL = 10 minutes)
+# In-memory Thread-safe Bounded TTL Cache (TTL = 10 minutes, Max = 1000 items)
+_CACHE_LOCK = threading.Lock()
 _CACHE: dict[str, tuple[float, any]] = {}
 CACHE_TTL = 600.0
+MAX_CACHE_SIZE = 1000
 
 
 def _get_from_cache(key: str):
-    if key in _CACHE:
-        ts, val = _CACHE[key]
-        if time.time() - ts < CACHE_TTL:
-            return val
-        del _CACHE[key]
+    with _CACHE_LOCK:
+        if key in _CACHE:
+            ts, val = _CACHE[key]
+            if time.time() - ts < CACHE_TTL:
+                return val
+            del _CACHE[key]
     return None
 
 
 def _set_cache(key: str, val: any):
-    _CACHE[key] = (time.time(), val)
+    with _CACHE_LOCK:
+        if len(_CACHE) >= MAX_CACHE_SIZE:
+            now = time.time()
+            expired = [k for k, (ts, _) in _CACHE.items() if now - ts >= CACHE_TTL]
+            for k in expired:
+                del _CACHE[k]
+            if len(_CACHE) >= MAX_CACHE_SIZE:
+                # Remove os 20% mais antigos
+                oldest_keys = sorted(_CACHE.keys(), key=lambda k: _CACHE[k][0])[: int(MAX_CACHE_SIZE * 0.2)]
+                for k in oldest_keys:
+                    _CACHE.pop(k, None)
+        _CACHE[key] = (time.time(), val)
 
 
 def _fmt(m: dict, default_media_type: str = "movie") -> dict:
@@ -184,23 +202,6 @@ def discover_by_genre(genre_id: int, page: int = 1) -> dict:
         pass
 
     return {"page": 1, "total_pages": 1, "total_results": 0, "results": []}
-
-
-def get_genres() -> list[dict]:
-    if not API_KEY:
-        return []
-    cached = _get_from_cache("genres:movie")
-    if cached:
-        return cached
-
-    try:
-        data = tmdb.Genres().movie_list(language="pt-BR")
-        genres = data.get("genres", [])
-        _set_cache("genres:movie", genres)
-        return genres
-    except (requests.RequestException, KeyError, ValueError):
-        pass
-    return []
 
 
 def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
@@ -437,13 +438,14 @@ def get_all_series_episodes(tmdb_id: int) -> dict[str, list[dict]]:
         return {}
 
 
-def get_movie_title(tmdb_id: int) -> str:
-    cache_key = f"title:{tmdb_id}"
+def get_movie_title(tmdb_id: int, media_type: str = "movie") -> str:
+    m_type = media_type or "movie"
+    cache_key = f"title:{m_type}:{tmdb_id}"
     cached = _get_from_cache(cache_key)
     if cached:
         return cached
 
-    details = get_movie_details(tmdb_id)
+    details = get_movie_details(tmdb_id, media_type=m_type)
     if details and details.get("title"):
         _set_cache(cache_key, details["title"])
         return details["title"]

@@ -73,6 +73,7 @@ export default function ReviewModal() {
       const isEpScope = isTv && modalScope === 'episode';
       const payload = {
         tmdb_id: currentMovie.tmdb_id,
+        movie_title: currentMovie.title || '',
         media_type: currentMovie.media_type || 'movie',
         rating: modalRating,
         comment: modalComment.trim(),

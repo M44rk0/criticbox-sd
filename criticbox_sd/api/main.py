@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from typing import Optional
 
 import grpc
 import uvicorn
@@ -22,7 +21,6 @@ from criticbox_sd.api.grpc_clients import get_grpc_manager
 from criticbox_sd.api.schemas import (
     AuthResponse,
     MovieDetailsResponse,
-    MovieSummary,
     ReviewCreateRequest,
     ReviewListItem,
     ReviewResponse,
@@ -311,6 +309,7 @@ def get_movie_details(
 
 from criticbox_sd.server import tmdb_service
 
+
 @app.get("/movies/{tmdb_id}/season/{season_number}", summary="Episódios de uma temporada de série")
 def get_season_episodes(
     tmdb_id: int = Path(..., ge=1, description="ID TMDb da série"),
@@ -355,6 +354,7 @@ def create_review(
             media_type=payload.media_type or "movie",
             season_number=payload.season_number,
             episode_number=payload.episode_number,
+            movie_title=payload.movie_title or "",
         )
         if not res.get("success", False):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=res.get("message", "Erro ao registrar review"))

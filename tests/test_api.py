@@ -329,6 +329,50 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
             self.assertIn("2", data)
             self.assertEqual(data["2"][0]["name"], "Seven Thirty-Seven")
 
+    def test_create_review_with_movie_title_persisted_201(self):
+        reg = self.client.post("/auth/register", json={"username": "cinephile", "password": "password123"})
+        token = reg.json()["access_token"]
+
+        payload = {
+            "tmdb_id": 157336,
+            "movie_title": "Interstellar",
+            "rating": 5.0,
+            "comment": "Obra de arte!",
+            "contains_spoilers": False,
+        }
+        res = self.client.post("/reviews", json=payload, headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(res.status_code, 201)
+        data = res.json()
+        self.assertEqual(data.get("movie_title"), "Interstellar")
+
+        # Verificar se a listagem retorna o movie_title diretamente do banco
+        list_res = self.client.get("/reviews")
+        self.assertEqual(list_res.status_code, 200)
+        items = list_res.json()
+        interstellar_review = next((r for r in items if r["tmdb_id"] == 157336), None)
+        self.assertIsNotNone(interstellar_review)
+        self.assertEqual(interstellar_review["movie_title"], "Interstellar")
+
+    def test_get_batch_movie_stats_grpc(self):
+        database.add_review(550, "u1", 4.0, "", False)
+        database.add_review(550, "u2", 5.0, "", False)
+        database.add_review(680, "u3", 3.0, "", False)
+
+        from criticbox_sd.generated import review_pb2 as r_pb2
+
+        servicer = ReviewServiceServicer()
+        req = r_pb2.BatchMovieStatsRequest(tmdb_ids=[550, 680, 99999])
+        res = servicer.GetBatchMovieStats(req, None)
+        self.assertIn(550, res.stats)
+        self.assertEqual(res.stats[550].total_count, 2)
+        self.assertEqual(res.stats[550].average_rating, 4.5)
+        self.assertIn(680, res.stats)
+        self.assertEqual(res.stats[680].total_count, 1)
+        self.assertEqual(res.stats[680].average_rating, 3.0)
+        self.assertIn(99999, res.stats)
+        self.assertEqual(res.stats[99999].total_count, 0)
+        self.assertEqual(res.stats[99999].average_rating, 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

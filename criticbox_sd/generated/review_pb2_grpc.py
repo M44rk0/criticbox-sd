@@ -57,6 +57,11 @@ class ReviewServiceStub:
                 request_serializer=review__pb2.MovieStatsRequest.SerializeToString,
                 response_deserializer=review__pb2.MovieStatsResponse.FromString,
                 _registered_method=True)
+        self.GetBatchMovieStats = channel.unary_unary(
+                '/review.ReviewService/GetBatchMovieStats',
+                request_serializer=review__pb2.BatchMovieStatsRequest.SerializeToString,
+                response_deserializer=review__pb2.BatchMovieStatsResponse.FromString,
+                _registered_method=True)
         self.GetAllReviews = channel.unary_unary(
                 '/review.ReviewService/GetAllReviews',
                 request_serializer=review__pb2.GetAllReviewsRequest.SerializeToString,
@@ -96,6 +101,12 @@ class ReviewServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetBatchMovieStats(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def GetAllReviews(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -130,6 +141,11 @@ def add_ReviewServiceServicer_to_server(servicer, server):
                     servicer.GetMovieStats,
                     request_deserializer=review__pb2.MovieStatsRequest.FromString,
                     response_serializer=review__pb2.MovieStatsResponse.SerializeToString,
+            ),
+            'GetBatchMovieStats': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetBatchMovieStats,
+                    request_deserializer=review__pb2.BatchMovieStatsRequest.FromString,
+                    response_serializer=review__pb2.BatchMovieStatsResponse.SerializeToString,
             ),
             'GetAllReviews': grpc.unary_unary_rpc_method_handler(
                     servicer.GetAllReviews,
@@ -250,6 +266,33 @@ class ReviewService:
             '/review.ReviewService/GetMovieStats',
             review__pb2.MovieStatsRequest.SerializeToString,
             review__pb2.MovieStatsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetBatchMovieStats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/review.ReviewService/GetBatchMovieStats',
+            review__pb2.BatchMovieStatsRequest.SerializeToString,
+            review__pb2.BatchMovieStatsResponse.FromString,
             options,
             channel_credentials,
             insecure,

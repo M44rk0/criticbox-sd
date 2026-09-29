@@ -25,10 +25,18 @@ PORT = int(os.getenv("MOVIE_SERVICE_PORT", "50051"))
 REVIEW_HOST = os.getenv("REVIEW_SERVICE_HOST", "localhost")
 REVIEW_PORT = os.getenv("REVIEW_SERVICE_PORT", "50052")
 
+_review_channel = None
+_review_stub = None
 
-def _get_review_stub():
-    channel = grpc.insecure_channel(f"{REVIEW_HOST}:{REVIEW_PORT}")
-    return r_pb2_grpc.ReviewServiceStub(channel)
+
+def _get_review_stub() -> r_pb2_grpc.ReviewServiceStub:
+    global _review_channel, _review_stub
+    if _review_channel is None or _review_stub is None:
+        target = f"{REVIEW_HOST}:{REVIEW_PORT}"
+        logger.info("Criando canal persistente com ReviewService em %s", target)
+        _review_channel = grpc.insecure_channel(target)
+        _review_stub = r_pb2_grpc.ReviewServiceStub(_review_channel)
+    return _review_stub
 
 
 def _fetch_movie_stats_via_grpc(tmdb_id: int) -> tuple[float, int]:
@@ -41,9 +49,27 @@ def _fetch_movie_stats_via_grpc(tmdb_id: int) -> tuple[float, int]:
         return 0.0, 0
 
 
-def _to_movie_summary_pb(item: dict) -> m_pb2.MovieSummary:
+def _fetch_batch_movie_stats_via_grpc(tmdb_ids: list[int]) -> dict[int, tuple[float, int]]:
+    if not tmdb_ids:
+        return {}
+    try:
+        stub = _get_review_stub()
+        response = stub.GetBatchMovieStats(r_pb2.BatchMovieStatsRequest(tmdb_ids=tmdb_ids), timeout=3.0)
+        result = {}
+        for tid, stat in response.stats.items():
+            result[tid] = (stat.average_rating, stat.total_count)
+        return result
+    except grpc.RpcError as e:
+        logger.warning("Falha na chamada gRPC batch inter-serviço (ReviewService): %s", e)
+        return {}
+
+
+def _to_movie_summary_pb(item: dict, stats_map: dict[int, tuple[float, int]] | None = None) -> m_pb2.MovieSummary:
     tmdb_id = item.get("id", 0)
-    avg_rating, total_count = _fetch_movie_stats_via_grpc(tmdb_id)
+    if stats_map is not None and tmdb_id in stats_map:
+        avg_rating, total_count = stats_map[tmdb_id]
+    else:
+        avg_rating, total_count = _fetch_movie_stats_via_grpc(tmdb_id)
 
     return m_pb2.MovieSummary(
         tmdb_id=tmdb_id,
@@ -65,7 +91,10 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         query = request.query.strip()
         logger.info("SearchMovies -> Buscando: '%s' (Página %d)", query, page)
         data = tmdb_service.search_movies(query, page)
-        summaries = [_to_movie_summary_pb(m) for m in data.get("results", [])]
+        results = data.get("results", [])
+        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
+        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
+        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
         logger.info("SearchMovies -> Encontrados %d títulos.", len(summaries))
         return m_pb2.SearchMoviesResponse(
             movies=summaries,
@@ -79,7 +108,10 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         page = max(request.page, 1)
         logger.info("GetTrendingMovies -> Buscando destaques (%s, Página %d)", time_window, page)
         data = tmdb_service.get_trending_movies(time_window=time_window, page=page)
-        summaries = [_to_movie_summary_pb(m) for m in data.get("results", [])]
+        results = data.get("results", [])
+        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
+        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
+        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
         return m_pb2.SearchMoviesResponse(
             movies=summaries,
             page=data.get("page", 1),
@@ -92,7 +124,10 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         genre_id = request.genre_id
         logger.info("DiscoverMovies -> Buscando gênero ID: %d (Página %d)", genre_id, page)
         data = tmdb_service.discover_by_genre(genre_id, page)
-        summaries = [_to_movie_summary_pb(m) for m in data.get("results", [])]
+        results = data.get("results", [])
+        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
+        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
+        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
         return m_pb2.SearchMoviesResponse(
             movies=summaries,
             page=data.get("page", 1),
@@ -104,7 +139,10 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         page = max(request.page, 1)
         logger.info("GetNowPlayingMovies -> Buscando filmes em cartaz (Página %d)", page)
         data = tmdb_service.get_now_playing_movies(page=page)
-        summaries = [_to_movie_summary_pb(m) for m in data.get("results", [])]
+        results = data.get("results", [])
+        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
+        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
+        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
         return m_pb2.SearchMoviesResponse(
             movies=summaries,
             page=data.get("page", 1),

@@ -10,11 +10,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from datetime import datetime, timezone
+
 from criticbox_sd.generated import review_pb2 as r_pb2
 from criticbox_sd.generated import review_pb2_grpc as r_pb2_grpc
 from criticbox_sd.server import database, tmdb_service
-
-from datetime import datetime, timezone
 
 load_dotenv()
 
@@ -87,6 +87,14 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         except Exception as e:
             logger.warning("Falha ao verificar estreia do título %d: %s", request.tmdb_id, e)
 
+        # Obter movie_title do request ou resolver previamente
+        movie_title = getattr(request, "movie_title", "") or ""
+        if not movie_title:
+            try:
+                movie_title = tmdb_service.get_movie_title(request.tmdb_id, media_type=media_type)
+            except Exception:
+                movie_title = ""
+
         res = database.add_review(
             tmdb_id=request.tmdb_id,
             user_id=request.user_id.strip(),
@@ -96,6 +104,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             media_type=media_type,
             season_number=season_num,
             episode_number=episode_num,
+            movie_title=movie_title,
         )
         return r_pb2.ReviewResponse(
             review_id=res["review_id"],
@@ -110,6 +119,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             media_type=res.get("media_type") or media_type,
             season_number=res.get("season_number", 0),
             episode_number=res.get("episode_number", 0),
+            movie_title=res.get("movie_title") or movie_title,
         )
 
     def GetMovieStats(self, request, context):
@@ -120,18 +130,33 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             total_count=stats["total_count"],
         )
 
+    def GetBatchMovieStats(self, request, context):
+        tmdb_ids = list(request.tmdb_ids)
+        stats_map = database.get_batch_movie_stats(tmdb_ids)
+        res_map = {}
+        for tid, s in stats_map.items():
+            res_map[tid] = r_pb2.MovieStatsResponse(
+                tmdb_id=tid,
+                average_rating=s["average_rating"],
+                total_count=s["total_count"],
+            )
+        return r_pb2.BatchMovieStatsResponse(stats=res_map)
+
     def GetAllReviews(self, request, context):
         limit = request.limit if request.limit > 0 else 50
         logger.info("GetAllReviews -> Buscando até %d reviews no banco", limit)
         raw_reviews = database.get_all_reviews(limit=limit)
         items = []
         for r in raw_reviews:
-            movie_title = tmdb_service.get_movie_title(r["tmdb_id"])
+            # Code Judo: movie_title vem direto do banco, eliminando o gargalo N+1 de requests HTTP
+            title = r.get("movie_title")
+            if not title:
+                title = tmdb_service.get_movie_title(r["tmdb_id"], media_type=r.get("media_type") or "movie")
             items.append(
                 r_pb2.ReviewItem(
                     review_id=r["review_id"],
                     tmdb_id=r["tmdb_id"],
-                    movie_title=movie_title,
+                    movie_title=title,
                     user_id=r["user_id"],
                     rating=r["rating"],
                     comment=r["comment"],
@@ -147,12 +172,21 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
     def GetReviewsByMovie(self, request, context):
         logger.info("GetReviewsByMovie -> Buscando reviews para o filme tmdb_id=%d", request.tmdb_id)
         raw_reviews = database.get_reviews_by_movie(request.tmdb_id)
-        movie_title = tmdb_service.get_movie_title(request.tmdb_id)
+        # Obter movie_title da primeira review ou resolver uma única vez para toda a lista
+        movie_title = ""
+        for r in raw_reviews:
+            if r.get("movie_title"):
+                movie_title = r["movie_title"]
+                break
+        if not movie_title:
+            media_type = getattr(request, "media_type", "movie") or "movie"
+            movie_title = tmdb_service.get_movie_title(request.tmdb_id, media_type=media_type)
+
         items = [
             r_pb2.ReviewItem(
                 review_id=r["review_id"],
                 tmdb_id=r["tmdb_id"],
-                movie_title=movie_title,
+                movie_title=r.get("movie_title") or movie_title,
                 user_id=r["user_id"],
                 rating=r["rating"],
                 comment=r["comment"],

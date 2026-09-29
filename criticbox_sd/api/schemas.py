@@ -106,6 +106,11 @@ class ReviewCreateRequest(BaseModel):
         description="Número do episódio avaliado (para séries)",
         json_schema_extra={"example": 3},
     )
+    movie_title: Optional[str] = Field(
+        default="",
+        description="Título da obra avaliada",
+        json_schema_extra={"example": "Interestelar"},
+    )
 
     @field_validator("tmdb_id")
     @classmethod
@@ -135,6 +140,7 @@ class ReviewResponse(BaseModel):
 
     review_id: str
     tmdb_id: int
+    movie_title: str = ""
     user_id: str
     rating: float
     comment: str = ""
