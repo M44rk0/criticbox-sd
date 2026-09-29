@@ -282,155 +282,155 @@ export default function MovieDetailPage() {
     </div>
   );
 
-  // Renderização do conteúdo da aba Ficha Técnica (Design simples e limpo)
+  // Renderização do conteúdo da aba Ficha Técnica (Dossiê de Produção Industrial)
   const renderCrewTab = () => (
     <div className="info-tab-content">
-      <div className="simple-specs-list">
+      <div className="dossier-grid">
         {movie.directors && movie.directors.length > 0 && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">
-              {movie.media_type === 'tv' ? 'Criação / Direção' : 'Direção'}
-            </span>
-            <span className="simple-spec-value">{movie.directors.join(', ')}</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// {movie.media_type === 'tv' ? 'CRIAÇÃO / DIREÇÃO' : 'DIREÇÃO'}</span>
+            <span className="dossier-value">{movie.directors.join(', ')}</span>
           </div>
         )}
 
         {movie.writers && movie.writers.length > 0 && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">Roteiro</span>
-            <span className="simple-spec-value">{movie.writers.join(', ')}</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// ROTEIRO & ARGUMENTO</span>
+            <span className="dossier-value">{movie.writers.join(', ')}</span>
           </div>
         )}
 
         {movie.music_composers && movie.music_composers.length > 0 && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">Trilha Sonora</span>
-            <span className="simple-spec-value">{movie.music_composers.join(', ')}</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// TRILHA SONORA ORIGINAL</span>
+            <span className="dossier-value">{movie.music_composers.join(', ')}</span>
           </div>
         )}
 
         {movie.cinematographers && movie.cinematographers.length > 0 && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">Fotografia</span>
-            <span className="simple-spec-value">{movie.cinematographers.join(', ')}</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// DIREÇÃO DE FOTOGRAFIA</span>
+            <span className="dossier-value">{movie.cinematographers.join(', ')}</span>
           </div>
         )}
 
         {movie.producers && movie.producers.length > 0 && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">Produção</span>
-            <span className="simple-spec-value">{movie.producers.slice(0, 4).join(', ')}</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// PRODUÇÃO EXECUTIVA</span>
+            <span className="dossier-value">{movie.producers.slice(0, 4).join(', ')}</span>
           </div>
         )}
 
         {runtimeStr && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">Duração</span>
-            <span className="simple-spec-value">{runtimeStr}</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// DURAÇÃO</span>
+            <span className="dossier-value mono">{runtimeStr}</span>
           </div>
         )}
 
         {movie.original_language && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">Idioma Original</span>
-            <span className="simple-spec-value">{movie.original_language.toUpperCase()}</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// IDIOMA ORIGINAL</span>
+            <span className="dossier-value mono">{movie.original_language.toUpperCase()}</span>
           </div>
         )}
 
         {movie.spoken_languages && movie.spoken_languages.length > 0 && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">Idiomas</span>
-            <span className="simple-spec-value">{movie.spoken_languages.join(', ')}</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// IDIOMAS FALADOS</span>
+            <span className="dossier-value">{movie.spoken_languages.join(', ')}</span>
           </div>
         )}
 
         {movie.certification && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">Classificação</span>
-            <span className="simple-spec-value">{movie.certification} anos</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// CLASSIFICAÇÃO INDICATIVA</span>
+            <span className="dossier-value mono">{movie.certification} ANOS (DJCTQ/ClassInd)</span>
           </div>
         )}
 
         {movie.release_date && (
-          <div className="simple-spec-row">
-            <span className="simple-spec-label">Lançamento</span>
-            <span className="simple-spec-value">{formatReleaseDate(movie.release_date)}</span>
+          <div className="dossier-card">
+            <span className="dossier-label">// DATA DE LANÇAMENTO</span>
+            <span className="dossier-value mono">{formatReleaseDate(movie.release_date)}</span>
           </div>
         )}
       </div>
     </div>
   );
 
-  // Renderização do conteúdo da aba Mercado (Design simples e limpo)
+  // Renderização do conteúdo da aba Mercado (Métricas Financeiras & Distribuição)
   const renderMarketTab = () => (
     <div className="info-tab-content">
-      <div className="simple-specs-list">
+      <div className="dossier-grid">
         {movie.media_type === 'movie' ? (
           <>
-            <div className="simple-spec-row">
-              <span className="simple-spec-label">Orçamento</span>
-              <span className="simple-spec-value">{formatCurrency(movie.budget) || 'Não divulgado'}</span>
+            <div className="dossier-card">
+              <span className="dossier-label">// ORÇAMENTO ESTIMADO</span>
+              <span className="dossier-value mono">{formatCurrency(movie.budget) || 'NÃO DIVULGADO'}</span>
             </div>
-            <div className="simple-spec-row">
-              <span className="simple-spec-label">Bilheteria Mundial</span>
-              <span className="simple-spec-value">{formatCurrency(movie.revenue) || 'Não divulgado'}</span>
+            <div className="dossier-card">
+              <span className="dossier-label">// BILHETERIA MUNDIAL</span>
+              <span className="dossier-value mono">{formatCurrency(movie.revenue) || 'NÃO DIVULGADO'}</span>
             </div>
             {movie.budget > 0 && movie.revenue > 0 && (
-              <div className="simple-spec-row">
-                <span className="simple-spec-label">Saldo Comercial</span>
-                <span
-                  className="simple-spec-value"
-                  style={{
-                    color: movie.revenue >= movie.budget ? '#4ade80' : '#f87171',
-                    fontWeight: 600,
-                  }}
-                >
+              <div className={`dossier-card highlight ${movie.revenue >= movie.budget ? 'profit' : 'loss'}`}>
+                <span className="dossier-label">// SALDO COMERCIAL ESTIMADO</span>
+                <span className="dossier-value mono bold">
                   {movie.revenue >= movie.budget ? '+' : ''}
                   {formatCurrency(movie.revenue - movie.budget)}
                 </span>
+                <span className="dossier-sub mono">
+                  {movie.revenue >= movie.budget ? 'DESEMPENHO SUPERAVITÁRIO' : 'DESEMPENHO DEFICITÁRIO'}
+                </span>
               </div>
             )}
-            <div className="simple-spec-row">
-              <span className="simple-spec-label">Status</span>
-              <span className="simple-spec-value">{translateStatus(movie.status) || 'Lançado'}</span>
+            <div className="dossier-card">
+              <span className="dossier-label">// STATUS DE PRODUÇÃO</span>
+              <span className="dossier-value mono">{translateStatus(movie.status) || 'LANÇADO'}</span>
             </div>
           </>
         ) : (
           <>
-            <div className="simple-spec-row">
-              <span className="simple-spec-label">Status</span>
-              <span className="simple-spec-value">{translateStatus(movie.status) || 'Em Exibição'}</span>
+            <div className="dossier-card">
+              <span className="dossier-label">// STATUS DE EXIBIÇÃO</span>
+              <span className="dossier-value mono">{translateStatus(movie.status) || 'EM EXIBIÇÃO'}</span>
             </div>
-            <div className="simple-spec-row">
-              <span className="simple-spec-label">Temporadas</span>
-              <span className="simple-spec-value">
-                {movie.number_of_seasons} ({movie.number_of_episodes || 0} episódios)
+            <div className="dossier-card">
+              <span className="dossier-label">// VOLUMETRIA</span>
+              <span className="dossier-value mono">
+                {movie.number_of_seasons} TEMPORADA{movie.number_of_seasons > 1 ? 'S' : ''} ({movie.number_of_episodes || 0} EPS)
               </span>
             </div>
             {movie.networks && movie.networks.length > 0 && (
-              <div className="simple-spec-row">
-                <span className="simple-spec-label">Emissora Original</span>
-                <span className="simple-spec-value">{movie.networks.map((n) => n.name).join(', ')}</span>
+              <div className="dossier-card">
+                <span className="dossier-label">// EMISSORA ORIGINAL</span>
+                <span className="dossier-value">{movie.networks.map((n) => n.name).join(', ')}</span>
               </div>
             )}
           </>
         )}
-
-        {/* Onde Assistir simples */}
-        {hasAnyProviders && (
-          <div className="simple-spec-row" style={{ alignItems: 'flex-start' }}>
-            <span className="simple-spec-label">Onde Assistir (BR)</span>
-            <div className="simple-streaming-list">
-              {allProviders.map((p, idx) => (
-                <div key={idx} className="simple-streaming-badge" title={`${p.provider_name} (${p.types.join(', ')})`}>
-                  {p.logo_url && <img src={p.logo_url} alt={p.provider_name} />}
-                  <span>{p.provider_name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Onde Assistir */}
+      {hasAnyProviders && (
+        <div className="market-streaming-block">
+          <div className="market-streaming-header">
+            <span className="dossier-label">// ONDE ASSISTIR NO BRASIL (STREAMING & VOD)</span>
+          </div>
+          <div className="market-streaming-grid">
+            {allProviders.map((p, idx) => (
+              <div key={idx} className="market-streaming-card" title={`${p.provider_name} (${p.types.join(', ')})`}>
+                {p.logo_url && <img src={p.logo_url} alt={p.provider_name} className="market-streaming-logo" />}
+                <div className="market-streaming-info">
+                  <span className="market-streaming-name">{p.provider_name}</span>
+                  <span className="market-streaming-types">{p.types.join(' • ')}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -908,22 +908,26 @@ export default function MovieDetailPage() {
                 </div>
 
                 {hasMoreCast && (
-                  <button
-                    className="cast-show-more-btn"
-                    onClick={() => setShowAllCast(!showAllCast)}
-                  >
-                    {showAllCast ? (
-                      <>
-                        <ChevronUp size={15} />
-                        MOSTRAR MENOS
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown size={15} />
-                        MOSTRAR TODO O ELENCO ({castList.length - INITIAL_CAST_COUNT} a mais)
-                      </>
-                    )}
-                  </button>
+                  <div className="cast-footer-wrap">
+                    <button
+                      type="button"
+                      className="cast-show-more-btn"
+                      onClick={() => setShowAllCast(!showAllCast)}
+                    >
+                      {showAllCast ? (
+                        <>
+                          <ChevronUp size={16} />
+                          <span>RECOLHER ELENCO</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={16} />
+                          <span>MOSTRAR TODO O ELENCO</span>
+                          <span className="cast-btn-badge">+{castList.length - INITIAL_CAST_COUNT}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
               </>
             ) : (

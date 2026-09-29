@@ -1896,58 +1896,62 @@ body {
 /* CAST GRID */
 .cast-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
   margin-top: 16px;
 }
 
 .cast-card {
-  background: var(--bg-card);
+  background: #0a0c11;
   border: 1px solid var(--gray-700);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.15s, border-color 0.15s;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
 .cast-card:hover {
   border-color: var(--accent);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 3px 3px 0 0 var(--accent);
 }
 
 .cast-photo {
   width: 100%;
-  aspect-ratio: 1/1.2;
+  aspect-ratio: 3/4;
   object-fit: cover;
-  background: #090b10;
+  background: #06070a;
   display: block;
+  border-bottom: 1px solid var(--gray-800);
 }
 
 .cast-photo-placeholder {
   width: 100%;
-  aspect-ratio: 1/1.2;
-  background: #11141c;
+  aspect-ratio: 3/4;
+  background: #0d1117;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Outfit', sans-serif;
   font-size: 1.5rem;
   color: var(--gray-500);
+  border-bottom: 1px solid var(--gray-800);
 }
 
 .cast-info {
-  padding: 8px 10px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .cast-name {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
   color: var(--white);
   line-height: 1.2;
+  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1957,10 +1961,11 @@ body {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
   color: var(--gray-400);
-  line-height: 1.2;
-  white-space: nowrap;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* TRAILER EMBED */
@@ -3217,43 +3222,55 @@ body {
 }
 
 /* ============================================================
-   TABBED SECTION: ELENCO | FICHA TÉCNICA | MERCADO
+   TABBED SECTION: ELENCO | FICHA TÉCNICA | MERCADO (SEGMENTED BRUTALIST)
    ============================================================ */
 .detail-info-tabs {
   display: flex;
-  gap: 0;
+  gap: 8px;
   border-bottom: 2px solid var(--gray-700);
-  margin-bottom: 0;
+  padding-bottom: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.detail-info-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .detail-info-tab {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--gray-400);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 14px 24px;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  background: #0a0c11;
+  color: var(--gray-300);
+  border: 1px solid var(--gray-700);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: -2px;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
   white-space: nowrap;
+  letter-spacing: 0.04em;
 }
 
 .detail-info-tab:hover {
   color: var(--white);
-  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--white);
+  background: #11141c;
 }
 
 .detail-info-tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  background: var(--accent);
+  color: #000000;
+  border-color: var(--accent);
+  font-weight: 800;
+  box-shadow: 2px 2px 0 0 #ffffff;
+}
+
+.detail-info-tab.active svg {
+  color: #000000;
 }
 
 .info-tab-content {
@@ -3266,123 +3283,204 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* CAST SHOW MORE / LESS BUTTON */
-.cast-show-more-btn {
+/* CAST SHOW MORE / LESS BUTTON (ALINHADO E IMPACTANTE) */
+.cast-footer-wrap {
   display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.cast-show-more-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
-  margin-top: 16px;
-  padding: 12px 20px;
+  gap: 10px;
+  padding: 12px 28px;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--accent);
-  background: var(--bg-card);
-  border: 1px solid var(--gray-700);
+  font-weight: 800;
+  color: #ffffff;
+  background: #0a0c11;
+  border: 2px solid #ffffff;
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
+  box-shadow: 4px 4px 0 0 var(--accent);
 }
 
 .cast-show-more-btn:hover {
+  background: var(--accent);
+  color: #000000;
   border-color: var(--accent);
-  background: var(--accent-dim);
+  box-shadow: 4px 4px 0 0 #ffffff;
+  transform: translateY(-1px);
+}
+
+.cast-btn-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.15);
+  color: inherit;
+}
+
+.cast-show-more-btn:hover .cast-btn-badge {
+  background: #000000;
+  color: var(--accent);
 }
 
 /* ============================================================
-   FICHA TÉCNICA & MERCADO: LAYOUT SIMPLES, CLEAN E ELEGANTE
+   DOSSIÊ DE PRODUÇÃO (FICHA TÉCNICA & MERCADO - BENTO DOSSIER)
    ============================================================ */
-.simple-specs-list {
+.dossier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.dossier-card {
+  background: #0a0c11;
+  border: 1px solid var(--gray-700);
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  max-width: 860px;
-  padding: 8px 0;
+  gap: 8px;
+  transition: border-color 0.15s, transform 0.15s;
 }
 
-.simple-spec-row {
-  display: flex;
-  align-items: baseline;
-  padding: 13px 0;
-  border-bottom: 1px solid var(--gray-700);
-  gap: 24px;
+.dossier-card:hover {
+  border-color: var(--white);
 }
 
-.simple-spec-row:last-child {
-  border-bottom: none;
-}
-
-.simple-spec-label {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
+.dossier-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
   letter-spacing: 0.06em;
-  color: var(--gray-400);
-  width: 170px;
-  flex-shrink: 0;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
-.simple-spec-value {
+.dossier-value {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.88rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--white);
-  line-height: 1.5;
+  line-height: 1.45;
   word-break: break-word;
 }
 
-.simple-streaming-list {
+.dossier-value.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.92rem;
+  color: #ffffff;
+}
+
+.dossier-value.bold {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.dossier-card.highlight.profit {
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  background: rgba(34, 197, 94, 0.04);
+}
+
+.dossier-card.highlight.profit .dossier-value {
+  color: #4ade80;
+}
+
+.dossier-card.highlight.loss {
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.dossier-card.highlight.loss .dossier-value {
+  color: #f87171;
+}
+
+.dossier-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gray-400);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ONDE ASSISTIR NO BRASIL (ESTRUTURA POLIDA) */
+.market-streaming-block {
+  margin-top: 24px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.simple-streaming-badge {
-  display: inline-flex;
+.market-streaming-header {
+  padding-bottom: 4px;
+}
+
+.market-streaming-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.market-streaming-card {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 10px;
-  background: var(--bg-card);
+  gap: 12px;
+  padding: 10px 14px;
+  background: #0a0c11;
   border: 1px solid var(--gray-700);
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: var(--gray-200);
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, transform 0.15s;
 }
 
-.simple-streaming-badge:hover {
+.market-streaming-card:hover {
   border-color: var(--accent);
-  color: var(--white);
+  transform: translateY(-2px);
 }
 
-.simple-streaming-badge img {
-  width: 20px;
-  height: 20px;
+.market-streaming-logo {
+  width: 34px;
+  height: 34px;
   object-fit: cover;
+  border: 1px solid var(--gray-700);
+  flex-shrink: 0;
+}
+
+.market-streaming-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.market-streaming-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.market-streaming-types {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--accent);
+  text-transform: uppercase;
 }
 
 @media (max-width: 640px) {
-  .detail-info-tabs {
-    overflow-x: auto;
-  }
-
   .detail-info-tab {
-    padding: 12px 16px;
-    font-size: 0.75rem;
-  }
-
-  .simple-spec-row {
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px 0;
-  }
-
-  .simple-spec-label {
-    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.72rem;
   }
 }
 
