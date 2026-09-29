@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
+  Star,
   Clock,
   Check,
   Plus,
@@ -9,6 +10,9 @@ import {
   ExternalLink,
   MessageSquare,
   ArrowRight,
+  Tv,
+  Film,
+  Globe,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useReviewModal } from '../context/ReviewModalContext';
@@ -158,6 +162,21 @@ export default function MovieDetailPage() {
     return <span className="movie-genre-badge">{c}</span>;
   };
 
+  // Helper para status de séries/filmes traduzidos
+  const translateStatus = (s) => {
+    if (!s) return '';
+    const map = {
+      Released: 'Lançado',
+      'Post Production': 'Pós-Produção',
+      'In Production': 'Em Produção',
+      Planned: 'Planejado',
+      Canceled: 'Cancelado',
+      'Returning Series': 'Em Exibição',
+      Ended: 'Finalizada',
+    };
+    return map[s] || s;
+  };
+
   // Provedores de Streaming (Watch Providers BR)
   const wp = movie.watch_providers || {};
   const flatrateList = wp.flatrate || [];
@@ -209,7 +228,7 @@ export default function MovieDetailPage() {
         </div>
 
         <div className="movie-detail-content">
-          {/* COLUNA ESQUERDA: PÔSTER + BOTÃO DE AVALIAR */}
+          {/* COLUNA ESQUERDA: PÔSTER + AVALIAR + PREVIEW STREAMING */}
           <div className="movie-detail-poster-col">
             <div className="movie-detail-poster">
               <img
@@ -222,101 +241,156 @@ export default function MovieDetailPage() {
             </div>
 
             {unreleased ? (
-              <div className="movie-unreleased-alert">
-                <Clock size={16} />
-                <span>LANÇAMENTO FUTURO</span>
+              <div className="movie-unreleased-badge" title="Este título ainda não foi lançado">
+                <Clock size={16} style={{ flexShrink: 0 }} />
+                <span>NÃO DISPONÍVEL (ESTREIA EM {formatReleaseDate(movie.release_date).toUpperCase()})</span>
               </div>
             ) : userAlreadyReviewed ? (
               <div className="movie-already-reviewed-badge">
                 <Check size={16} />
-                <span>AVALIADO POR VOCÊ</span>
+                VOCÊ JÁ AVALIOU
               </div>
             ) : (
               <button
                 className="movie-detail-eval-btn"
                 onClick={() => openReviewModal(movie, loadData)}
               >
-                <Plus size={16} />
-                AVALIAR TÍTULO
+                <Star size={15} fill="currentColor" />
+                AVALIAR {movie.media_type === 'tv' ? 'ESTA SÉRIE / EPISÓDIO' : 'ESTE FILME'}
               </button>
+            )}
+
+            {/* PREVIEW COMPACTO DE STREAMING NO BRASIL */}
+            {hasAnyProviders && (
+              <div className="hero-streaming-preview">
+                <div className="hero-streaming-title">
+                  <span>DISPONÍVEL NO BRASIL</span>
+                </div>
+                <div className="hero-streaming-logos">
+                  {allProviders.slice(0, 6).map((p, idx) => (
+                    <img
+                      key={idx}
+                      src={p.logo_url}
+                      alt={p.provider_name}
+                      title={`${p.provider_name} — ${p.types.join(', ')}`}
+                      className="hero-streaming-logo-img"
+                    />
+                  ))}
+                  {allProviders.length > 6 && (
+                    <span className="hero-streaming-overflow">+{allProviders.length - 6}</span>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
-          {/* COLUNA DIREITA: METADADOS COMPLETOS */}
+          {/* COLUNA DIREITA: INFORMAÇÕES DETALHADAS */}
           <div className="movie-detail-info-col">
             <button className="movie-detail-back-btn" onClick={() => navigate(-1)}>
-              <ArrowLeft size={13} />
+              <ArrowLeft size={14} style={{ marginRight: '6px' }} />
               VOLTAR
             </button>
 
-            <div>
-              <h1 className="movie-detail-title">{movie.title}</h1>
-              {movie.original_title && movie.original_title !== movie.title && (
-                <span className="movie-detail-orig-title">
-                  TÍTULO ORIGINAL: {movie.original_title}
-                  {movie.original_language && ` (${movie.original_language.toUpperCase()})`}
-                </span>
+            {/* KICKER DE CABEÇALHO BRUTALISTA */}
+            <div className="movie-detail-kicker">
+              <span className={`movie-kicker-type ${movie.media_type === 'tv' ? 'series' : ''}`}>
+                {movie.media_type === 'tv' ? (
+                  <>
+                    <Tv size={11} /> SÉRIE
+                  </>
+                ) : (
+                  <>
+                    <Film size={11} /> FILME
+                  </>
+                )}
+              </span>
+              {movie.certification && (
+                <>
+                  <span className="movie-kicker-dot">•</span>
+                  {getClassIndBadge(movie.certification)}
+                </>
+              )}
+              {movie.genres && movie.genres.length > 0 && (
+                <>
+                  <span className="movie-kicker-dot">•</span>
+                  <span className="movie-kicker-genres">{movie.genres.slice(0, 3).join(' / ').toUpperCase()}</span>
+                </>
+              )}
+              {movie.status && (
+                <>
+                  <span className="movie-kicker-dot">•</span>
+                  <span className="movie-kicker-status">{translateStatus(movie.status).toUpperCase()}</span>
+                </>
               )}
             </div>
 
-            {/* DIRETORES / SHOWRUNNERS */}
+            {/* TÍTULO (SEM LOGO) */}
+            <h1 className="movie-detail-title">{movie.title}</h1>
+
+            {/* TÍTULO ORIGINAL (APENAS O TEXTO + IDIOMA BADGE) */}
+            {movie.original_title && movie.original_title.toLowerCase() !== movie.title.toLowerCase() && (
+              <div className="movie-original-title">
+                <span><strong>{movie.original_title}</strong></span>
+                {movie.original_language && (
+                  <span className="movie-genre-badge" style={{ padding: '1px 6px', fontSize: '0.62rem' }}>
+                    {movie.original_language.toUpperCase()}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {movie.tagline && <p className="movie-detail-tagline">"{movie.tagline}"</p>}
+
+            {/* METADADOS: DATA + TEMPO/TEMPORADAS + IDIOMAS */}
+            <div className="movie-detail-meta">
+              <span>{movie.release_date ? movie.release_date.substring(0, 4) : '2026'}</span>
+              {movie.media_type === 'tv' && movie.number_of_seasons ? (
+                <span>
+                  • {movie.number_of_seasons} Temporada{movie.number_of_seasons > 1 ? 's' : ''} (
+                  {movie.number_of_episodes || 0} eps)
+                </span>
+              ) : (
+                runtimeStr && <span>• {runtimeStr}</span>
+              )}
+              {movie.spoken_languages && movie.spoken_languages.length > 0 && (
+                <span>• {movie.spoken_languages.slice(0, 2).join(', ')}</span>
+              )}
+            </div>
+
+            {/* DIREÇÃO / CRIADORES */}
             {movie.directors && movie.directors.length > 0 && (
               <div className="movie-detail-directors">
-                <span className="director-label">
-                  {movie.media_type === 'tv' ? 'CRIAÇÃO / DIREÇÃO:' : 'DIREÇÃO:'}
-                </span>
-                {movie.directors.map((d, i) => (
-                  <span key={i} className="director-chip">{d}</span>
+                <span className="director-label">{movie.media_type === 'tv' ? 'CRIADO POR / DIREÇÃO:' : 'DIREÇÃO:'}</span>
+                {movie.directors.map((d) => (
+                  <span key={d} className="director-chip">
+                    {d}
+                  </span>
                 ))}
               </div>
             )}
 
-            {/* TAGLINE */}
-            {movie.tagline && <p className="movie-detail-tagline">"{movie.tagline}"</p>}
-
-            {/* BARRA DE METADADOS */}
-            <div className="movie-detail-meta-bar">
-              {movie.release_date && (
-                <span className="movie-detail-meta-item">
-                  {movie.release_date.substring(0, 4)}
-                </span>
-              )}
-
-              {runtimeStr && (
-                <span className="movie-detail-meta-item">{runtimeStr}</span>
-              )}
-
-              {movie.number_of_seasons && (
-                <span className="movie-detail-meta-item">
-                  {movie.number_of_seasons} {movie.number_of_seasons === 1 ? 'TEMPORADA' : 'TEMPORADAS'}
-                  {movie.number_of_episodes ? ` (${movie.number_of_episodes} EPS)` : ''}
-                </span>
-              )}
-
-              {getClassIndBadge(movie.certification)}
-
-              {movie.media_type && (
-                <span className="movie-format-chip">
-                  {movie.media_type === 'tv' ? 'SÉRIE' : 'FILME'}
-                </span>
-              )}
-            </div>
-
-            {/* GÊNEROS */}
-            {movie.genres && movie.genres.length > 0 && (
-              <div className="movie-detail-genres">
-                {movie.genres.map((g) => (
-                  <span key={g} className="movie-genre-badge">{g}</span>
-                ))}
-
+            {/* LINKS EXTERNOS: IMDB & SITE OFICIAL */}
+            {(movie.imdb_id || movie.homepage) && (
+              <div className="movie-external-links">
+                {movie.imdb_id && (
+                  <a
+                    href={`https://www.imdb.com/title/${movie.imdb_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="movie-ext-badge imdb"
+                  >
+                    IMDb
+                    <ExternalLink size={11} />
+                  </a>
+                )}
                 {movie.homepage && (
                   <a
                     href={movie.homepage}
                     target="_blank"
                     rel="noreferrer"
-                    className="movie-homepage-link"
-                    title="Website oficial"
+                    className="movie-ext-badge"
                   >
+                    <Globe size={11} />
                     SITE OFICIAL
                     <ExternalLink size={11} />
                   </a>
