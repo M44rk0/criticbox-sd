@@ -33,7 +33,7 @@ import ReviewComment from '../components/ReviewComment';
 import { formatReviewDate, formatReleaseDate, isUnreleased } from '../utils/date';
 import { SERIES_EPISODES_CACHE } from '../utils/constants';
 
-const INITIAL_CAST_COUNT = 7;
+const INITIAL_CAST_COUNT = 6;
 
 export default function MovieDetailPage() {
   const { id } = useParams();
@@ -282,82 +282,90 @@ export default function MovieDetailPage() {
     </div>
   );
 
-  // Renderização do conteúdo da aba Ficha Técnica (Dossiê de Produção Industrial)
-  const renderCrewTab = () => (
-    <div className="info-tab-content">
-      <div className="dossier-grid">
-        {movie.directors && movie.directors.length > 0 && (
-          <div className="dossier-card">
-            <span className="dossier-label">// {movie.media_type === 'tv' ? 'CRIAÇÃO / DIREÇÃO' : 'DIREÇÃO'}</span>
-            <span className="dossier-value">{movie.directors.join(', ')}</span>
-          </div>
-        )}
+  // Renderização do conteúdo da aba Ficha Técnica (Dossiê de Produção Industrial - Máx 6 itens)
+  const renderCrewTab = () => {
+    const cards = [];
+    if (movie.directors && movie.directors.length > 0) {
+      cards.push(
+        <div key="directors" className="dossier-card">
+          <span className="dossier-label">// {movie.media_type === 'tv' ? 'CRIAÇÃO / DIREÇÃO' : 'DIREÇÃO'}</span>
+          <span className="dossier-value">{movie.directors.join(', ')}</span>
+        </div>
+      );
+    }
+    if (movie.writers && movie.writers.length > 0) {
+      cards.push(
+        <div key="writers" className="dossier-card">
+          <span className="dossier-label">// ROTEIRO & ARGUMENTO</span>
+          <span className="dossier-value">{movie.writers.join(', ')}</span>
+        </div>
+      );
+    }
+    if (movie.music_composers && movie.music_composers.length > 0) {
+      cards.push(
+        <div key="music" className="dossier-card">
+          <span className="dossier-label">// TRILHA SONORA ORIGINAL</span>
+          <span className="dossier-value">{movie.music_composers.join(', ')}</span>
+        </div>
+      );
+    }
+    if (movie.cinematographers && movie.cinematographers.length > 0) {
+      cards.push(
+        <div key="cinematographers" className="dossier-card">
+          <span className="dossier-label">// DIREÇÃO DE FOTOGRAFIA</span>
+          <span className="dossier-value">{movie.cinematographers.join(', ')}</span>
+        </div>
+      );
+    }
+    if (movie.producers && movie.producers.length > 0) {
+      cards.push(
+        <div key="producers" className="dossier-card">
+          <span className="dossier-label">// PRODUÇÃO EXECUTIVA</span>
+          <span className="dossier-value">{movie.producers.slice(0, 4).join(', ')}</span>
+        </div>
+      );
+    }
+    if (runtimeStr) {
+      cards.push(
+        <div key="runtime" className="dossier-card">
+          <span className="dossier-label">// DURAÇÃO</span>
+          <span className="dossier-value mono">{runtimeStr}</span>
+        </div>
+      );
+    }
+    if (movie.original_language) {
+      cards.push(
+        <div key="lang" className="dossier-card">
+          <span className="dossier-label">// IDIOMA ORIGINAL</span>
+          <span className="dossier-value mono">{movie.original_language.toUpperCase()}</span>
+        </div>
+      );
+    }
+    if (movie.certification) {
+      cards.push(
+        <div key="cert" className="dossier-card">
+          <span className="dossier-label">// CLASSIFICAÇÃO INDICATIVA</span>
+          <span className="dossier-value mono">{movie.certification} ANOS (DJCTQ/ClassInd)</span>
+        </div>
+      );
+    }
+    if (movie.release_date) {
+      cards.push(
+        <div key="release" className="dossier-card">
+          <span className="dossier-label">// DATA DE LANÇAMENTO</span>
+          <span className="dossier-value mono">{formatReleaseDate(movie.release_date)}</span>
+        </div>
+      );
+    }
 
-        {movie.writers && movie.writers.length > 0 && (
-          <div className="dossier-card">
-            <span className="dossier-label">// ROTEIRO & ARGUMENTO</span>
-            <span className="dossier-value">{movie.writers.join(', ')}</span>
-          </div>
-        )}
-
-        {movie.music_composers && movie.music_composers.length > 0 && (
-          <div className="dossier-card">
-            <span className="dossier-label">// TRILHA SONORA ORIGINAL</span>
-            <span className="dossier-value">{movie.music_composers.join(', ')}</span>
-          </div>
-        )}
-
-        {movie.cinematographers && movie.cinematographers.length > 0 && (
-          <div className="dossier-card">
-            <span className="dossier-label">// DIREÇÃO DE FOTOGRAFIA</span>
-            <span className="dossier-value">{movie.cinematographers.join(', ')}</span>
-          </div>
-        )}
-
-        {movie.producers && movie.producers.length > 0 && (
-          <div className="dossier-card">
-            <span className="dossier-label">// PRODUÇÃO EXECUTIVA</span>
-            <span className="dossier-value">{movie.producers.slice(0, 4).join(', ')}</span>
-          </div>
-        )}
-
-        {runtimeStr && (
-          <div className="dossier-card">
-            <span className="dossier-label">// DURAÇÃO</span>
-            <span className="dossier-value mono">{runtimeStr}</span>
-          </div>
-        )}
-
-        {movie.original_language && (
-          <div className="dossier-card">
-            <span className="dossier-label">// IDIOMA ORIGINAL</span>
-            <span className="dossier-value mono">{movie.original_language.toUpperCase()}</span>
-          </div>
-        )}
-
-        {movie.spoken_languages && movie.spoken_languages.length > 0 && (
-          <div className="dossier-card">
-            <span className="dossier-label">// IDIOMAS FALADOS</span>
-            <span className="dossier-value">{movie.spoken_languages.join(', ')}</span>
-          </div>
-        )}
-
-        {movie.certification && (
-          <div className="dossier-card">
-            <span className="dossier-label">// CLASSIFICAÇÃO INDICATIVA</span>
-            <span className="dossier-value mono">{movie.certification} ANOS (DJCTQ/ClassInd)</span>
-          </div>
-        )}
-
-        {movie.release_date && (
-          <div className="dossier-card">
-            <span className="dossier-label">// DATA DE LANÇAMENTO</span>
-            <span className="dossier-value mono">{formatReleaseDate(movie.release_date)}</span>
-          </div>
-        )}
+    return (
+      <div className="info-tab-content">
+        <div className="dossier-grid">
+          {cards.slice(0, 6)}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Renderização do conteúdo da aba Mercado (Métricas Financeiras & Distribuição)
   const renderMarketTab = () => (
@@ -373,18 +381,6 @@ export default function MovieDetailPage() {
               <span className="dossier-label">// BILHETERIA MUNDIAL</span>
               <span className="dossier-value mono">{formatCurrency(movie.revenue) || 'NÃO DIVULGADO'}</span>
             </div>
-            {movie.budget > 0 && movie.revenue > 0 && (
-              <div className={`dossier-card highlight ${movie.revenue >= movie.budget ? 'profit' : 'loss'}`}>
-                <span className="dossier-label">// SALDO COMERCIAL ESTIMADO</span>
-                <span className="dossier-value mono bold">
-                  {movie.revenue >= movie.budget ? '+' : ''}
-                  {formatCurrency(movie.revenue - movie.budget)}
-                </span>
-                <span className="dossier-sub mono">
-                  {movie.revenue >= movie.budget ? 'DESEMPENHO SUPERAVITÁRIO' : 'DESEMPENHO DEFICITÁRIO'}
-                </span>
-              </div>
-            )}
             <div className="dossier-card">
               <span className="dossier-label">// STATUS DE PRODUÇÃO</span>
               <span className="dossier-value mono">{translateStatus(movie.status) || 'LANÇADO'}</span>
