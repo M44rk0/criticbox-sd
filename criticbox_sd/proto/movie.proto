@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package movie;
+
+service MovieService {
+  rpc SearchMovies (SearchMoviesRequest) returns (SearchMoviesResponse);
+  rpc GetTrendingMovies (TrendingMoviesRequest) returns (SearchMoviesResponse);
+  rpc GetMovieDetails (MovieDetailsRequest) returns (MovieDetailsResponse);
+  rpc DiscoverMovies (DiscoverMoviesRequest) returns (SearchMoviesResponse);
+  rpc GetNowPlayingMovies (NowPlayingRequest) returns (SearchMoviesResponse);
+}
+
+message NowPlayingRequest {
+  int32 page = 1;
+}
+
+message SeasonInfo {
+  int32 season_number = 1;
+  string name = 2;
+  int32 episode_count = 3;
+  string poster_url = 4;
+}
+
+message MovieSummary {
+  int32 tmdb_id = 1;
+  string title = 2;
+  string release_date = 3;
+  string poster_url = 4;
+  string backdrop_url = 5;
+  string overview = 6;
+  float tmdb_vote_average = 7;
+  float criticbox_rating = 8;
+  int32 criticbox_review_count = 9;
+  string media_type = 10; // "movie" or "tv"
+}
+
+message SearchMoviesRequest {
+  string query = 1;
+  int32 page = 2;
+}
+
+message TrendingMoviesRequest {
+  string time_window = 1; // "day" or "week"
+  int32 page = 2;
+}
+
+message DiscoverMoviesRequest {
+  int32 genre_id = 1;
+  int32 page = 2;
+}
+
+message SearchMoviesResponse {
+  repeated MovieSummary movies = 1;
+  int32 page = 2;
+  int32 total_results = 3;
+  int32 total_pages = 4;
+}
+
+message CastMember {
+  string name = 1;
+  string character = 2;
+  string profile_url = 3;
+}
+
+message MovieDetailsRequest {
+  int32 tmdb_id = 1;
+  string media_type = 2; // "movie" or "tv"
+}
+
+message MovieDetailsResponse {
+  int32 tmdb_id = 1;
+  string title = 2;
+  string release_date = 3;
+  string poster_url = 4;
+  string backdrop_url = 5;
+  string overview = 6;
+  float tmdb_vote_average = 7;
+  float criticbox_rating = 8;
+  int32 criticbox_review_count = 9;
+  repeated string genres = 10;
+  int32 runtime = 11;
+  bool found = 12;
+  repeated string directors = 13;
+  repeated CastMember cast = 14;
+  string trailer_url = 15;
+  string tagline = 16;
+  string media_type = 17;
+  int32 number_of_seasons = 18;
+  int32 number_of_episodes = 19;
+  repeated SeasonInfo seasons = 20;
+}

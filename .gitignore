@@ -31,6 +31,8 @@ env/
 dist/
 build/
 *.egg-info/
+node_modules/
+frontend/node_modules/
 
 # Testing & Coverage
 .pytest_cache/

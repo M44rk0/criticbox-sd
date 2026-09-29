@@ -1388,6 +1388,113 @@
         font-size: 1.6rem;
       }
     }
+  
+    /* Auth Modal Styling */
+    .auth-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      background: rgba(6, 7, 10, 0.88);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .auth-modal-overlay.active {
+      display: flex;
+    }
+
+    .auth-card {
+      background: #0a0c11;
+      border: 2px solid #ffffff;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+      width: 100%;
+      max-width: 440px;
+      padding: 32px 28px;
+      position: relative;
+    }
+
+    .auth-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--gray-700);
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+
+    .auth-tab {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 0.82rem;
+      color: var(--gray-400);
+      padding: 8px 16px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      text-transform: uppercase;
+      transition: all 0.15s;
+    }
+
+    .auth-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .auth-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .auth-input-group label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .auth-input-group input {
+      background: #06070a;
+      border: 1px solid var(--gray-700);
+      color: #fff;
+      padding: 10px 14px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .auth-input-group input:focus {
+      border-color: var(--accent);
+    }
+
+    .auth-error {
+      color: #ff5555;
+      font-size: 0.78rem;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 14px;
+      background: rgba(255, 85, 85, 0.08);
+      border: 1px solid rgba(255, 85, 85, 0.3);
+      padding: 8px 12px;
+      display: none;
+    }
+
+    .loading-pulse {
+      display: inline-block;
+      color: var(--gray-500);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      padding: 28px;
+      text-align: center;
+      width: 100%;
+      grid-column: 1 / -1;
+    }
+
   </style>
 </head>
 
@@ -1409,10 +1516,18 @@
     <div class="nav-right">
       <div class="nav-search">
         <span class="nav-search-icon">⌕</span>
-        <input type="text" placeholder="Buscar filmes, diretores..." />
+        <input type="text" id="nav-search-input" placeholder="Buscar filmes (ex: Batman, Matrix)..." oninput="handleSearchInput(event)" />
       </div>
-      <button class="nav-btn nav-btn-ghost">ENTRAR</button>
-      <button class="nav-btn nav-btn-accent">CRIAR CONTA</button>
+      <div id="nav-auth-logged-out" style="display: flex; gap: 8px;">
+        <button class="nav-btn nav-btn-ghost" onclick="openAuthModal('login')">ENTRAR</button>
+        <button class="nav-btn nav-btn-accent" onclick="openAuthModal('register')">CRIAR CONTA</button>
+      </div>
+      <div id="nav-auth-logged-in" style="display: none; align-items: center; gap: 10px;">
+        <span id="nav-user-badge" style="font-family: 'Space Grotesk', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--accent); border: 1px solid var(--accent-border); padding: 5px 12px; background: var(--accent-dim);">
+          @usuario
+        </span>
+        <button class="nav-btn nav-btn-ghost" onclick="handleLogout()">SAIR</button>
+      </div>
     </div>
   </nav>
 
@@ -1422,12 +1537,12 @@
        ============================================================ -->
   <section class="hero">
     <div class="hero-bg">
-      <img src="https://image.tmdb.org/t/p/w1280/qeQJx07rK2xm8SD2sJxFKhE7gs0.jpg" alt="Destaque Homem-Aranha: Um Novo Dia" />
+      <img id="hero-backdrop-img" src="https://image.tmdb.org/t/p/w1280/qeQJx07rK2xm8SD2sJxFKhE7gs0.jpg" alt="Destaque" />
     </div>
     <div class="hero-content">
       <div class="hero-poster-frame">
-        <img src="https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg" alt="Pôster Homem-Aranha: Um Novo Dia" />
-        <span class="hero-poster-rank">#1 EM ALTA</span>
+        <img id="hero-poster-img" src="https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg" alt="Pôster" />
+        <span class="hero-poster-rank" id="hero-rank-badge">#1 EM ALTA</span>
       </div>
       <div class="hero-info">
         <div class="hero-eyebrow">
@@ -1435,38 +1550,51 @@
           <span class="hero-eyebrow-chip outline">2026</span>
           <span class="hero-eyebrow-chip outline">AÇÃO • SCI-FI</span>
         </div>
-        <h1 class="hero-title">HOMEM-ARANHA:<br>UM NOVO DIA</h1>
-        <p class="hero-tagline">"É um novo dia para Peter Parker em um mundo sem memórias."</p>
-        <p class="hero-synopsis">
-          Combatendo o crime em tempo integral como Homem-Aranha em um mundo que não se lembra mais dele e lidando com a pressão de ver seus antigos amigos seguirem em frente, Peter passa por uma mudança imprevisível que pode ser a única chave para deter uma nova ameaça invisível à cidade.
+        <h1 class="hero-title" id="hero-title">HOMEM-ARANHA:<br>UM NOVO DIA</h1>
+        <p class="hero-tagline" id="hero-tagline">"É um novo dia para Peter Parker em um mundo sem memórias."</p>
+        <p class="hero-synopsis" id="hero-synopsis">
+          Combatendo o crime em tempo integral como Homem-Aranha em um mundo que não se lembra mais dele e lidando com a pressão de ver seus antigos amigos seguirem em frente.
         </p>
         <div class="hero-stats">
           <div class="hero-stat">
-            <span class="hero-stat-value">7.9</span>
+            <span class="hero-stat-value" id="hero-tmdb-score">7.9</span>
             <span class="hero-stat-label">NOTA TMDB</span>
           </div>
           <div class="hero-stat-divider"></div>
           <div class="hero-stat">
-            <span class="hero-stat-value">2.8K</span>
-            <span class="hero-stat-label">AVALIAÇÕES</span>
+            <span class="hero-stat-value" id="hero-criticbox-score">5.0</span>
+            <span class="hero-stat-label">NOTA CRITICBOX</span>
           </div>
           <div class="hero-stat-divider"></div>
           <div class="hero-stat">
-            <span class="hero-stat-value">142</span>
-            <span class="hero-stat-label">MIN</span>
+            <span class="hero-stat-value" id="hero-review-count">24</span>
+            <span class="hero-stat-label">AVALIAÇÕES</span>
           </div>
         </div>
         <div class="hero-actions">
-          <button class="hero-btn hero-btn-primary" onclick="openReviewModal()">
+          <button class="hero-btn hero-btn-primary" onclick="openHeroReviewModal()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            ESCREVER CRÍTICA
+            AVALIAR FILME
           </button>
-          <button class="hero-btn hero-btn-secondary" onclick="openReviewModal()">VER DETALHES →</button>
         </div>
       </div>
     </div>
   </section>
 
+
+  <!-- ============================================================
+       BUSCA: RESULTADOS EM TEMPO REAL (API GATEWAY -> gRPC MOVIE SERVICE)
+       ============================================================ -->
+  <section id="search-section" class="section" style="display: none; padding-top: 40px;">
+    <div class="section-header">
+      <div class="section-title-group">
+        <span class="section-num">🔍</span>
+        <h2 class="section-title" id="search-section-title">Resultados da Busca</h2>
+      </div>
+      <button class="nav-btn nav-btn-ghost" onclick="clearSearch()">LIMPAR BUSCA ✕</button>
+    </div>
+    <div class="movies-grid" id="search-movies-grid"></div>
+  </section>
 
   <!-- ============================================================
        TRENDING: FILMES EM ALTA (TMDB API)
@@ -1480,7 +1608,7 @@
       <a href="#" class="section-link">VER TODOS NO TMDB →</a>
     </div>
 
-    <div class="movies-grid">
+    <div class="movies-grid" id="trending-movies-grid">
       <!-- 01 -->
       <div class="movie-card" onclick="openReviewModal()" style="cursor: pointer;" title="Escrever crítica para Homem-Aranha: Um Novo Dia">
         <div class="movie-card-poster">
@@ -1619,7 +1747,7 @@
       <a href="#" class="section-link">VER TODAS →</a>
     </div>
 
-    <div class="reviews-grid">
+    <div class="reviews-grid" id="recent-reviews-grid">
       <!-- Review 1: Real review from criticbox.db SQLite -->
       <div class="review-card">
         <div class="review-card-poster">
@@ -1722,13 +1850,13 @@
   <!-- ============================================================
        CTA BANNER
        ============================================================ -->
-  <section class="section" style="padding-top: 0;">
+  <section id="cta-banner-section" class="section" style="padding-top: 0;">
     <div class="cta-banner">
       <div class="cta-text">
         <h2>COMECE A CRITICAR AGORA.</h2>
         <p>Crie sua conta gratuita e compartilhe suas opiniões sobre os filmes que você ama (ou odeia).</p>
       </div>
-      <button class="cta-btn">CRIAR CONTA GRÁTIS →</button>
+      <button class="cta-btn" onclick="openAuthModal('register')">CRIAR CONTA GRÁTIS →</button>
     </div>
   </section>
 
@@ -1768,34 +1896,33 @@
   <div id="review-modal-overlay" class="review-modal-overlay" onclick="handleOverlayClick(event)" role="dialog" aria-modal="true" aria-labelledby="modal-movie-title">
     <div class="v1-card" onclick="event.stopPropagation()">
       <div class="v1-poster-col">
-        <img src="https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg" alt="Pôster Homem-Aranha: Um Novo Dia" />
+        <img id="modal-poster-img" src="https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg" alt="Pôster" />
         <div class="v1-poster-overlay"></div>
         <div class="v1-poster-info">
-          <span class="v1-poster-chip">2026 • AÇÃO / SCI-FI</span>
-          <h2 class="v1-poster-title">HOMEM-ARANHA: UM NOVO DIA</h2>
-          <p class="v1-poster-director">Dir. Destin Daniel Cretton</p>
+          <span id="modal-poster-chip" class="v1-poster-chip">2026 • FILME</span>
+          <h2 id="modal-poster-title" class="v1-poster-title">TÍTULO DO FILME</h2>
+          <p id="modal-poster-director" class="v1-poster-director">Catálogo TMDb</p>
         </div>
       </div>
       <div class="v1-content-col">
         <div>
           <div class="v1-header-bar">
             <div class="v1-meta-row">
-              <span class="v1-chip-lancamento">LANÇAMENTO</span>
-              <span class="v1-meta-duration">2H 22MIN</span>
+              <span class="v1-chip-lancamento">AVALIAÇÃO</span>
+              <span class="v1-meta-duration" id="modal-score-preview">NOTA: 5.0</span>
             </div>
             <button class="v1-close-btn" onclick="closeReviewModal()" aria-label="Fechar" title="Fechar">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
-          <h1 id="modal-movie-title" class="v1-movie-title">Homem-Aranha: Um Novo Dia</h1>
-          <p class="v1-movie-tagline">"É um novo dia para Peter Parker em um mundo sem memórias."</p>
-          <p class="v1-movie-synopsis">
-            Combatendo o crime em tempo integral como Homem-Aranha em um mundo que não se lembra mais dele e lidando com a pressão de ver seus antigos amigos seguirem em frente, Peter passa por uma mudança imprevisível que pode ser a única chave para deter uma nova ameaça à cidade.
+          <h1 id="modal-movie-title" class="v1-movie-title">Título</h1>
+          <p id="modal-movie-synopsis" class="v1-movie-synopsis">
+            Sinopse do filme...
           </p>
         </div>
         <hr class="v1-divider" />
         <div>
-          <label class="v1-field-label">SUA CLASSIFICAÇÃO</label>
+          <label class="v1-field-label">SUA NOTA (0.5 A 5.0 ESTRELAS)</label>
           <div class="v1-rating-row">
             <div class="stars-flex" id="stars-modal" data-rating="5.0"></div>
             <span class="v1-score-badge" id="score-modal">5.0</span>
@@ -1803,8 +1930,8 @@
         </div>
         <div>
           <label class="v1-field-label">SUA CRÍTICA</label>
-          <textarea class="v1-textarea" id="comment-modal" placeholder="Escreva sua análise detalhada sobre o filme..." maxlength="1500" oninput="updateCharCount(1500)"></textarea>
-          <span class="v1-char-counter" id="chars-modal">0 / 1500</span>
+          <textarea class="v1-textarea" id="comment-modal" placeholder="Escreva sua análise detalhada sobre o filme..." maxlength="1000" oninput="updateCharCount(1000)"></textarea>
+          <span class="v1-char-counter" id="chars-modal">0 / 1000</span>
         </div>
         <div class="v1-actions-row">
           <label class="v1-spoiler-wrap">
@@ -1812,9 +1939,39 @@
             <span class="v1-custom-checkbox"></span>
             <span>Contém spoilers</span>
           </label>
-          <button class="v1-submit-btn" onclick="submitModalReview()">PUBLICAR AVALIAÇÃO</button>
+          <button class="v1-submit-btn" id="modal-submit-btn" onclick="submitModalReview()">PUBLICAR AVALIAÇÃO</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       AUTH MODAL (LOGIN / REGISTRO)
+       ============================================================ -->
+  <div id="auth-modal-overlay" class="auth-modal-overlay" onclick="handleAuthOverlayClick(event)" role="dialog" aria-modal="true">
+    <div class="auth-card" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <span class="nav-logo" style="font-size: 1rem;">CRITICBOX // CONTA</span>
+        <button class="v1-close-btn" onclick="closeAuthModal()" aria-label="Fechar">✕</button>
+      </div>
+      <div class="auth-tabs">
+        <button id="auth-tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Entrar</button>
+        <button id="auth-tab-register" class="auth-tab" onclick="switchAuthTab('register')">Criar Conta</button>
+      </div>
+      <div id="auth-error-msg" class="auth-error"></div>
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+        <div class="auth-input-group">
+          <label for="auth-username">Nome de Usuário</label>
+          <input type="text" id="auth-username" required placeholder="ex: cinemanerd" autocomplete="username" />
+        </div>
+        <div class="auth-input-group">
+          <label for="auth-password">Senha</label>
+          <input type="password" id="auth-password" required placeholder="Mínimo 6 caracteres" autocomplete="current-password" />
+        </div>
+        <button type="submit" id="auth-submit-btn" class="v1-submit-btn" style="width: 100%; margin-top: 10px;">
+          ENTRAR NA CONTA
+        </button>
+      </form>
     </div>
   </div>
 
@@ -1823,36 +1980,252 @@
 
   <!-- Interactive Scripts -->
   <script>
-    function openReviewModal() {
+    const API_BASE = window.location.origin;
+
+    let currentAuthMode = 'login';
+    let currentModalMovie = {
+      tmdb_id: 550,
+      title: 'Homem-Aranha: Um Novo Dia',
+      poster_url: 'https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg',
+      overview: 'Combatendo o crime em tempo integral como Homem-Aranha em um mundo que não se lembra mais dele.',
+      release_date: '2026-07-24'
+    };
+    let heroMovie = { ...currentModalMovie };
+    let searchDebounceTimer = null;
+
+    // ----------------- Auth State Helpers ----------------- //
+    function getAuthToken() {
+      return localStorage.getItem('criticbox_token');
+    }
+
+    function getAuthUser() {
+      return localStorage.getItem('criticbox_user');
+    }
+
+    function setAuth(token, username) {
+      localStorage.setItem('criticbox_token', token);
+      localStorage.setItem('criticbox_user', username);
+      updateAuthUI();
+    }
+
+    function clearAuth() {
+      localStorage.removeItem('criticbox_token');
+      localStorage.removeItem('criticbox_user');
+      updateAuthUI();
+    }
+
+    function updateAuthUI() {
+      const user = getAuthUser();
+      const loggedOutDiv = document.getElementById('nav-auth-logged-out');
+      const loggedInDiv = document.getElementById('nav-auth-logged-in');
+      const userBadge = document.getElementById('nav-user-badge');
+
+      if (user && getAuthToken()) {
+        loggedOutDiv.style.display = 'none';
+        loggedInDiv.style.display = 'flex';
+        userBadge.textContent = '@' + user;
+        const cta = document.getElementById('cta-banner-section');
+        if (cta) cta.style.display = 'none';
+      } else {
+        loggedOutDiv.style.display = 'flex';
+        loggedInDiv.style.display = 'none';
+        const cta = document.getElementById('cta-banner-section');
+        if (cta) cta.style.display = 'block';
+      }
+    }
+
+    function handleLogout() {
+      clearAuth();
+      showToast('Sessão encerrada com sucesso.', false);
+    }
+
+    // ----------------- Auth Modal ----------------- //
+    function openAuthModal(mode = 'login') {
+      currentAuthMode = mode;
+      switchAuthTab(mode);
+      const err = document.getElementById('auth-error-msg');
+      if (err) err.style.display = 'none';
+      const modal = document.getElementById('auth-modal-overlay');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById('auth-modal-overlay');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function handleAuthOverlayClick(e) {
+      if (e.target.id === 'auth-modal-overlay') closeAuthModal();
+    }
+
+    function switchAuthTab(tab) {
+      currentAuthMode = tab;
+      const tabLogin = document.getElementById('auth-tab-login');
+      const tabReg = document.getElementById('auth-tab-register');
+      const btn = document.getElementById('auth-submit-btn');
+      const err = document.getElementById('auth-error-msg');
+      if (err) err.style.display = 'none';
+
+      if (tab === 'login') {
+        tabLogin.classList.add('active');
+        tabReg.classList.remove('active');
+        btn.textContent = 'ENTRAR NA CONTA';
+      } else {
+        tabReg.classList.add('active');
+        tabLogin.classList.remove('active');
+        btn.textContent = 'CRIAR NOVA CONTA';
+      }
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const username = document.getElementById('auth-username').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const errEl = document.getElementById('auth-error-msg');
+      errEl.style.display = 'none';
+
+      const endpoint = currentAuthMode === 'login' ? '/auth/login' : '/auth/register';
+
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          const msg = data.detail || (data.erros ? data.erros.map(e => e.mensagem).join(', ') : 'Erro na requisição');
+          errEl.textContent = msg;
+          errEl.style.display = 'block';
+          return;
+        }
+
+        setAuth(data.access_token, data.username);
+        closeAuthModal();
+        showToast(currentAuthMode === 'login' ? `Bem-vindo(a) de volta, @${data.username}!` : `Conta criada com sucesso! @${data.username}`, false);
+      } catch (err) {
+        errEl.textContent = 'Erro de conexão com o API Gateway.';
+        errEl.style.display = 'block';
+      }
+    }
+
+    // ----------------- Toast ----------------- //
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.style.borderColor = isError ? '#ff5555' : 'var(--accent)';
+      toast.style.boxShadow = isError ? '4px 4px 0px 0px #ff5555' : '4px 4px 0px 0px var(--accent)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3800);
+    }
+
+    // ----------------- Review Modal ----------------- //
+    function openReviewModal(movie) {
+      if (movie) {
+        currentModalMovie = movie;
+      }
+      document.getElementById('modal-movie-title').textContent = currentModalMovie.title;
+      document.getElementById('modal-poster-title').textContent = currentModalMovie.title.toUpperCase();
+      document.getElementById('modal-movie-synopsis').textContent = currentModalMovie.overview || 'Sem sinopse disponível.';
+      document.getElementById('modal-poster-img').src = currentModalMovie.poster_url || 'https://via.placeholder.com/500x750?text=Sem+Poster';
+      document.getElementById('modal-poster-chip').textContent = (currentModalMovie.release_date ? currentModalMovie.release_date.substring(0, 4) : '2026') + ' • TMDb #' + currentModalMovie.tmdb_id;
+
+      initStars('stars-modal', 'score-modal', 5.0);
+      document.getElementById('comment-modal').value = '';
+      updateCharCount(1000);
+      document.getElementById('spoiler-modal').checked = false;
+
       const modal = document.getElementById('review-modal-overlay');
-      if (!modal) return;
-      modal.classList.add('active');
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => {
-        const txt = document.getElementById('comment-modal');
-        if (txt) txt.focus();
-      }, 100);
+      if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function openHeroReviewModal() {
+      openReviewModal(heroMovie);
     }
 
     function closeReviewModal() {
       const modal = document.getElementById('review-modal-overlay');
-      if (!modal) return;
-      modal.classList.remove('active');
+      if (modal) modal.classList.remove('active');
       document.body.style.overflow = '';
     }
 
     function handleOverlayClick(e) {
-      if (e.target.id === 'review-modal-overlay') {
-        closeReviewModal();
-      }
+      if (e.target.id === 'review-modal-overlay') closeReviewModal();
     }
 
     window.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         closeReviewModal();
+        closeAuthModal();
       }
     });
 
+    async function submitModalReview() {
+      const token = getAuthToken();
+      if (!token) {
+        showToast('⚠️ Você precisa estar logado para publicar uma crítica!', true);
+        openAuthModal('login');
+        return;
+      }
+
+      const rating = parseFloat(document.getElementById('score-modal').textContent || '5.0');
+      const comment = document.getElementById('comment-modal').value.trim();
+      const contains_spoilers = document.getElementById('spoiler-modal').checked;
+
+      const payload = {
+        tmdb_id: currentModalMovie.tmdb_id,
+        rating: rating,
+        comment: comment,
+        contains_spoilers: contains_spoilers
+      };
+
+      const btn = document.getElementById('modal-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'PUBLICANDO VIA gRPC...';
+
+      try {
+        const res = await fetch(`${API_BASE}/reviews`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (res.status === 401) {
+          clearAuth();
+          showToast('Sessão expirada. Por favor, autentique-se novamente.', true);
+          openAuthModal('login');
+          return;
+        }
+
+        if (!res.ok) {
+          const msg = data.detail || (data.erros ? data.erros.map(e => e.mensagem).join(', ') : 'Erro ao cadastrar crítica.');
+          showToast(`[-] Erro: ${msg}`, true);
+          return;
+        }
+
+        showToast(`✓ [${currentModalMovie.title}] Crítica de nota ${rating.toFixed(1)} salva com sucesso no banco real!`, false);
+        closeReviewModal();
+        loadRecentReviews();
+        loadTrendingMovies();
+      } catch (err) {
+        showToast('[-] Erro ao se comunicar com o API Gateway.', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'PUBLICAR AVALIAÇÃO';
+      }
+    }
+
+    // ----------------- Star Picker ----------------- //
     function initStars(cId, sId, val) {
       const c = document.getElementById(cId);
       if (!c) return;
@@ -1892,6 +2265,8 @@
       paint(c, v);
       const el = document.getElementById(sId);
       if (el) el.textContent = Number(v).toFixed(1);
+      const prev = document.getElementById('modal-score-preview');
+      if (prev) prev.textContent = `NOTA: ${Number(v).toFixed(1)}`;
     }
 
     function updateCharCount(max) {
@@ -1900,20 +2275,183 @@
       if (t && c) c.textContent = t.value.length + ' / ' + max;
     }
 
-    function submitModalReview() {
-      const toast = document.getElementById('toast');
-      const sp = document.getElementById('spoiler-modal')?.checked;
-      const score = document.getElementById('score-modal')?.textContent || '5.0';
-      if (toast) {
-        toast.textContent = '✓ [Homem-Aranha] Crítica publicada com nota ' + score + '!' + (sp ? ' (Contém Spoilers)' : '');
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3500);
-      }
-      closeReviewModal();
+    // ----------------- Card Builders ----------------- //
+    function createMovieCardHtml(m, rank) {
+      const poster = m.poster_url || 'https://via.placeholder.com/500x750?text=Sem+Poster';
+      const tmdbScore = m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-';
+      const criticboxScore = m.criticbox_rating > 0 ? `${m.criticbox_rating.toFixed(1)}/5.0 (${m.criticbox_review_count})` : 'Sem avaliações';
+      const year = m.release_date ? m.release_date.substring(0, 4) : '2026';
+      const safeData = encodeURIComponent(JSON.stringify(m));
+
+      return `
+        <div class="movie-card" onclick="openReviewModalFromEncoded('${safeData}')" title="Avaliar ${m.title}">
+          <div class="movie-card-poster">
+            <img src="${poster}" alt="${m.title}" loading="lazy" />
+            <span class="movie-card-rank">#${rank < 10 ? '0' + rank : rank}</span>
+            <span class="movie-card-score">★ ${tmdbScore}</span>
+          </div>
+          <div class="movie-card-info">
+            <span class="movie-card-title">${m.title}</span>
+            <span class="movie-card-meta">${year} • Criticbox: ${criticboxScore}</span>
+            <button class="nav-btn nav-btn-accent" style="margin-top: 10px; width: 100%; font-size: 0.72rem; padding: 6px 8px;" onclick="event.stopPropagation(); openReviewModalFromEncoded('${safeData}')">
+              AVALIAR FILME
+            </button>
+          </div>
+        </div>
+      `;
     }
 
+    function openReviewModalFromEncoded(encoded) {
+      const movie = JSON.parse(decodeURIComponent(encoded));
+      openReviewModal(movie);
+    }
+
+    // ----------------- Fetch Trending Movies ----------------- //
+    async function loadTrendingMovies() {
+      const container = document.getElementById('trending-movies-grid');
+      try {
+        const res = await fetch(`${API_BASE}/movies/trending`);
+        if (!res.ok) throw new Error('Falha ao carregar catálogo');
+        const data = await res.json();
+        const movies = data.movies || [];
+
+        if (movies.length === 0) {
+          container.innerHTML = '<div class="loading-pulse">Nenhum filme em alta retornado pelo serviço gRPC.</div>';
+          return;
+        }
+
+        // Atualiza Hero com o primeiro filme se disponível
+        if (movies.length > 0) {
+          const first = movies[0];
+          heroMovie = first;
+          document.getElementById('hero-title').textContent = first.title;
+          document.getElementById('hero-synopsis').textContent = first.overview || '';
+          document.getElementById('hero-tmdb-score').textContent = first.tmdb_vote_average.toFixed(1);
+          document.getElementById('hero-criticbox-score').textContent = first.criticbox_rating > 0 ? first.criticbox_rating.toFixed(1) : '-';
+          document.getElementById('hero-review-count').textContent = first.criticbox_review_count || '0';
+          if (first.poster_url) document.getElementById('hero-poster-img').src = first.poster_url;
+          if (first.backdrop_url) document.getElementById('hero-backdrop-img').src = first.backdrop_url;
+          if (first.release_date) document.getElementById('hero-year-chip').textContent = first.release_date.substring(0, 4);
+        }
+
+        container.innerHTML = movies.slice(0, 10).map((m, idx) => createMovieCardHtml(m, idx + 1)).join('');
+      } catch (err) {
+        container.innerHTML = '<div class="loading-pulse">Serviço de Catálogo gRPC temporariamente indisponível.</div>';
+      }
+    }
+
+    // ----------------- Fetch Recent Reviews ----------------- //
+    async function loadRecentReviews() {
+      const container = document.getElementById('recent-reviews-grid');
+      try {
+        const res = await fetch(`${API_BASE}/reviews`);
+        if (!res.ok) throw new Error('Falha ao buscar reviews');
+        const reviews = await res.json();
+
+        if (!reviews || reviews.length === 0) {
+          container.innerHTML = `
+            <div style="grid-column: 1 / -1; padding: 40px; text-align: center; background: #0a0c11; border: 1px solid var(--gray-700);">
+              <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; color: var(--gray-400); margin-bottom: 12px;">
+                Nenhuma crítica cadastrada ainda no banco de dados.
+              </p>
+              <button class="nav-btn nav-btn-accent" onclick="openHeroReviewModal()">SEJA O PRIMEIRO A AVALIAR →</button>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = reviews.map(r => {
+          const initial = (r.user_id || 'U').substring(0, 1).toUpperCase();
+          const starsCount = Math.round(r.rating || 0);
+          let starsHtml = '';
+          for (let i = 1; i <= 5; i++) {
+            starsHtml += `<span class="review-star ${i <= starsCount ? '' : 'off'}">★</span>`;
+          }
+          const spoilerBadge = r.contains_spoilers
+            ? '<span style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #ff5555; border: 1px solid #ff5555; padding: 1px 5px; margin-left: 8px;">CONTÉM SPOILER</span>'
+            : '';
+
+          return `
+            <div class="review-card">
+              <div class="review-card-body" style="padding: 24px;">
+                <div class="review-card-header">
+                  <span class="review-card-movie">${r.movie_title || 'Filme #' + r.tmdb_id}</span>
+                  <span class="review-card-score-badge">${r.rating.toFixed(1)}</span>
+                </div>
+                <div class="review-card-stars">
+                  ${starsHtml} ${spoilerBadge}
+                </div>
+                <p class="review-card-text" style="${r.contains_spoilers ? 'filter: blur(5px); cursor: pointer; transition: filter 0.2s;' : ''}" ${r.contains_spoilers ? 'onclick="this.style.filter='none'" title="Clique para revelar o spoiler"' : ''}>
+                  ${r.comment || '<i>(Sem crítica em texto)</i>'}
+                </p>
+                <div class="review-card-user" style="margin-top: 14px;">
+                  <span class="review-card-avatar">${initial}</span>
+                  <span class="review-card-username">@${r.user_id}</span>
+                  <span class="review-card-date">${r.created_at || 'banco real'}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = '<div class="loading-pulse">Serviço de Reviews gRPC temporariamente indisponível.</div>';
+      }
+    }
+
+    // ----------------- Live Search ----------------- //
+    function handleSearchInput(e) {
+      const q = e.target.value.trim();
+      clearTimeout(searchDebounceTimer);
+
+      if (!q) {
+        clearSearch();
+        return;
+      }
+
+      searchDebounceTimer = setTimeout(() => {
+        executeSearch(q);
+      }, 350);
+    }
+
+    async function executeSearch(query) {
+      const sec = document.getElementById('search-section');
+      const title = document.getElementById('search-section-title');
+      const grid = document.getElementById('search-movies-grid');
+
+      sec.style.display = 'block';
+      title.textContent = `Resultados da Busca: "${query}"`;
+      grid.innerHTML = '<div class="loading-pulse">Pesquisando no catálogo TMDb via gRPC...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/movies?query=${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error('Erro na busca');
+        const data = await res.json();
+        const movies = data.movies || [];
+
+        if (movies.length === 0) {
+          grid.innerHTML = `<div class="loading-pulse">Nenhum resultado encontrado para "${query}".</div>`;
+          return;
+        }
+
+        grid.innerHTML = movies.map((m, idx) => createMovieCardHtml(m, idx + 1)).join('');
+        sec.scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        grid.innerHTML = '<div class="loading-pulse">Falha ao buscar filmes no catálogo gRPC.</div>';
+      }
+    }
+
+    function clearSearch() {
+      const sec = document.getElementById('search-section');
+      sec.style.display = 'none';
+      document.getElementById('nav-search-input').value = '';
+    }
+
+    // ----------------- Page Init ----------------- //
     window.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
       initStars('stars-modal', 'score-modal', 5.0);
+      loadTrendingMovies();
+      loadRecentReviews();
     });
   </script>
 </body>

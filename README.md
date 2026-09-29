@@ -1,221 +1,243 @@
-# 🎬 Criticbox SD - Catálogo e Avaliação Distribuída de Filmes
+# 🎬 Criticbox SD — Arquitetura Distribuída (Entrega 2)
 
-Aplicação desenvolvida para a disciplina de **Sistemas Distribuídos (SD)**. O projeto combina um servidor **gRPC** e uma **API REST com FastAPI** em Python, integrando com a API do **TMDb (The Movie Database)** e banco de dados **SQLite** para catálogo e avaliação de filmes em tempo real.
+Sistema distribuído de catálogo e avaliação de filmes desenvolvido para a disciplina de **Sistemas Distribuídos (SD)**. A solução implementa um ecossistema com **Frontend Web moderno (React + Vite)**, um **API Gateway centralizador (FastAPI)** com autenticação **JWT**, e **2 Microsserviços internos comunicando-se via gRPC (Protocol Buffers)** com persistência em **Banco de Dados Real (SQLite / MySQL)**.
+
+---
+
+## 🏛️ Visão Geral da Arquitetura Distribuída
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       Frontend (React / Vite)                   │
+│   Interface visual brutalista, autenticação JWT, busca & notas  │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │ HTTP / JSON (Bearer Token)
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│               API Gateway Centralizador (FastAPI :8000)         │
+│  - Borda única de entrada                                       │
+│  - Middleware de Autenticação JWT (401 se ausente/inválido)     │
+│  - Validação de Payloads JSON (400 Bad Request detalhado)       │
+│  - Tradução de Protocolos: HTTP/JSON ◄► gRPC/Protobuf binário   │
+└──────────────────┬─────────────────────────────┬────────────────┘
+                   │ gRPC / Protobuf             │ gRPC / Protobuf
+                   │ (Porta 50051)               │ (Porta 50052)
+                   ▼                             ▼
+┌──────────────────────────────┐ ┌────────────────────────────────┐
+│  Microsserviço de Catálogo   │ │  Microsserviço de Avaliações   │
+│     (MovieService :50051)    │ │    (ReviewService :50052)      │
+│ - Busca de Filmes            │ │ - Registro e Login de Usuários │
+│ - Filmes em Alta (Trending)  │ │ - Criação de Críticas (Notas)  │
+│ - Detalhes do Filme          │ │ - Cálculo de Médias do Filme   │
+│ - Integração com API TMDb    │ │ - Listagem Geral de Reviews    │
+└──────────────┬───────────────┘ └───────────────┬────────────────┘
+               │                                 │
+               └──── Chamada RPC Inter-serviço ──┘
+                     (Estatísticas de Reviews)
+                                 │
+                                 ▼
+               ┌───────────────────────────────────┐
+               │    Banco de Dados Real (SQLite)   │
+               │   Tabelas: users e reviews        │
+               │   (Sem mocks ou dados em memória) │
+               └───────────────────────────────────┘
+```
+
+---
+
+## 📋 Requisitos Atendidos
+
+| Requisito | Implementação no Criticbox |
+|---|---|
+| **Frontend** | Interface completa em **React** (Vite) no diretório `frontend/` e protótipo standalone `criticbox_home.html`, com tema Dark Brutalista, seletor de estrelas (0.5 a 5.0), busca dinâmica com debounce e modal de autenticação. Comunica-se **exclusivamente com o API Gateway**. |
+| **API Gateway** | Desenvolvido em **FastAPI**, escutando em `http://localhost:8000`. Recebe HTTP/JSON, valida schemas, autentica JWT e orquestra chamadas gRPC para os microsserviços internos. |
+| **Backend com 2 Microsserviços** | 1) **MovieService** (porta 50051) e 2) **ReviewService** (porta 50052). Ambos expõem serviços gRPC definidos via Protocol Buffers (`movie.proto` e `review.proto`). |
+| **Comunicação Inter-serviços** | O `MovieService` consulta o `ReviewService` via gRPC (`GetMovieStats`) para agregar a média Criticbox às listagens de filmes em tempo real. |
+| **Banco de Dados Real** | Persistência real em **SQLite** (`criticbox.db`) com tabelas relacionais `users` e `reviews` (suporte a MySQL configurável via `.env`). Zero mocks ou dados estáticos. |
+| **Validação no Gateway** | Schemas Pydantic rigorosos. Retorno semântico explícito de `400 Bad Request` com lista detalhada de campos faltantes/inválidos, `201 Created` para inserções e `200 OK` para consultas. |
+| **Segurança (JWT)** | Middleware/dependência de segurança que valida `Authorization: Bearer <token>`. Requisições sem token válido são imediatamente barradas na borda com `401 Unauthorized`. |
+| **Tradução de Protocolo** | O Gateway desserializa JSON, valida, serializa em mensagens binárias Protobuf, invoca o stub gRPC e converte a resposta binária em JSON para o cliente. |
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Linguagem:** Python 3.10+
-- **Gerenciador de Dependências:** [Poetry](https://python-poetry.org/)
-- **API REST (Aulas 5 e 6):** [FastAPI](https://fastapi.tiangolo.com/), [Pydantic v2](https://docs.pydantic.dev/) & [Uvicorn](https://www.uvicorn.org/)
-- **Comunicação RPC:** [gRPC](https://grpc.io/) & [Protocol Buffers (proto3)](https://protobuf.dev/)
-- **Banco de Dados:** SQLite
-- **API Externa:** [TMDb API](https://www.themoviedb.org/documentation/api) (`tmdbsimple`)
-- **Linters & Qualidade:** Ruff
+- **Linguagem Backend:** Python 3.10+
+- **Frontend:** React 19, Vite, CSS Vanilla Moderno
+- **API Gateway:** FastAPI, Uvicorn, Pydantic v2
+- **Segurança:** PyJWT, PBKDF2-HMAC-SHA256 (hashing seguro de senhas)
+- **RPC & Serialização:** gRPC, Protocol Buffers (`proto3`)
+- **Banco de Dados:** SQLite (local) / MySQL (Cloud SQL)
+- **API Externa de Catálogo:** TMDb API (`tmdbsimple`)
+- **Gerenciador de Dependências:** Poetry
 
 ---
 
-## 📁 Estrutura do Projeto
+## 📁 Estrutura de Arquivos
 
 ```text
 criticbox-sd/
 ├── criticbox_sd/
-│   ├── api/                   # Módulo da API REST (FastAPI)
-│   │   ├── __init__.py
-│   │   ├── main.py            # Servidor FastAPI, rotas e handlers de validação
-│   │   └── schemas.py         # Modelos e validações com Pydantic (DTOs)
-│   ├── client/
-│   │   └── client.py          # Cliente gRPC interativo (CLI)
-│   ├── generated/             # Arquivos Python gerados pelo protoc (stubs)
-│   ├── proto/
-│   │   └── criticbox.proto    # Definições das mensagens e serviços gRPC
+│   ├── api/
+│   │   ├── auth.py              # Utilitários de JWT e dependência de autenticação (401)
+│   │   ├── grpc_clients.py      # Gerenciador de stubs gRPC e tradução HTTP <-> Protobuf
+│   │   ├── main.py              # API Gateway FastAPI (rotas públicas e protegidas)
+│   │   └── schemas.py           # DTOs e validações semânticas Pydantic (400)
+│   ├── generated/               # Stubs Python gerados pelo protoc
+│   │   ├── movie_pb2.py
+│   │   ├── movie_pb2_grpc.py
+│   │   ├── review_pb2.py
+│   │   └── review_pb2_grpc.py
+│   ├── proto/                   # Contratos de interface IDL (Protocol Buffers)
+│   │   ├── movie.proto          # Serviço de filmes e catálogo
+│   │   └── review.proto         # Serviço de reviews e autenticação de usuários
 │   ├── scripts/
-│   │   └── compile_proto.py   # Script para compilar o arquivo .proto
-│   └── server/
-│       ├── database.py        # Camada de persistência SQLite (criticbox.db)
-│       ├── server.py          # Servidor gRPC principal
-│       └── tmdb_service.py    # Cliente de integração com a API do TMDb
+│   │   └── compile_proto.py     # Compilador dos arquivos .proto
+│   ├── server/
+│   │   ├── database.py          # Camada de persistência real SQLite/MySQL
+│   │   ├── movie_service.py     # Microsserviço gRPC de Catálogo (porta 50051)
+│   │   ├── review_service.py    # Microsserviço gRPC de Reviews e Usuários (porta 50052)
+│   │   └── tmdb_service.py      # Integração externa TMDb
+│   └── run_all.py               # Orquestrador unificado para inicialização local
+├── frontend/                    # Aplicação Web SPA (React + Vite)
+│   ├── src/
+│   │   ├── App.jsx              # Interface completa (Autenticação, Busca, Reviews)
+│   │   ├── index.css            # Sistema de design dark brutalista
+│   │   └── main.jsx
+│   ├── package.json
+│   └── vite.config.js           # Proxy reverso para o API Gateway
 ├── tests/
-│   ├── test_api.py            # Testes automatizados da API REST (FastAPI)
-│   └── test_reviews.py        # Testes do serviço gRPC e banco
-├── .env.example               # Template de variáveis de ambiente
-├── .gitignore                 # Arquivos ignorados pelo Git
-├── pyproject.toml             # Configurações do Poetry e dependências
-└── README.md                  # Documentação do projeto
+│   ├── test_api.py              # Testes automatizados do Gateway, JWT e gRPC
+│   └── test_reviews.py          # Testes unitários de persistência e serviços
+├── criticbox_home.html          # Protótipo visual brutalista integrado
+├── .env.example                 # Exemplo de configuração
+├── pyproject.toml               # Dependências Poetry e scripts
+└── README.md
 ```
 
 ---
 
-## ⚙️ Pré-requisitos
+## 🚀 Como Executar
 
-- **Python 3.10 ou superior** instalado na máquina.
-- **Poetry** instalado (`pip install poetry` ou via script oficial).
-- Uma chave de API do **TMDb** (obtenha gratuitamente em [themoviedb.org](https://www.themoviedb.org/settings/api)).
+### 1. Pré-requisitos
+- Python 3.10+
+- Poetry (`pip install poetry`)
+- Node.js 18+ e npm
 
----
-
-## 🚀 Instalação e Configuração
-
-### 1. Clonar o Repositório e Instalar Dependências
+### 2. Instalação das Dependências
 
 ```bash
-# Entrar no diretório do projeto
-cd criticbox-sd
-
-# Instalar todas as dependências via Poetry
+# Na raiz do projeto (backend Python):
 poetry install
+
+# No diretório do frontend (React):
+cd frontend
+npm install
+cd ..
 ```
 
-### 2. Configurar as Variáveis de Ambiente
+### 3. Configuração do `.env`
 
-Crie um arquivo `.env` na raiz do projeto com base no `.env.example`:
-
+Copie o `.env.example` para `.env` se ainda não tiver feito:
 ```bash
-# No Linux/macOS
 cp .env.example .env
-
-# No Windows (PowerShell)
-Copy-Item .env.example .env
 ```
-
-Edite o arquivo `.env` e insira sua chave da API do TMDb:
-
-```env
-TMDB_API_KEY=cole_sua_chave_aqui
-GRPC_SERVER_HOST=localhost
-GRPC_SERVER_PORT=50051
-API_PORT=8000
-```
+*(Opcional: insira sua chave TMDb em `TMDB_API_KEY`, ou utilize a chave de demonstração já pré-configurada).*
 
 ---
 
-## 🌐 API REST com FastAPI (Aulas 5 e 6 de SD)
+### 4. Executando a Aplicação
 
-A API REST disponibiliza endpoints HTTP para registro e consulta de reviews com validação de campos (análoga às validações do Bean Validation do Spring na Aula 6) e persistência no banco SQLite.
+#### Opção A: Executar Tudo com Comando Único (Recomendado)
 
-### Iniciar o Servidor FastAPI
-
-```bash
-# Opção 1: Atalho configurado no Poetry
-poetry run api
-
-# Opção 2: Direto via Uvicorn com hot-reload
-poetry run uvicorn criticbox_sd.api.main:app --reload --port 8000
-```
-
-> A aplicação iniciará na porta `8000`. A documentação interativa Swagger estará disponível em [http://localhost:8000/docs](http://localhost:8000/docs).
-
-### Rotas e Exemplos de Uso com `curl`
-
-#### 1. Buscar Filmes no TMDb (`GET /movies` -> `200 OK`)
-
-Realiza a busca de filmes por termo no TMDb com paginação e calcula a média de notas e total de reviews registradas no Criticbox:
+O script `run_all.py` inicia simultaneamente os dois microsserviços gRPC e o API Gateway:
 
 ```bash
-curl -i -X GET "http://localhost:8000/movies?query=Clube%20da%20Luta&page=1"
+poetry run start
 ```
 
-#### 2. Criar Review com Sucesso (`POST /reviews` -> `201 Created`)
+Saída no console:
+```text
+======================================================================
+INICIANDO ECOSSISTEMA DISTRIBUÍDO CRITICBOX (ENTREGA 2)
+======================================================================
+✓ [gRPC] ReviewService ativo na porta 50052
+✓ [gRPC] MovieService ativo na porta 50051
+✓ [REST] Iniciando API Gateway em http://0.0.0.0:8000
+  -> Interface Web (Frontend): http://localhost:8000/app
+  -> Documentação Swagger:   http://localhost:8000/docs
+======================================================================
+```
 
+Em seguida, em outro terminal, inicie o Frontend React em modo de desenvolvimento:
 ```bash
-curl -i -X POST http://localhost:8000/reviews \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tmdb_id": 550,
-    "user_id": "marcodev",
-    "rating": 4.5,
-    "comment": "Clube da Luta e sensacional!",
-    "contains_spoilers": false
-  }'
+cd frontend
+npm run dev
 ```
-
-**Resposta HTTP 201:**
-```json
-{
-  "review_id": "e0a17f65-8db8-406b-a2c3-9b19dfb4a4cb",
-  "tmdb_id": 550,
-  "user_id": "marcodev",
-  "rating": 4.5,
-  "comment": "Clube da Luta e sensacional!",
-  "contains_spoilers": false,
-  "created_at": "2026-09-24 22:15:21",
-  "success": true,
-  "message": "Review registrada com sucesso!"
-}
-```
-
-#### 2. Testar Validação de Erro (`POST /reviews` -> `400 Bad Request`)
-
-Simulando campos inválidos (nota fora do intervalo permitido de 0.5 a 5.0 e `user_id` em branco):
-
-```bash
-curl -i -X POST http://localhost:8000/reviews \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tmdb_id": 550,
-    "user_id": "   ",
-    "rating": 6.5,
-    "comment": "Teste invalido"
-  }'
-```
-
-**Resposta HTTP 400 (formato amigável e em português):**
-```json
-{
-  "mensagem": "Dados inválidos",
-  "erros": [
-    {
-      "campo": "user_id",
-      "mensagem": "O nome de usuário não pode estar em branco."
-    },
-    {
-      "campo": "rating",
-      "mensagem": "A nota deve estar entre 0.5 e 5.0 estrelas."
-    }
-  ]
-}
-```
-
-#### 3. Listar Todas as Reviews (`GET /reviews` -> `200 OK`)
-
-```bash
-curl -i -X GET http://localhost:8000/reviews
-```
+Acesse a aplicação no navegador em: **`http://localhost:5173`** (ou acesse diretamente pelo Gateway em `http://localhost:8000/app`).
 
 ---
 
-## 📡 Comunicação Cliente-Servidor gRPC
+#### Opção B: Executar os Serviços Separadamente
 
-Para testar o microsserviço gRPC:
+Se desejar acompanhar os logs de cada microsserviço em terminais isolados:
 
-### Terminal 1: Iniciar Servidor gRPC
+1. **Terminal 1 — Microsserviço de Reviews e Usuários (gRPC 50052):**
+   ```bash
+   poetry run review-service
+   ```
 
-```bash
-poetry run python criticbox_sd/server/server.py
-```
-> O servidor iniciará escutando em `0.0.0.0:50051`.
+2. **Terminal 2 — Microsserviço de Filmes e Catálogo (gRPC 50051):**
+   ```bash
+   poetry run movie-service
+   ```
 
-### Terminal 2: Iniciar Cliente CLI gRPC
+3. **Terminal 3 — API Gateway FastAPI (HTTP 8000):**
+   ```bash
+   poetry run api
+   ```
 
-```bash
-poetry run python criticbox_sd/client/client.py
-```
-
-### Serviços gRPC Disponíveis (`criticbox.proto`)
-
-| RPC | Descrição |
-| :--- | :--- |
-| `SearchMovies` | Realiza busca paginada de filmes por título no TMDb. |
-| `CreateReview` | Registra uma nova crítica/avaliação no banco SQLite. |
-| `GetAllReviews` | Retorna todas as reviews cadastradas com título do filme associado. |
+4. **Terminal 4 — Frontend React:**
+   ```bash
+   cd frontend
+   npm run dev
+   ```
 
 ---
 
 ## 🧪 Testes Automatizados
 
-Para executar todos os testes da aplicação (API REST e gRPC):
+O projeto conta com uma suíte abrangente de testes unitários e de integração que validam:
+- Autenticação e ciclo de vida do token JWT
+- Rejeição imediata na borda (`401 Unauthorized`) para requisições sem token válido
+- Validação estrita de payload (`400 Bad Request`) para notas fora do intervalo, campos obrigatórios em branco ou tipos inválidos
+- Delegação de requisições gRPC através do Gateway
+- Persistência e integridade das avaliações no banco real SQLite
+- Comunicação inter-serviços via Protocol Buffers
+
+Para rodar todos os testes:
 
 ```bash
-poetry run python -m unittest discover -s tests
+poetry run python -m unittest discover tests
 ```
+
+---
+
+## 🔐 Endpoints do API Gateway
+
+### Autenticação (Públicos)
+- `POST /auth/register` — Cadastra um novo usuário no banco via gRPC e retorna token JWT (`201 Created`).
+- `POST /auth/login` — Autentica as credenciais do usuário via gRPC e retorna token JWT (`200 OK`).
+
+### Perfil e Avaliações (Protegidos por JWT)
+- `GET /auth/me` — Retorna dados do usuário autenticado (`Authorization: Bearer <token>`).
+- `POST /reviews` — Registra uma nova crítica no banco real através do `ReviewService` gRPC. Exige header `Authorization: Bearer <token>`. Retorna `201 Created`.
+
+### Catálogo e Consultas (Públicos)
+- `GET /movies?query={termo}&page={n}` — Busca filmes no TMDb via `MovieService` gRPC (`200 OK`).
+- `GET /movies/trending` — Retorna filmes em alta na semana via `MovieService` gRPC (`200 OK`).
+- `GET /movies/{tmdb_id}` — Detalhes completos do filme via `MovieService` gRPC (`200 OK`).
+- `GET /reviews` — Lista todas as críticas salvas no banco real via `ReviewService` gRPC (`200 OK`).
+- `GET /reviews/movie/{tmdb_id}` — Lista críticas de um filme específico (`200 OK`).
+
+Documentação Swagger interativa disponível em: **`http://localhost:8000/docs`**.
