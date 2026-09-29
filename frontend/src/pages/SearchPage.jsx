@@ -3,6 +3,21 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, X, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiFetch } from '../api/client';
 
+const POPULAR_GENRES = [
+  { id: 28, name: 'Ação' },
+  { id: 12, name: 'Aventura' },
+  { id: 16, name: 'Animação' },
+  { id: 35, name: 'Comédia' },
+  { id: 80, name: 'Crime' },
+  { id: 99, name: 'Documentário' },
+  { id: 18, name: 'Drama' },
+  { id: 878, name: 'Ficção Científica' },
+  { id: 27, name: 'Terror' },
+  { id: 10749, name: 'Romance' },
+  { id: 53, name: 'Suspense' },
+  { id: 14, name: 'Fantasia' },
+];
+
 export default function SearchPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -67,6 +82,11 @@ export default function SearchPage() {
     setTotalResults(0);
   };
 
+  const selectGenre = (g) => {
+    setSearchTerm('');
+    setSearchParams({ genre_id: g.id, genre_name: g.name, page: 1 });
+  };
+
   const goToPage = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
     if (genreId) {
@@ -121,22 +141,48 @@ export default function SearchPage() {
         )}
         {genreId && !queryParam && (
           <p style={{ marginTop: '12px', fontFamily: "'JetBrains Mono', monospace", fontSize: '0.75rem', color: 'var(--gray-400)' }}>
-            Explorando gênero <strong style={{ color: 'var(--accent)' }}>"{genreName}"</strong> • Página {pageParam} de {totalPages}
+            Explorando gênero <strong style={{ color: 'var(--accent)' }}>"{genreName}"</strong> • {totalResults} títulos no catálogo (Página {pageParam} de {totalPages})
           </p>
         )}
+
+        {/* EXPLORAR POR GÊNERO ATALHOS */}
+        <div className="search-genre-chips" style={{ marginTop: '16px' }}>
+          {POPULAR_GENRES.map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              className={`search-genre-chip ${String(genreId) === String(g.id) ? 'active' : ''}`}
+              onClick={() => selectGenre(g)}
+            >
+              {g.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="section">
         {loading ? (
           <div className="loading-pulse">Buscando títulos no catálogo...</div>
-        ) : (queryParam || genreId) && results.length === 0 ? (
-          <div style={{ padding: '60px', textAlign: 'center', background: '#0a0c11', border: '1px solid var(--gray-700)' }}>
-            <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.3rem', color: '#fff', marginBottom: '8px' }}>
+        ) : !queryParam && !genreId ? (
+          <div className="detail-reviews-empty">
+            <h3 className="detail-reviews-empty-title">
+              Navegue pelo Catálogo
+            </h3>
+            <p className="detail-reviews-empty-desc">
+              Selecione um dos gêneros acima ou digite o nome de uma produção no campo de busca para começar a explorar.
+            </p>
+          </div>
+        ) : results.length === 0 ? (
+          <div className="detail-reviews-empty">
+            <h3 className="detail-reviews-empty-title">
               Nenhum título encontrado
             </h3>
-            <p style={{ color: 'var(--gray-400)', fontSize: '0.88rem' }}>
-              Tente buscar por termos mais genéricos ou selecione outro gênero.
+            <p className="detail-reviews-empty-desc">
+              Tente buscar por termos mais genéricos ou selecione outro gênero no catálogo.
             </p>
+            <button className="nav-btn nav-btn-ghost" onClick={clearFilters}>
+              LIMPAR FILTROS
+            </button>
           </div>
         ) : (
           <>
@@ -187,7 +233,7 @@ export default function SearchPage() {
                   Anterior
                 </button>
                 <span className="pagination-info">
-                  Página <strong>{pageParam}</strong> de <strong>{totalPages}</strong>
+                  PÁGINA <strong>{pageParam < 10 ? `0${pageParam}` : pageParam}</strong> // <strong>{totalPages < 10 ? `0${totalPages}` : totalPages}</strong>
                 </span>
                 <button
                   className="pagination-btn"

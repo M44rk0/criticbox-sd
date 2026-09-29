@@ -1029,34 +1029,14 @@ export default function MovieDetailPage() {
         </div>
 
         {reviews.length === 0 ? (
-          <div
-            style={{
-              padding: '60px 40px',
-              textAlign: 'center',
-              background: '#0a0c11',
-              border: '1px solid var(--gray-700)',
-            }}
-          >
-            <h3
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: '1.25rem',
-                color: '#fff',
-                marginBottom: '8px',
-              }}
-            >
+          <div className="detail-reviews-empty">
+            <h3 className="detail-reviews-empty-title">
               {unreleased ? 'Título aguardando lançamento' : 'Nenhuma avaliação para este título ainda'}
             </h3>
-            <p
-              style={{
-                color: 'var(--gray-400)',
-                fontSize: '0.88rem',
-                marginBottom: unreleased ? '0' : '20px',
-              }}
-            >
+            <p className="detail-reviews-empty-desc">
               {unreleased
                 ? `As avaliações serão liberadas a partir de ${formatReleaseDate(movie.release_date)}.`
-                : 'Seja o primeiro a compartilhar sua opinião com a comunidade!'}
+                : 'Seja o primeiro a compartilhar sua análise crítica com a comunidade.'}
             </p>
             {!unreleased && (
               <button className="nav-btn nav-btn-accent" onClick={() => openReviewModal(movie, loadData)}>
