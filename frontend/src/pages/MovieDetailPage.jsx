@@ -686,19 +686,18 @@ export default function MovieDetailPage() {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="series-special-still" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Tv size={24} color="var(--gray-600)" />
+                      <div className="series-special-still empty">
+                        <Tv size={22} color="var(--gray-600)" />
                       </div>
                     )}
                     <div className="series-special-info">
                       <span className="series-special-tag">ÚLTIMO EPISÓDIO EXIBIDO</span>
-                      <span className="series-special-title">
-                        T{movie.last_episode_to_air.season_number}E{movie.last_episode_to_air.episode_number}:{' '}
-                        {movie.last_episode_to_air.name}
-                      </span>
+                      <h4 className="series-special-title">
+                        T{movie.last_episode_to_air.season_number}E{movie.last_episode_to_air.episode_number} // {movie.last_episode_to_air.name}
+                      </h4>
                       <span className="series-special-date">
                         {formatReleaseDate(movie.last_episode_to_air.air_date)}
-                        {movie.last_episode_to_air.vote_average > 0 && ` • ★ ${movie.last_episode_to_air.vote_average}`}
+                        {movie.last_episode_to_air.vote_average > 0 && ` • ★ ${movie.last_episode_to_air.vote_average.toFixed(1)}`}
                       </span>
                     </div>
                   </div>
@@ -714,18 +713,15 @@ export default function MovieDetailPage() {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="series-special-still" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Calendar size={24} color="var(--accent)" />
+                      <div className="series-special-still empty">
+                        <Calendar size={22} color="var(--accent)" />
                       </div>
                     )}
                     <div className="series-special-info">
-                      <span className="series-special-tag" style={{ color: 'var(--accent)' }}>
-                        PRÓXIMO EPISÓDIO A ESTREAR
-                      </span>
-                      <span className="series-special-title">
-                        T{movie.next_episode_to_air.season_number}E{movie.next_episode_to_air.episode_number}:{' '}
-                        {movie.next_episode_to_air.name}
-                      </span>
+                      <span className="series-special-tag accent">PRÓXIMO EPISÓDIO A ESTREAR</span>
+                      <h4 className="series-special-title">
+                        T{movie.next_episode_to_air.season_number}E{movie.next_episode_to_air.episode_number} // {movie.next_episode_to_air.name}
+                      </h4>
                       <span className="series-special-date">
                         Estreia em {formatReleaseDate(movie.next_episode_to_air.air_date)}
                       </span>
@@ -735,15 +731,18 @@ export default function MovieDetailPage() {
               </div>
             )}
 
-            {/* SELETOR DE TEMPORADAS EM PILLS */}
+            {/* SELETOR DE TEMPORADAS BRUTALISTA (SEM SCROLLBAR HORIZONTAL) */}
             <div className="season-selector-bar">
               {movie.seasons.map((s) => (
                 <button
                   key={s.season_number}
+                  type="button"
                   className={`season-selector-btn ${selectedSeason === s.season_number ? 'active' : ''}`}
                   onClick={() => handleSelectSeason(s.season_number)}
                 >
-                  {s.name || `Temporada ${s.season_number}`} ({s.episode_count} eps)
+                  <span className="season-btn-code">T{s.season_number < 10 ? `0${s.season_number}` : s.season_number}</span>
+                  <span className="season-btn-title">{s.name || `Temporada ${s.season_number}`}</span>
+                  <span className="season-btn-eps">{s.episode_count} EPS</span>
                 </button>
               ))}
             </div>
@@ -766,53 +765,55 @@ export default function MovieDetailPage() {
                         </div>
                       )}
                       <span className="episode-number-badge">
-                        T{selectedSeason < 10 ? `0${selectedSeason}` : selectedSeason}E
-                        {ep.episode_number < 10 ? `0${ep.episode_number}` : ep.episode_number}
+                        T{selectedSeason < 10 ? `0${selectedSeason}` : selectedSeason}E{ep.episode_number < 10 ? `0${ep.episode_number}` : ep.episode_number}
                       </span>
                     </div>
 
                     <div className="episode-body">
-                      <div className="episode-header-row">
-                        <h4 className="episode-title">{ep.name}</h4>
-                        <div className="episode-meta-row">
-                          {ep.vote_average > 0 && (
-                            <span className="episode-rating-badge">
-                              <Star size={13} fill="currentColor" />
-                              {ep.vote_average.toFixed(1)}
-                            </span>
-                          )}
-                          {ep.air_date && <span>{formatReleaseDate(ep.air_date)}</span>}
-                          {ep.runtime > 0 && <span>{ep.runtime} min</span>}
+                      <div>
+                        <div className="episode-header-row">
+                          <div className="episode-title-group">
+                            <span className="episode-num-prefix">{ep.episode_number < 10 ? `0${ep.episode_number}` : ep.episode_number}.</span>
+                            <h4 className="episode-title">{ep.name}</h4>
+                          </div>
+                          <div className="episode-meta-row">
+                            {ep.vote_average > 0 && (
+                              <span className="episode-rating-badge">
+                                <Star size={12} fill="currentColor" />
+                                {ep.vote_average.toFixed(1)}
+                              </span>
+                            )}
+                            {ep.runtime > 0 && <span className="episode-runtime-chip">{ep.runtime} MIN</span>}
+                            {ep.air_date && <span className="episode-date-chip">{formatReleaseDate(ep.air_date)}</span>}
+                          </div>
                         </div>
+
+                        <p className="episode-overview">
+                          {ep.overview || 'Sinopse não disponível para este episódio.'}
+                        </p>
                       </div>
 
-                      <p className="episode-overview">
-                        {ep.overview || 'Sinopse não disponível para este episódio.'}
-                      </p>
+                      <div className="episode-footer-row">
+                        {(ep.directors?.length > 0 || ep.writers?.length > 0) ? (
+                          <div className="episode-crew">
+                            {ep.directors?.length > 0 && <span>DIR: {ep.directors.join(', ')} </span>}
+                            {ep.writers?.length > 0 && <span>// ROT: {ep.writers.join(', ')}</span>}
+                          </div>
+                        ) : <div />}
 
-                      {/* Direção e Roteiro do Episódio */}
-                      {(ep.directors?.length > 0 || ep.writers?.length > 0) && (
-                        <div className="episode-crew">
-                          {ep.directors?.length > 0 && <span>Dir: {ep.directors.join(', ')} </span>}
-                          {ep.writers?.length > 0 && <span>• Rot: {ep.writers.join(', ')}</span>}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="episode-actions">
-                      <button
-                        className="nav-btn nav-btn-accent"
-                        style={{ padding: '6px 12px', fontSize: '0.72rem' }}
-                        onClick={() =>
-                          openReviewModal(movie, loadData, {
-                            season: selectedSeason,
-                            episode: ep.episode_number,
-                          })
-                        }
-                      >
-                        <Star size={12} fill="currentColor" style={{ marginRight: '4px' }} />
-                        AVALIAR EPISÓDIO
-                      </button>
+                        <button
+                          className="nav-btn nav-btn-accent episode-eval-btn"
+                          onClick={() =>
+                            openReviewModal(movie, loadData, {
+                              season: selectedSeason,
+                              episode: ep.episode_number,
+                            })
+                          }
+                        >
+                          <Star size={12} fill="currentColor" style={{ marginRight: '6px' }} />
+                          AVALIAR EPISÓDIO
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
