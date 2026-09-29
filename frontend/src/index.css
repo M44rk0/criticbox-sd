@@ -2183,3 +2183,896 @@ body {
   color: var(--gray-300);
 }
 
+/* ============================================================
+   EXPANDED TMDB MOVIE DETAIL STYLES
+   ============================================================ */
+
+/* Classificação Indicativa (DJCTQ/ClassInd Brasil) */
+.classind-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.classind-l, .classind-livre {
+  background: #00a54f;
+  color: #ffffff;
+}
+
+.classind-10 {
+  background: #00a4e3;
+  color: #ffffff;
+}
+
+.classind-12 {
+  background: #f7c900;
+  color: #000000;
+}
+
+.classind-14 {
+  background: #f58220;
+  color: #ffffff;
+}
+
+.classind-16 {
+  background: #ef4123;
+  color: #ffffff;
+}
+
+.classind-18 {
+  background: #000000;
+  color: #ffffff;
+  border-color: #ef4123;
+}
+
+
+/* Original Title & Badges */
+.movie-original-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  margin-top: -8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.movie-status-badge {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  text-transform: uppercase;
+}
+
+/* External IDs & Links */
+.movie-external-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.movie-ext-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid var(--gray-700);
+  background: var(--bg-card);
+  color: var(--gray-300);
+  transition: all 0.15s;
+}
+
+.movie-ext-badge:hover {
+  border-color: var(--white);
+  color: var(--white);
+  background: var(--bg-elevated);
+}
+
+.movie-ext-badge.imdb {
+  background: #f5c518;
+  color: #000;
+  border-color: #f5c518;
+  font-weight: 800;
+}
+
+.movie-ext-badge.imdb:hover {
+  background: #e3b615;
+  border-color: #e3b615;
+  color: #000;
+}
+
+/* Hero Quick Streaming Preview */
+.hero-streaming-preview {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.hero-streaming-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--gray-400);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-streaming-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.hero-streaming-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid var(--gray-700);
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.hero-streaming-logo-img:hover {
+  transform: scale(1.08);
+  border-color: var(--accent);
+}
+
+.hero-streaming-more-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-streaming-more-btn:hover {
+  text-decoration: underline;
+}
+
+.hero-streaming-overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+}
+
+/* SECTION ONDE ASSISTIR NO BRASIL */
+.watch-providers-container {
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.watch-providers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.watch-providers-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.watch-provider-tab {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: 1px solid var(--gray-700);
+  background: transparent;
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.watch-provider-tab:hover {
+  color: var(--white);
+  border-color: var(--white);
+}
+
+.watch-provider-tab.active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  font-weight: 800;
+}
+
+.watch-providers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.watch-provider-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-body);
+  border: 1px solid var(--gray-700);
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.watch-provider-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.watch-provider-card img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border: 1px solid var(--gray-700);
+  flex-shrink: 0;
+}
+
+.watch-provider-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.watch-provider-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.watch-provider-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.watch-providers-empty {
+  padding: 24px;
+  text-align: center;
+  background: var(--bg-body);
+  border: 1px dashed var(--gray-700);
+  color: var(--gray-400);
+  font-size: 0.85rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* FICHA TÉCNICA & MERCADO (BENTO GRID) */
+.bento-production-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.bento-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 0.15s;
+}
+
+.bento-card:hover {
+  border-color: var(--white);
+}
+
+.bento-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-bottom: 1px solid var(--gray-700);
+  padding-bottom: 10px;
+}
+
+.bento-data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+
+.bento-data-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+
+.bento-data-value {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--white);
+  text-align: right;
+  word-break: break-word;
+}
+
+.bento-data-value.highlight-gold {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.bento-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.bento-chip {
+  background: var(--bg-body);
+  border: 1px solid var(--gray-700);
+  padding: 3px 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  color: var(--gray-300);
+}
+
+
+/* ESTRUTURA DE SÉRIES (TEMPORADAS & EPISÓDIOS) */
+.series-guide-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.series-special-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.series-special-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.series-special-card.next {
+  border-color: var(--accent-border);
+  background: rgba(255, 153, 0, 0.04);
+}
+
+.series-special-still {
+  width: 96px;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border: 1px solid var(--gray-700);
+  flex-shrink: 0;
+  background: #000;
+}
+
+.series-special-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.series-special-tag {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.series-special-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.series-special-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--gray-400);
+}
+
+.season-selector-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.season-selector-btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  color: var(--gray-300);
+  border: 1px solid var(--gray-700);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.season-selector-btn:hover {
+  color: var(--white);
+  border-color: var(--white);
+}
+
+.season-selector-btn.active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  font-weight: 800;
+}
+
+.episodes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.episode-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 200px 1fr auto;
+  gap: 20px;
+  align-items: start;
+  transition: border-color 0.15s;
+}
+
+.episode-card:hover {
+  border-color: var(--gray-500);
+}
+
+@media (max-width: 768px) {
+  .episode-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+.episode-still-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+  border: 1px solid var(--gray-700);
+  overflow: hidden;
+}
+
+.episode-still-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.episode-still-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-600);
+}
+
+.episode-number-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid var(--gray-700);
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+}
+
+.episode-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.episode-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.episode-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.episode-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--gray-400);
+}
+
+.episode-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.episode-overview {
+  font-size: 0.85rem;
+  color: var(--gray-300);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.episode-crew {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--gray-400);
+  margin-top: 4px;
+}
+
+.episode-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* CONTROLES DE CARROSSEL */
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.carousel-ctrl-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.carousel-ctrl-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg-body);
+}
+
+.carousel-ctrl-btn:active {
+  transform: scale(0.95);
+}
+
+/* RECOMENDAÇÕES CARROSSEL */
+.recommendations-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.recommendations-carousel {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 12px;
+  width: 100%;
+}
+
+.recommendations-carousel::-webkit-scrollbar {
+  height: 5px;
+}
+
+.recommendations-carousel::-webkit-scrollbar-track {
+  background: var(--bg-card);
+}
+
+.recommendations-carousel::-webkit-scrollbar-thumb {
+  background: var(--gray-700);
+}
+
+.recommendations-carousel::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+.rec-card {
+  min-width: 160px;
+  max-width: 160px;
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.rec-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+}
+
+.rec-poster {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  background: #090b10;
+  display: block;
+}
+
+.rec-info {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rec-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--gray-400);
+}
+
+/* ============================================================
+   TABBED SECTION: ELENCO | FICHA TÉCNICA | MERCADO
+   ============================================================ */
+.detail-info-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--gray-700);
+  margin-bottom: 0;
+}
+
+.detail-info-tab {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gray-400);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 14px 24px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: -2px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.detail-info-tab:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.detail-info-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.info-tab-content {
+  padding-top: 24px;
+  animation: fadeInTab 0.2s ease-out;
+}
+
+@keyframes fadeInTab {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* CAST SHOW MORE / LESS BUTTON */
+.cast-show-more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 20px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.15s;
+}
+
+.cast-show-more-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* ============================================================
+   FICHA TÉCNICA & MERCADO: LAYOUT SIMPLES, CLEAN E ELEGANTE
+   ============================================================ */
+.simple-specs-list {
+  display: flex;
+  flex-direction: column;
+  max-width: 860px;
+  padding: 8px 0;
+}
+
+.simple-spec-row {
+  display: flex;
+  align-items: baseline;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--gray-700);
+  gap: 24px;
+}
+
+.simple-spec-row:last-child {
+  border-bottom: none;
+}
+
+.simple-spec-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-400);
+  width: 170px;
+  flex-shrink: 0;
+}
+
+.simple-spec-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--white);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.simple-streaming-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.simple-streaming-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--gray-200);
+  transition: border-color 0.15s;
+}
+
+.simple-streaming-badge:hover {
+  border-color: var(--accent);
+  color: var(--white);
+}
+
+.simple-streaming-badge img {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+@media (max-width: 640px) {
+  .detail-info-tabs {
+    overflow-x: auto;
+  }
+
+  .detail-info-tab {
+    padding: 12px 16px;
+    font-size: 0.75rem;
+  }
+
+  .simple-spec-row {
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 0;
+  }
+
+  .simple-spec-label {
+    width: 100%;
+  }
+}
+
+

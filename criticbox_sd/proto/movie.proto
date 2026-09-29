@@ -62,6 +62,33 @@ message CastMember {
   string profile_url = 3;
 }
 
+
+message NetworkInfo {
+  string name = 1;
+  string logo_url = 2;
+}
+
+message ProviderItem {
+  string provider_name = 1;
+  string logo_url = 2;
+}
+
+message WatchProviders {
+  repeated ProviderItem flatrate = 1;
+  repeated ProviderItem rent = 2;
+  repeated ProviderItem buy = 3;
+}
+
+message EpisodeSummary {
+  int32 episode_number = 1;
+  int32 season_number = 2;
+  string name = 3;
+  string air_date = 4;
+  string overview = 5;
+  string still_url = 6;
+  float vote_average = 7;
+}
+
 message MovieDetailsRequest {
   int32 tmdb_id = 1;
   string media_type = 2; // "movie" or "tv"
@@ -88,4 +115,31 @@ message MovieDetailsResponse {
   int32 number_of_seasons = 18;
   int32 number_of_episodes = 19;
   repeated SeasonInfo seasons = 20;
+
+  // Novos campos ricos do TMDB
+  string original_title = 21;
+  string original_language = 22;
+  repeated string spoken_languages = 23;
+  string certification = 24;
+  int32 vote_count = 25;
+  float popularity = 26;
+  int64 budget = 27;
+  int64 revenue = 28;
+  string status = 29;
+  string imdb_id = 30;
+  string homepage = 31;
+  string logo_url = 32;
+  repeated string photos = 33;
+  repeated string writers = 34;
+  repeated string music_composers = 35;
+  repeated string cinematographers = 36;
+  repeated string producers = 37;
+  // field 38 and 39 removed (production_companies, production_countries)
+  repeated NetworkInfo networks = 40;
+  WatchProviders watch_providers = 41;
+  repeated MovieSummary recommendations = 42;
+  EpisodeSummary last_episode_to_air = 43;
+  EpisodeSummary next_episode_to_air = 44;
+  string first_air_date = 45;
+  string last_air_date = 46;
 }

@@ -207,6 +207,39 @@ class SeasonInfo(BaseModel):
     poster_url: str = ""
 
 
+
+
+
+class NetworkInfo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    name: str
+    logo_url: str = ""
+
+
+class ProviderItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    provider_name: str
+    logo_url: str = ""
+
+
+class WatchProviders(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    flatrate: list[ProviderItem] = []
+    rent: list[ProviderItem] = []
+    buy: list[ProviderItem] = []
+
+
+class EpisodeSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    episode_number: int = 0
+    season_number: int = 0
+    name: str = ""
+    air_date: str = ""
+    overview: str = ""
+    still_url: str = ""
+    vote_average: float = 0.0
+
+
 class MovieDetailsResponse(MovieSummary):
     genres: list[str] = []
     runtime: int = 0
@@ -217,6 +250,33 @@ class MovieDetailsResponse(MovieSummary):
     number_of_seasons: int = 0
     number_of_episodes: int = 0
     seasons: list[SeasonInfo] = []
+
+    # Novos campos TMDB
+    original_title: str = ""
+    original_language: str = ""
+    spoken_languages: list[str] = []
+    certification: str = ""
+    vote_count: int = 0
+    popularity: float = 0.0
+    budget: int = 0
+    revenue: int = 0
+    status: str = ""
+    imdb_id: str = ""
+    homepage: str = ""
+    logo_url: str = ""
+    photos: list[str] = []
+    writers: list[str] = []
+    music_composers: list[str] = []
+    cinematographers: list[str] = []
+    producers: list[str] = []
+
+    networks: list[NetworkInfo] = []
+    watch_providers: Optional[WatchProviders] = None
+    recommendations: list[MovieSummary] = []
+    last_episode_to_air: Optional[EpisodeSummary] = None
+    next_episode_to_air: Optional[EpisodeSummary] = None
+    first_air_date: str = ""
+    last_air_date: str = ""
 
 
 

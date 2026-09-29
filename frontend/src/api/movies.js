@@ -17,6 +17,10 @@ export async function getSeriesEpisodes(id) {
   return apiFetch(`/movies/${id}/episodes`);
 }
 
+export async function getSeasonEpisodes(id, seasonNumber) {
+  return apiFetch(`/movies/${id}/season/${seasonNumber}`);
+}
+
 export async function searchMovies({ query = '', page = 1, genre = '', mediaType = '', minRating = 0 }) {
   const params = new URLSearchParams();
   if (query) params.append('query', query);

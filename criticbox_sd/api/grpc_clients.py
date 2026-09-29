@@ -166,6 +166,66 @@ class GatewayGRPCManager:
                 }
                 for s in getattr(res, "seasons", [])
             ],
+            "original_title": getattr(res, "original_title", "") or "",
+            "original_language": getattr(res, "original_language", "") or "",
+            "spoken_languages": list(getattr(res, "spoken_languages", [])),
+            "certification": getattr(res, "certification", "") or "",
+            "vote_count": int(getattr(res, "vote_count", 0)),
+            "popularity": round(float(getattr(res, "popularity", 0.0)), 1),
+            "budget": int(getattr(res, "budget", 0)),
+            "revenue": int(getattr(res, "revenue", 0)),
+            "status": getattr(res, "status", "") or "",
+            "imdb_id": getattr(res, "imdb_id", "") or "",
+            "homepage": getattr(res, "homepage", "") or "",
+            "logo_url": getattr(res, "logo_url", "") or "",
+            "photos": list(getattr(res, "photos", [])),
+            "writers": list(getattr(res, "writers", [])),
+            "music_composers": list(getattr(res, "music_composers", [])),
+            "cinematographers": list(getattr(res, "cinematographers", [])),
+            "producers": list(getattr(res, "producers", [])),
+
+            "networks": [
+                {
+                    "name": n.name,
+                    "logo_url": getattr(n, "logo_url", "") or "",
+                }
+                for n in getattr(res, "networks", [])
+            ],
+            "watch_providers": {
+                "flatrate": [
+                    {"provider_name": p.provider_name, "logo_url": getattr(p, "logo_url", "") or ""}
+                    for p in getattr(getattr(res, "watch_providers", None), "flatrate", [])
+                ],
+                "rent": [
+                    {"provider_name": p.provider_name, "logo_url": getattr(p, "logo_url", "") or ""}
+                    for p in getattr(getattr(res, "watch_providers", None), "rent", [])
+                ],
+                "buy": [
+                    {"provider_name": p.provider_name, "logo_url": getattr(p, "logo_url", "") or ""}
+                    for p in getattr(getattr(res, "watch_providers", None), "buy", [])
+                ],
+            },
+            "recommendations": [_pb_to_movie_dict(m) for m in getattr(res, "recommendations", [])],
+            "last_episode_to_air": {
+                "name": res.last_episode_to_air.name,
+                "episode_number": res.last_episode_to_air.episode_number,
+                "season_number": res.last_episode_to_air.season_number,
+                "air_date": res.last_episode_to_air.air_date,
+                "overview": res.last_episode_to_air.overview,
+                "still_url": res.last_episode_to_air.still_url,
+                "vote_average": round(float(res.last_episode_to_air.vote_average), 1),
+            } if getattr(res, "last_episode_to_air", None) and res.last_episode_to_air.name else None,
+            "next_episode_to_air": {
+                "name": res.next_episode_to_air.name,
+                "episode_number": res.next_episode_to_air.episode_number,
+                "season_number": res.next_episode_to_air.season_number,
+                "air_date": res.next_episode_to_air.air_date,
+                "overview": res.next_episode_to_air.overview,
+                "still_url": res.next_episode_to_air.still_url,
+                "vote_average": round(float(res.next_episode_to_air.vote_average), 1),
+            } if getattr(res, "next_episode_to_air", None) and res.next_episode_to_air.name else None,
+            "first_air_date": getattr(res, "first_air_date", "") or "",
+            "last_air_date": getattr(res, "last_air_date", "") or "",
         }
 
     # ----------------- Review Service Operations ----------------- #

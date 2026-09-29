@@ -32,6 +32,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/movie/:id" element={<MovieDetailPage />} />
+            <Route path="/movies/:id" element={<MovieDetailPage />} />
           </Routes>
 
           <Footer />

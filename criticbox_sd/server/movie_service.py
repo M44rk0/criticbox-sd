@@ -178,6 +178,69 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
             for s in details.get("seasons", [])
         ]
 
+
+        networks_pbs = [
+            m_pb2.NetworkInfo(
+                name=n.get("name", ""),
+                logo_url=n.get("logo_url", ""),
+            )
+            for n in details.get("networks", [])
+        ]
+
+        wp_data = details.get("watch_providers", {})
+        def _to_provider_item(p):
+            return m_pb2.ProviderItem(
+                provider_name=p.get("provider_name", ""),
+                logo_url=p.get("logo_url", ""),
+            )
+        wp_pb = m_pb2.WatchProviders(
+            flatrate=[_to_provider_item(p) for p in wp_data.get("flatrate", [])],
+            rent=[_to_provider_item(p) for p in wp_data.get("rent", [])],
+            buy=[_to_provider_item(p) for p in wp_data.get("buy", [])],
+        )
+
+        recs_pbs = [
+            m_pb2.MovieSummary(
+                tmdb_id=m.get("id", 0),
+                title=m.get("title", ""),
+                release_date=m.get("release_date") or "",
+                poster_url=m.get("poster_url") or "",
+                backdrop_url=m.get("backdrop_url") or "",
+                overview=m.get("overview") or "",
+                tmdb_vote_average=round(float(m.get("tmdb_vote_average", 0.0)), 1),
+                criticbox_rating=0.0,
+                criticbox_review_count=0,
+                media_type=m.get("media_type") or "movie",
+            )
+            for m in details.get("recommendations", [])
+        ]
+
+        lep_data = details.get("last_episode_to_air")
+        last_ep_pb = None
+        if lep_data:
+            last_ep_pb = m_pb2.EpisodeSummary(
+                episode_number=lep_data.get("episode_number", 0),
+                season_number=lep_data.get("season_number", 0),
+                name=lep_data.get("name", ""),
+                air_date=lep_data.get("air_date", ""),
+                overview=lep_data.get("overview", ""),
+                still_url=lep_data.get("still_url", ""),
+                vote_average=float(lep_data.get("vote_average", 0.0)),
+            )
+
+        nep_data = details.get("next_episode_to_air")
+        next_ep_pb = None
+        if nep_data:
+            next_ep_pb = m_pb2.EpisodeSummary(
+                episode_number=nep_data.get("episode_number", 0),
+                season_number=nep_data.get("season_number", 0),
+                name=nep_data.get("name", ""),
+                air_date=nep_data.get("air_date", ""),
+                overview=nep_data.get("overview", ""),
+                still_url=nep_data.get("still_url", ""),
+                vote_average=float(nep_data.get("vote_average", 0.0)),
+            )
+
         return m_pb2.MovieDetailsResponse(
             tmdb_id=details.get("id", request.tmdb_id),
             title=details.get("title", ""),
@@ -199,6 +262,30 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
             number_of_seasons=details.get("number_of_seasons", 0),
             number_of_episodes=details.get("number_of_episodes", 0),
             seasons=seasons_pbs,
+            original_title=details.get("original_title") or "",
+            original_language=details.get("original_language") or "",
+            spoken_languages=details.get("spoken_languages", []),
+            certification=details.get("certification") or "",
+            vote_count=int(details.get("vote_count", 0)),
+            popularity=float(details.get("popularity", 0.0)),
+            budget=int(details.get("budget", 0)),
+            revenue=int(details.get("revenue", 0)),
+            status=details.get("status") or "",
+            imdb_id=details.get("imdb_id") or "",
+            homepage=details.get("homepage") or "",
+            logo_url=details.get("logo_url") or "",
+            photos=details.get("photos", []),
+            writers=details.get("writers", []),
+            music_composers=details.get("music_composers", []),
+            cinematographers=details.get("cinematographers", []),
+            producers=details.get("producers", []),
+            networks=networks_pbs,
+            watch_providers=wp_pb,
+            recommendations=recs_pbs,
+            last_episode_to_air=last_ep_pb,
+            next_episode_to_air=next_ep_pb,
+            first_air_date=details.get("first_air_date") or "",
+            last_air_date=details.get("last_air_date") or "",
         )
 
 

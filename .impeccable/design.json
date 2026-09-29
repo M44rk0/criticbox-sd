@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-29T16:31:00.000Z",
+  "title": "Design System: Criticbox",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Cadmium Projector Amber",
+        "canonical": "#ff9900",
+        "tonalRamp": [
+          "#331f00",
+          "#663d00",
+          "#995c00",
+          "#cc7a00",
+          "#ff9900",
+          "#ffad33",
+          "#ffc266",
+          "#ffd699"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Amber Glow",
+        "canonical": "#ffaa22",
+        "tonalRamp": [
+          "#332200",
+          "#664400",
+          "#996600",
+          "#cc8800",
+          "#ffaa22",
+          "#ffbb4e",
+          "#ffcc7a",
+          "#ffdda6"
+        ]
+      },
+      "bg-body": {
+        "role": "neutral",
+        "displayName": "Noir Void",
+        "canonical": "#06070a",
+        "tonalRamp": [
+          "#000000",
+          "#06070a",
+          "#0e1017",
+          "#161924",
+          "#222737",
+          "#353c54",
+          "#525c7e",
+          "#8a93b0"
+        ]
+      },
+      "bg-card": {
+        "role": "neutral",
+        "displayName": "Terminal Charcoal",
+        "canonical": "#0a0c11",
+        "tonalRamp": [
+          "#020305",
+          "#0a0c11",
+          "#141822",
+          "#212737",
+          "#323a50",
+          "#4a5574",
+          "#6b789e",
+          "#9ea7c1"
+        ]
+      },
+      "bg-elevated": {
+        "role": "neutral",
+        "displayName": "Elevated Steel",
+        "canonical": "#11141d",
+        "tonalRamp": [
+          "#050609",
+          "#11141d",
+          "#1e2333",
+          "#2f364e",
+          "#434d6e",
+          "#5c6993",
+          "#818db5",
+          "#b2bad2"
+        ]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Stark White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#202020",
+          "#404040",
+          "#606060",
+          "#808080",
+          "#a0a0a0",
+          "#c0c0c0",
+          "#e0e0e0",
+          "#ffffff"
+        ]
+      },
+      "border-medium": {
+        "role": "neutral",
+        "displayName": "Border Charcoal",
+        "canonical": "#2a2f3d",
+        "tonalRamp": [
+          "#0d0f14",
+          "#1b1e27",
+          "#2a2f3d",
+          "#3e4559",
+          "#555e78",
+          "#717c9b",
+          "#939dbb",
+          "#bdc4d8"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Cinema Display Marquee",
+        "purpose": "Monumental uppercase hero titles (Outfit 900, -0.03em tracking)."
+      },
+      "headline": {
+        "displayName": "Section Headline",
+        "purpose": "Catalog section headers and major cards (Outfit 800, uppercase)."
+      },
+      "title": {
+        "displayName": "Terminal Item Title",
+        "purpose": "Film names in cards, author tags, modal titles (Space Grotesk 700)."
+      },
+      "body": {
+        "displayName": "Critical Prose",
+        "purpose": "Long-form reviews, user comments, and movie synopses (Plus Jakarta Sans 400)."
+      },
+      "label": {
+        "displayName": "Control & Navigation Label",
+        "purpose": "Action triggers, button labels, filter chips (Space Grotesk 700 uppercase)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-offset-subtle",
+        "value": "2px 2px 0px 0px rgba(255, 255, 255, 0.3)",
+        "purpose": "Resting tactile displacement for primary action triggers."
+      },
+      {
+        "name": "shadow-offset-accent",
+        "value": "3px 3px 0px 0px #ff9900",
+        "purpose": "High-voltage tactile hover step on buttons and active tabs."
+      },
+      {
+        "name": "shadow-monolith",
+        "value": "10px 10px 0px 0px #ff9900",
+        "purpose": "Signature hero poster card displacement."
+      },
+      {
+        "name": "shadow-elevation",
+        "value": "0 16px 40px rgba(0, 0, 0, 0.65)",
+        "purpose": "Deep void ambient separation behind floating posters."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duration-snap",
+        "value": "0.15s ease",
+        "purpose": "Mechanical instant feedback on hover and active states."
+      },
+      {
+        "name": "duration-smooth",
+        "value": "0.3s ease",
+        "purpose": "Subtle poster zoom and image scale transitions."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1200px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Monumental primary action button with Cadmium Amber fill and crisp white hover shift.",
+      "html": "<button class=\"ds-btn-primary\">ESCREVER CRÍTICA</button>",
+      "css": ".ds-btn-primary { background: #ff9900; color: #000000; border: 1px solid #ff9900; font-family: 'Space Grotesk', sans-serif; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 12px 28px; border-radius: 0; cursor: pointer; box-shadow: 2px 2px 0px 0px rgba(255, 255, 255, 0.3); transition: all 0.15s ease; } .ds-btn-primary:hover { background: #ffffff; border-color: #ffffff; color: #000000; box-shadow: 3px 3px 0px 0px #ff9900; transform: translateY(-1px); }"
+    },
+    {
+      "name": "Ghost Outline Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Subtle utilitarian outline button for secondary navigation and filter controls.",
+      "html": "<button class=\"ds-btn-ghost\">VER TODOS OS FILMES</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: #9ca3af; border: 1px solid #2a2f3d; font-family: 'Space Grotesk', sans-serif; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 16px; border-radius: 0; cursor: pointer; transition: all 0.15s ease; } .ds-btn-ghost:hover { background: #ffffff; border-color: #ffffff; color: #000000; }"
+    },
+    {
+      "name": "Definitive Monospace Score Badge",
+      "kind": "chip",
+      "refersTo": "score-badge",
+      "description": "Raw industrial rating chip formatted in JetBrains Mono with Cadmium Amber background.",
+      "html": "<span class=\"ds-score-badge\">9.4</span>",
+      "css": ".ds-score-badge { display: inline-flex; align-items: center; justify-content: center; background: #ff9900; color: #000000; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 800; padding: 3px 8px; border-radius: 0; border: 1px solid #ffffff; user-select: none; }"
+    },
+    {
+      "name": "Brutalist Movie Card",
+      "kind": "card",
+      "refersTo": "movie-card",
+      "description": "Rigid catalog tile with 2:3 aspect poster frame, pinned rank badge, and metadata container.",
+      "html": "<div class=\"ds-movie-card\"><div class=\"ds-card-poster-wrap\"><div class=\"ds-card-rank\">#01</div><img class=\"ds-card-img\" src=\"https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg\" alt=\"Dune: Part Two\" /><div class=\"ds-card-overlay-score\">8.8</div></div><div class=\"ds-card-meta\"><span class=\"ds-card-title\">DUNE: PART TWO</span><div class=\"ds-card-sub\"><span>2024</span><span>•</span><span>SCI-FI</span></div></div></div>",
+      "css": ".ds-movie-card { width: 220px; background: #0a0c11; border: 1px solid #2a2f3d; border-radius: 0; display: flex; flex-direction: column; overflow: hidden; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s; } .ds-movie-card:hover { background: #11141d; border-color: #ff9900; transform: translateY(-2px); } .ds-card-poster-wrap { position: relative; width: 100%; aspect-ratio: 2/3; background: #06070a; overflow: hidden; border-bottom: 1px solid #2a2f3d; } .ds-card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; } .ds-movie-card:hover .ds-card-img { transform: scale(1.04); } .ds-card-rank { position: absolute; top: 0; left: 0; background: rgba(6, 7, 10, 0.92); color: #ff9900; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-right: 1px solid rgba(255, 153, 0, 0.25); border-bottom: 1px solid rgba(255, 153, 0, 0.25); z-index: 2; } .ds-card-overlay-score { position: absolute; bottom: 8px; right: 8px; background: #ff9900; color: #000000; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; z-index: 2; } .ds-card-meta { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; } .ds-card-title { font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 700; color: #ffffff; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-card-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #6b7280; display: flex; gap: 6px; align-items: center; }"
+    },
+    {
+      "name": "Terminal Search Input",
+      "kind": "input",
+      "refersTo": "search-input",
+      "description": "Dark inset search bar with charcoal border and sharp Cadmium Amber focus state.",
+      "html": "<div class=\"ds-search-box\"><svg class=\"ds-search-icon\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"8\"></circle><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"></line></svg><input class=\"ds-input\" type=\"text\" placeholder=\"BUSCAR FILME OU DIRETOR...\" /></div>",
+      "css": ".ds-search-box { display: flex; align-items: center; background: #090b10; border: 1px solid #2a2f3d; padding: 0 12px; height: 38px; gap: 8px; border-radius: 0; width: 300px; transition: border-color 0.15s ease; } .ds-search-box:focus-within { border-color: #ff9900; } .ds-search-icon { color: #6b7280; flex-shrink: 0; } .ds-input { background: transparent; border: none; outline: none; color: #ffffff; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.82rem; width: 100%; border-radius: 0; } .ds-input::placeholder { color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; }"
+    },
+    {
+      "name": "Terminal Brand Logo",
+      "kind": "custom",
+      "refersTo": "navbar-brand",
+      "description": "The signature Criticbox monogram featuring Space Grotesk 800 and the cadmium terminal square glyph.",
+      "html": "<div class=\"ds-brand-logo\">CRITICBOX<span class=\"ds-brand-glyph\">■</span></div>",
+      "css": ".ds-brand-logo { display: inline-flex; align-items: center; gap: 4px; font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.15rem; color: #ffffff; padding: 4px 10px; border: 1px solid #2a2f3d; letter-spacing: 0.05em; background: transparent; border-radius: 0; cursor: pointer; transition: all 0.15s ease; user-select: none; } .ds-brand-logo:hover { border-color: #ffffff; background: rgba(255, 255, 255, 0.04); } .ds-brand-glyph { color: #ff9900; font-size: 0.7rem; margin-left: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Industrial Cinema Terminal",
+    "overview": "Criticbox is built as an uncompromising, high-density projection room and architectural archive for cinema criticism. It completely rejects the sterile, rounded, pastel-drenched tropes of contemporary consumer web design in favor of mechanical precision, razor-sharp geometric edges, deep noir blacks, and high-voltage cadmium amber accents. The interface feels less like a social network and more like an industrial terminal salvaged from a classic 35mm projection booth or a classified cinematic registry.",
+    "keyCharacteristics": [
+      "Absolute Zero-Radius Discipline: Every single element across the system—posters, buttons, badges, chips, inputs, and avatars—is rigidly rectangular (0px radius).",
+      "Noir Void Contrast: Deep pitch blacks (#06070a, #0a0c11) punctuated by stark white borders (#ffffff) and incandescent Cadmium Projector Amber (#ff9900).",
+      "Tactile Offset Shadows: No blurred ambient light. Interactive elevation is rendered strictly through hard offset pixel steps (2px 2px to 10px 10px solid shift).",
+      "Four-Tier Typographic Engine: Outfit for heavyweight cinema titles, Space Grotesk for navigation and controls, JetBrains Mono for index scores and rankings, and Plus Jakarta Sans for reading long-form critical prose."
+    ],
+    "rules": [
+      {
+        "name": "The Cadmium Beacon Rule",
+        "body": "Cadmium Amber (#ff9900) must never cover more than 10% of any viewport. Its power comes from solitary contrast against total darkness; flooding the page in amber breaks the cinema projection illusion.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pure Void Rule",
+        "body": "Never introduce colored or multi-hue gradient backgrounds. Gradients are permitted only as linear fade-to-black masks (linear-gradient(180deg, rgba(6,7,10,0) to #06070a)) to blend movie backdrops into the canvas.",
+        "section": "colors"
+      },
+      {
+        "name": "The Case Doctrine Rule",
+        "body": "All headings, buttons, chips, and section headers are strictly uppercase. Body copy, reviews, and synopses remain sentence case for reading comfort.",
+        "section": "typography"
+      },
+      {
+        "name": "The Numeric Mono Rule",
+        "body": "Every numerical rating, rank badge, timestamp, and runtime must be set in JetBrains Mono with tabular numbers to preserve alignment and mechanical feeling.",
+        "section": "typography"
+      },
+      {
+        "name": "The Zero-Blur Doctrine",
+        "body": "No box-shadow on interactive elements may have a blur radius greater than 0px. Elevation is a hard step, never a fuzzy cloud.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Physical Hop Rule",
+        "body": "Buttons and cards that receive hover states physically shift position (transform: translateY(-2px)) accompanied by a corresponding hard offset shadow drop.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Absolute Zero-Radius Rule",
+        "body": "Every element—from posters to buttons, input fields, tags, and user avatars—is strictly rectangular.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do enforce border-radius: 0 !important on every newly authored component, dialog, avatar, badge, or container.",
+      "Do use JetBrains Mono for any data-driven value: scores, ratings, episode codes (e.g. T01E04), years, runtimes, and ranks.",
+      "Do keep display headings in Outfit (all-caps) and interactive UI controls in Space Grotesk (all-caps).",
+      "Do use hard-edged, solid offset drop shadows (2px 2px 0 0 ...) without blur on button or card hover states.",
+      "Do keep background surfaces rooted in dark noir tones (#06070a, #0a0c11, #11141d).",
+      "Do frame high-prominence headers, hero posters, and modals with solid high-contrast borders (2px solid #ffffff)."
+    ],
+    "donts": [
+      "Don't use pill buttons, rounded card corners, circular avatars, or any border-radius > 0px.",
+      "Don't apply blurry, multi-stop ambient drop shadows (box-shadow: 0 10px 30px rgba(...)).",
+      "Don't introduce colorful decorative gradients (purple-to-blue, sunset gradients, or SaaS glass bubbles).",
+      "Don't use lowercase or camelCase on button labels, section headings, or filter tags.",
+      "Don't replace the high-voltage Cadmium Amber (#ff9900) with generic web blues, greens, or pastels.",
+      "Don't hide critical movie metadata inside hidden tooltips; prioritize dense, scannable brutalist layouts."
+    ]
+  }
+}

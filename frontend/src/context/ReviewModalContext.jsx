@@ -14,7 +14,7 @@ export function ReviewModalProvider({ children }) {
   const [onSuccessCallback, setOnSuccessCallback] = useState(null);
   const [reviewRevision, setReviewRevision] = useState(0);
 
-  const openReviewModal = (movie, onSuccess = null) => {
+  const openReviewModal = (movie, onSuccess = null, prefill = null) => {
     if (!isLoggedIn) {
       showToast('Faça login para avaliar.', true);
       openAuth('login');
@@ -26,7 +26,7 @@ export function ReviewModalProvider({ children }) {
       return;
     }
 
-    setReviewModalMovie(movie);
+    setReviewModalMovie(prefill ? { ...movie, _prefill: prefill } : movie);
     setOnSuccessCallback(() => onSuccess);
   };
 

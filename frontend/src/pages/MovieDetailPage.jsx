@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -12,14 +12,28 @@ import {
   User,
   MessageSquare,
   ArrowRight,
+  Tv,
+  Film,
+  Calendar,
+  Globe,
+  DollarSign,
+  TrendingUp,
+  Tv2,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useReviewModal } from '../context/ReviewModalContext';
-import { getMovieDetails, getSeriesEpisodes } from '../api/movies';
+import { getMovieDetails, getSeasonEpisodes, getSeriesEpisodes } from '../api/movies';
 import { getMovieReviews } from '../api/reviews';
 import ReviewComment from '../components/ReviewComment';
 import { formatReviewDate, formatReleaseDate, isUnreleased } from '../utils/date';
 import { SERIES_EPISODES_CACHE } from '../utils/constants';
+
+const INITIAL_CAST_COUNT = 7;
 
 export default function MovieDetailPage() {
   const { id } = useParams();
@@ -35,6 +49,21 @@ export default function MovieDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Aba ativa: 'cast' | 'crew' | 'market'
+  const [activeInfoTab, setActiveInfoTab] = useState('cast');
+
+  // Controle "Mostrar mais" do elenco
+  const [showAllCast, setShowAllCast] = useState(false);
+
+  // Séries: Temporada ativa e episódios
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const [seasonEpisodesMap, setSeasonEpisodesMap] = useState({});
+  const [loadingSeason, setLoadingSeason] = useState(false);
+
+
+  // Carrossel de Recomendações
+  const recsCarouselRef = useRef(null);
+
   const loadData = async () => {
     setLoading(true);
     setError('');
@@ -45,16 +74,14 @@ export default function MovieDetailPage() {
       ]);
 
       setMovie(movieData);
-
-      if (movieData.media_type === 'tv' && !SERIES_EPISODES_CACHE[id]) {
-        getSeriesEpisodes(id)
-          .then((epData) => {
-            if (epData) SERIES_EPISODES_CACHE[id] = epData;
-          })
-          .catch(() => {});
-      }
-
       setReviews(reviewsData || []);
+
+      // Se for série, inicializa a primeira temporada
+      if (movieData.media_type === 'tv' && movieData.seasons && movieData.seasons.length > 0) {
+        const firstSeasonNum = movieData.seasons[0].season_number || 1;
+        setSelectedSeason(firstSeasonNum);
+        loadSeasonEpisodes(firstSeasonNum);
+      }
     } catch (err) {
       setError(err.message || 'Erro ao carregar detalhes do título.');
     } finally {
@@ -62,13 +89,39 @@ export default function MovieDetailPage() {
     }
   };
 
+  const loadSeasonEpisodes = async (seasonNum) => {
+    if (seasonEpisodesMap[seasonNum]) return;
+    setLoadingSeason(true);
+    try {
+      const res = await getSeasonEpisodes(id, seasonNum);
+      if (res?.episodes) {
+        setSeasonEpisodesMap((prev) => ({
+          ...prev,
+          [seasonNum]: res.episodes,
+        }));
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar episódios da temporada:', err);
+    } finally {
+      setLoadingSeason(false);
+    }
+  };
+
+  const handleSelectSeason = (seasonNum) => {
+    setSelectedSeason(seasonNum);
+    loadSeasonEpisodes(seasonNum);
+  };
+
   useEffect(() => {
     loadData();
+    setShowAllCast(false);
+    setActiveInfoTab('cast');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id, mediaType]);
 
+
   if (loading) {
-    return <div className="loading-pulse" style={{ marginTop: '100px' }}>Carregando informações do catálogo...</div>;
+    return <div className="loading-pulse" style={{ marginTop: '100px' }}>Carregando catálogo e ficha técnica...</div>;
   }
 
   if (error || !movie) {
@@ -109,6 +162,82 @@ export default function MovieDetailPage() {
     return match ? match[1] : null;
   };
   const trailerKey = getYouTubeKey(movie.trailer_url);
+
+  // Helper para moedas (Budget & Revenue)
+  const formatCurrency = (val) => {
+    if (!val || val <= 0) return null;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(val);
+  };
+
+  // Helper para selos oficiais da Classificação Indicativa do Brasil (DJCTQ/ClassInd)
+  const getClassIndBadge = (cert) => {
+    if (!cert) return null;
+    const c = String(cert).toUpperCase().trim();
+    if (c === 'L' || c === 'LIVRE') return <span className="classind-badge classind-l">L</span>;
+    if (c === '10') return <span className="classind-badge classind-10">10</span>;
+    if (c === '12') return <span className="classind-badge classind-12">12</span>;
+    if (c === '14') return <span className="classind-badge classind-14">14</span>;
+    if (c === '16') return <span className="classind-badge classind-16">16</span>;
+    if (c === '18') return <span className="classind-badge classind-18">18</span>;
+    return <span className="movie-genre-badge">{c}</span>;
+  };
+
+  // Helper para status de séries/filmes traduzidos
+  const translateStatus = (s) => {
+    if (!s) return null;
+    const map = {
+      'Returning Series': 'Em Exibição',
+      Ended: 'Finalizada',
+      Canceled: 'Cancelada',
+      'In Production': 'Em Produção',
+      'Post Production': 'Pós-Produção',
+      Released: 'Lançado',
+      Planned: 'Planejado',
+    };
+    return map[s] || s;
+  };
+
+  // Provedores de Streaming (Watch Providers BR)
+  const wp = movie.watch_providers || {};
+  const flatrateList = wp.flatrate || [];
+  const rentList = wp.rent || [];
+  const buyList = wp.buy || [];
+  const hasAnyProviders = flatrateList.length > 0 || rentList.length > 0 || buyList.length > 0;
+
+  // Todos os provedores únicos (sem duplicatas, logo consolidada)
+  const allProviders = (() => {
+    const map = new Map();
+    const addToMap = (list, type) => {
+      list.forEach((p) => {
+        if (!map.has(p.provider_name)) {
+          map.set(p.provider_name, { ...p, types: [type] });
+        } else {
+          map.get(p.provider_name).types.push(type);
+        }
+      });
+    };
+    addToMap(flatrateList, 'Assinatura');
+    addToMap(rentList, 'Aluguel');
+    addToMap(buyList, 'Compra');
+    return Array.from(map.values());
+  })();
+
+  // Rolagem no carrossel de recomendações
+  const scrollRecs = (dir) => {
+    if (recsCarouselRef.current) {
+      const scrollAmt = dir === 'left' ? -350 : 350;
+      recsCarouselRef.current.scrollBy({ left: scrollAmt, behavior: 'smooth' });
+    }
+  };
+
+  // Elenco visível
+  const castList = movie.cast || [];
+  const visibleCast = showAllCast ? castList : castList.slice(0, INITIAL_CAST_COUNT);
+  const hasMoreCast = castList.length > INITIAL_CAST_COUNT;
 
   const renderReviewCard = (r) => (
     <div key={r.review_id} className="review-card">
@@ -153,6 +282,158 @@ export default function MovieDetailPage() {
     </div>
   );
 
+  // Renderização do conteúdo da aba Ficha Técnica (Design simples e limpo)
+  const renderCrewTab = () => (
+    <div className="info-tab-content">
+      <div className="simple-specs-list">
+        {movie.directors && movie.directors.length > 0 && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">
+              {movie.media_type === 'tv' ? 'Criação / Direção' : 'Direção'}
+            </span>
+            <span className="simple-spec-value">{movie.directors.join(', ')}</span>
+          </div>
+        )}
+
+        {movie.writers && movie.writers.length > 0 && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">Roteiro</span>
+            <span className="simple-spec-value">{movie.writers.join(', ')}</span>
+          </div>
+        )}
+
+        {movie.music_composers && movie.music_composers.length > 0 && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">Trilha Sonora</span>
+            <span className="simple-spec-value">{movie.music_composers.join(', ')}</span>
+          </div>
+        )}
+
+        {movie.cinematographers && movie.cinematographers.length > 0 && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">Fotografia</span>
+            <span className="simple-spec-value">{movie.cinematographers.join(', ')}</span>
+          </div>
+        )}
+
+        {movie.producers && movie.producers.length > 0 && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">Produção</span>
+            <span className="simple-spec-value">{movie.producers.slice(0, 4).join(', ')}</span>
+          </div>
+        )}
+
+        {runtimeStr && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">Duração</span>
+            <span className="simple-spec-value">{runtimeStr}</span>
+          </div>
+        )}
+
+        {movie.original_language && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">Idioma Original</span>
+            <span className="simple-spec-value">{movie.original_language.toUpperCase()}</span>
+          </div>
+        )}
+
+        {movie.spoken_languages && movie.spoken_languages.length > 0 && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">Idiomas</span>
+            <span className="simple-spec-value">{movie.spoken_languages.join(', ')}</span>
+          </div>
+        )}
+
+        {movie.certification && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">Classificação</span>
+            <span className="simple-spec-value">{movie.certification} anos</span>
+          </div>
+        )}
+
+        {movie.release_date && (
+          <div className="simple-spec-row">
+            <span className="simple-spec-label">Lançamento</span>
+            <span className="simple-spec-value">{formatReleaseDate(movie.release_date)}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Renderização do conteúdo da aba Mercado (Design simples e limpo)
+  const renderMarketTab = () => (
+    <div className="info-tab-content">
+      <div className="simple-specs-list">
+        {movie.media_type === 'movie' ? (
+          <>
+            <div className="simple-spec-row">
+              <span className="simple-spec-label">Orçamento</span>
+              <span className="simple-spec-value">{formatCurrency(movie.budget) || 'Não divulgado'}</span>
+            </div>
+            <div className="simple-spec-row">
+              <span className="simple-spec-label">Bilheteria Mundial</span>
+              <span className="simple-spec-value">{formatCurrency(movie.revenue) || 'Não divulgado'}</span>
+            </div>
+            {movie.budget > 0 && movie.revenue > 0 && (
+              <div className="simple-spec-row">
+                <span className="simple-spec-label">Saldo Comercial</span>
+                <span
+                  className="simple-spec-value"
+                  style={{
+                    color: movie.revenue >= movie.budget ? '#4ade80' : '#f87171',
+                    fontWeight: 600,
+                  }}
+                >
+                  {movie.revenue >= movie.budget ? '+' : ''}
+                  {formatCurrency(movie.revenue - movie.budget)}
+                </span>
+              </div>
+            )}
+            <div className="simple-spec-row">
+              <span className="simple-spec-label">Status</span>
+              <span className="simple-spec-value">{translateStatus(movie.status) || 'Lançado'}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="simple-spec-row">
+              <span className="simple-spec-label">Status</span>
+              <span className="simple-spec-value">{translateStatus(movie.status) || 'Em Exibição'}</span>
+            </div>
+            <div className="simple-spec-row">
+              <span className="simple-spec-label">Temporadas</span>
+              <span className="simple-spec-value">
+                {movie.number_of_seasons} ({movie.number_of_episodes || 0} episódios)
+              </span>
+            </div>
+            {movie.networks && movie.networks.length > 0 && (
+              <div className="simple-spec-row">
+                <span className="simple-spec-label">Emissora Original</span>
+                <span className="simple-spec-value">{movie.networks.map((n) => n.name).join(', ')}</span>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Onde Assistir simples */}
+        {hasAnyProviders && (
+          <div className="simple-spec-row" style={{ alignItems: 'flex-start' }}>
+            <span className="simple-spec-label">Onde Assistir (BR)</span>
+            <div className="simple-streaming-list">
+              {allProviders.map((p, idx) => (
+                <div key={idx} className="simple-streaming-badge" title={`${p.provider_name} (${p.types.join(', ')})`}>
+                  {p.logo_url && <img src={p.logo_url} alt={p.provider_name} />}
+                  <span>{p.provider_name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div>
       {/* HERO BANNER DO TÍTULO */}
@@ -168,10 +449,12 @@ export default function MovieDetailPage() {
           />
         </div>
         <div className="movie-detail-content">
+          {/* COLUNA ESQUERDA: PÔSTER + AVALIAR + PREVIEW STREAMING */}
           <div className="movie-detail-poster-col">
             <div className="movie-detail-poster">
               <img src={movie.poster_url || 'https://via.placeholder.com/500x750?text=Sem+Poster'} alt={movie.title} />
             </div>
+
             {unreleased ? (
               <div className="movie-unreleased-badge" title="Este título ainda não foi lançado">
                 <Clock size={16} style={{ flexShrink: 0 }} />
@@ -192,20 +475,62 @@ export default function MovieDetailPage() {
                 AVALIAR {movie.media_type === 'tv' ? 'ESTA SÉRIE / EPISÓDIO' : 'ESTE FILME'}
               </button>
             )}
+
+            {/* PREVIEW COMPACTO DE STREAMING NO BRASIL */}
+            {hasAnyProviders && (
+              <div className="hero-streaming-preview">
+                <div className="hero-streaming-title">
+                  <span>DISPONÍVEL NO BRASIL</span>
+                </div>
+                <div className="hero-streaming-logos">
+                  {allProviders.slice(0, 6).map((p, idx) => (
+                    <img
+                      key={idx}
+                      src={p.logo_url}
+                      alt={p.provider_name}
+                      title={`${p.provider_name} — ${p.types.join(', ')}`}
+                      className="hero-streaming-logo-img"
+                    />
+                  ))}
+                  {allProviders.length > 6 && (
+                    <span className="hero-streaming-overflow">+{allProviders.length - 6}</span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
+          {/* COLUNA DIREITA: INFORMAÇÕES DETALHADAS */}
           <div className="movie-detail-info-col">
             <button className="movie-detail-back-btn" onClick={() => navigate(-1)}>
               <ArrowLeft size={14} style={{ marginRight: '6px' }} />
               VOLTAR
             </button>
 
+            {/* BADGES: TIPO DE MÍDIA + CLASSIFICAÇÃO INDICATIVA + STATUS + GÊNEROS */}
             <div className="movie-detail-genres">
-              {movie.media_type === 'tv' && (
-                <span className="movie-genre-badge" style={{ background: '#38bdf8', color: '#000', borderColor: '#38bdf8' }}>
+              {movie.media_type === 'tv' ? (
+                <span className="movie-genre-badge" style={{ background: '#38bdf8', color: '#000', borderColor: '#38bdf8', fontWeight: 800 }}>
+                  <Tv size={11} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-1px' }} />
                   SÉRIE
                 </span>
+              ) : (
+                <span className="movie-genre-badge" style={{ background: 'var(--accent)', color: '#000', borderColor: 'var(--accent)', fontWeight: 800 }}>
+                  <Film size={11} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-1px' }} />
+                  FILME
+                </span>
               )}
+
+              {/* Selo ClassInd Oficial */}
+              {movie.certification && getClassIndBadge(movie.certification)}
+
+              {/* Status da obra */}
+              {movie.status && (
+                <span className="movie-status-badge">
+                  {translateStatus(movie.status)}
+                </span>
+              )}
+
               {movie.genres && movie.genres.length > 0 ? (
                 movie.genres.map((g) => (
                   <span key={g} className="movie-genre-badge">
@@ -217,10 +542,24 @@ export default function MovieDetailPage() {
               )}
             </div>
 
+            {/* TÍTULO (SEM LOGO) */}
             <h1 className="movie-detail-title">{movie.title}</h1>
+
+            {/* TÍTULO ORIGINAL (APENAS O TEXTO + IDIOMA BADGE) */}
+            {movie.original_title && movie.original_title.toLowerCase() !== movie.title.toLowerCase() && (
+              <div className="movie-original-title">
+                <span><strong>{movie.original_title}</strong></span>
+                {movie.original_language && (
+                  <span className="movie-genre-badge" style={{ padding: '1px 6px', fontSize: '0.62rem' }}>
+                    {movie.original_language.toUpperCase()}
+                  </span>
+                )}
+              </div>
+            )}
 
             {movie.tagline && <p className="movie-detail-tagline">"{movie.tagline}"</p>}
 
+            {/* METADADOS: DATA + TEMPO/TEMPORADAS + IDIOMAS */}
             <div className="movie-detail-meta">
               <span>{movie.release_date ? movie.release_date.substring(0, 4) : '2026'}</span>
               {movie.media_type === 'tv' && movie.number_of_seasons ? (
@@ -231,8 +570,12 @@ export default function MovieDetailPage() {
               ) : (
                 runtimeStr && <span>• {runtimeStr}</span>
               )}
+              {movie.spoken_languages && movie.spoken_languages.length > 0 && (
+                <span>• {movie.spoken_languages.slice(0, 2).join(', ')}</span>
+              )}
             </div>
 
+            {/* DIREÇÃO / CRIADORES */}
             {movie.directors && movie.directors.length > 0 && (
               <div className="movie-detail-directors">
                 <span>{movie.media_type === 'tv' ? 'CRIADO POR / DIREÇÃO:' : 'DIREÇÃO:'}</span>
@@ -244,16 +587,49 @@ export default function MovieDetailPage() {
               </div>
             )}
 
+            {/* LINKS EXTERNOS: IMDB & SITE OFICIAL */}
+            {(movie.imdb_id || movie.homepage) && (
+              <div className="movie-external-links">
+                {movie.imdb_id && (
+                  <a
+                    href={`https://www.imdb.com/title/${movie.imdb_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="movie-ext-badge imdb"
+                  >
+                    IMDb
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+                {movie.homepage && (
+                  <a
+                    href={movie.homepage}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="movie-ext-badge"
+                  >
+                    <Globe size={11} />
+                    SITE OFICIAL
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* SINOPSE */}
             <p className="movie-detail-synopsis">
               {movie.overview || 'Sinopse não disponível para este título.'}
             </p>
 
+            {/* NOTAS E POPULARIDADE */}
             <div className="movie-detail-ratings-box">
               <div className="movie-detail-rating-item">
                 <span className="movie-detail-rating-num">
                   {movie.tmdb_vote_average ? movie.tmdb_vote_average.toFixed(1) : '-'}
                 </span>
-                <span className="movie-detail-rating-label">NOTA TMDB</span>
+                <span className="movie-detail-rating-label">
+                  NOTA TMDB ({movie.vote_count ? `${movie.vote_count.toLocaleString('pt-BR')} votos` : 'TMDb'})
+                </span>
               </div>
               <div className="hero-stat-divider"></div>
               <div className="movie-detail-rating-item">
@@ -267,14 +643,193 @@ export default function MovieDetailPage() {
                 <span className="movie-detail-rating-num">{movie.criticbox_review_count}</span>
                 <span className="movie-detail-rating-label">AVALIAÇÕES</span>
               </div>
+              {movie.popularity > 0 && (
+                <>
+                  <div className="hero-stat-divider"></div>
+                  <div className="movie-detail-rating-item">
+                    <span className="movie-detail-rating-num" style={{ color: 'var(--white)', fontSize: '1.2rem' }}>
+                      {Math.round(movie.popularity)}
+                    </span>
+                    <span className="movie-detail-rating-label">POPULARIDADE</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* SEÇÃO DO TRAILER */}
+      {/* SEÇÃO GUIA COMPLETO DE SÉRIES (TEMPORADAS & EPISÓDIOS) */}
+      {movie.media_type === 'tv' && movie.seasons && movie.seasons.length > 0 && (
+        <section className="section" style={{ paddingTop: '40px', paddingBottom: '30px' }}>
+          <div className="section-header">
+            <div className="section-title-group">
+              <span className="section-num">
+                <Tv2 size={18} />
+              </span>
+              <h2 className="section-title">
+                Guia de Temporadas & Episódios ({movie.number_of_seasons} Temporadas • {movie.number_of_episodes} eps)
+              </h2>
+            </div>
+          </div>
+
+          <div className="series-guide-section">
+            {/* CARDS DE ÚLTIMO E PRÓXIMO EPISÓDIO */}
+            {(movie.last_episode_to_air || movie.next_episode_to_air) && (
+              <div className="series-special-cards">
+                {movie.last_episode_to_air && (
+                  <div className="series-special-card">
+                    {movie.last_episode_to_air.still_url ? (
+                      <img
+                        src={movie.last_episode_to_air.still_url}
+                        alt={movie.last_episode_to_air.name}
+                        className="series-special-still"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="series-special-still" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Tv size={24} color="var(--gray-600)" />
+                      </div>
+                    )}
+                    <div className="series-special-info">
+                      <span className="series-special-tag">ÚLTIMO EPISÓDIO EXIBIDO</span>
+                      <span className="series-special-title">
+                        T{movie.last_episode_to_air.season_number}E{movie.last_episode_to_air.episode_number}:{' '}
+                        {movie.last_episode_to_air.name}
+                      </span>
+                      <span className="series-special-date">
+                        {formatReleaseDate(movie.last_episode_to_air.air_date)}
+                        {movie.last_episode_to_air.vote_average > 0 && ` • ★ ${movie.last_episode_to_air.vote_average}`}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {movie.next_episode_to_air && (
+                  <div className="series-special-card next">
+                    {movie.next_episode_to_air.still_url ? (
+                      <img
+                        src={movie.next_episode_to_air.still_url}
+                        alt={movie.next_episode_to_air.name}
+                        className="series-special-still"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="series-special-still" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Calendar size={24} color="var(--accent)" />
+                      </div>
+                    )}
+                    <div className="series-special-info">
+                      <span className="series-special-tag" style={{ color: 'var(--accent)' }}>
+                        PRÓXIMO EPISÓDIO A ESTREAR
+                      </span>
+                      <span className="series-special-title">
+                        T{movie.next_episode_to_air.season_number}E{movie.next_episode_to_air.episode_number}:{' '}
+                        {movie.next_episode_to_air.name}
+                      </span>
+                      <span className="series-special-date">
+                        Estreia em {formatReleaseDate(movie.next_episode_to_air.air_date)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* SELETOR DE TEMPORADAS EM PILLS */}
+            <div className="season-selector-bar">
+              {movie.seasons.map((s) => (
+                <button
+                  key={s.season_number}
+                  className={`season-selector-btn ${selectedSeason === s.season_number ? 'active' : ''}`}
+                  onClick={() => handleSelectSeason(s.season_number)}
+                >
+                  {s.name || `Temporada ${s.season_number}`} ({s.episode_count} eps)
+                </button>
+              ))}
+            </div>
+
+            {/* LISTA DE EPISÓDIOS DA TEMPORADA */}
+            {loadingSeason ? (
+              <div className="loading-pulse" style={{ padding: '40px 0' }}>
+                Carregando episódios da Temporada {selectedSeason}...
+              </div>
+            ) : seasonEpisodesMap[selectedSeason] && seasonEpisodesMap[selectedSeason].length > 0 ? (
+              <div className="episodes-grid">
+                {seasonEpisodesMap[selectedSeason].map((ep) => (
+                  <div key={ep.episode_number} className="episode-card">
+                    <div className="episode-still-wrap">
+                      {ep.still_url ? (
+                        <img src={ep.still_url} alt={ep.name} loading="lazy" />
+                      ) : (
+                        <div className="episode-still-empty">
+                          <Tv size={28} />
+                        </div>
+                      )}
+                      <span className="episode-number-badge">
+                        T{selectedSeason < 10 ? `0${selectedSeason}` : selectedSeason}E
+                        {ep.episode_number < 10 ? `0${ep.episode_number}` : ep.episode_number}
+                      </span>
+                    </div>
+
+                    <div className="episode-body">
+                      <div className="episode-header-row">
+                        <h4 className="episode-title">{ep.name}</h4>
+                        <div className="episode-meta-row">
+                          {ep.vote_average > 0 && (
+                            <span className="episode-rating-badge">
+                              <Star size={13} fill="currentColor" />
+                              {ep.vote_average.toFixed(1)}
+                            </span>
+                          )}
+                          {ep.air_date && <span>{formatReleaseDate(ep.air_date)}</span>}
+                          {ep.runtime > 0 && <span>{ep.runtime} min</span>}
+                        </div>
+                      </div>
+
+                      <p className="episode-overview">
+                        {ep.overview || 'Sinopse não disponível para este episódio.'}
+                      </p>
+
+                      {/* Direção e Roteiro do Episódio */}
+                      {(ep.directors?.length > 0 || ep.writers?.length > 0) && (
+                        <div className="episode-crew">
+                          {ep.directors?.length > 0 && <span>Dir: {ep.directors.join(', ')} </span>}
+                          {ep.writers?.length > 0 && <span>• Rot: {ep.writers.join(', ')}</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="episode-actions">
+                      <button
+                        className="nav-btn nav-btn-accent"
+                        style={{ padding: '6px 12px', fontSize: '0.72rem' }}
+                        onClick={() =>
+                          openReviewModal(movie, loadData, {
+                            season: selectedSeason,
+                            episode: ep.episode_number,
+                          })
+                        }
+                      >
+                        <Star size={12} fill="currentColor" style={{ marginRight: '4px' }} />
+                        AVALIAR EPISÓDIO
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="watch-providers-empty">
+                Episódios desta temporada não detalhados no catálogo.
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* SEÇÃO DO TRAILER OFICIAL */}
       {trailerKey && (
-        <section className="section" style={{ paddingTop: '50px', paddingBottom: '30px' }}>
+        <section className="section" style={{ paddingTop: '30px', paddingBottom: '30px' }}>
           <div className="section-header">
             <div className="section-title-group">
               <span className="section-num">
@@ -298,49 +853,157 @@ export default function MovieDetailPage() {
         </section>
       )}
 
-      {/* SEÇÃO DO ELENCO PRINCIPAL */}
-      {movie.cast && movie.cast.length > 0 && (
-        <section
-          className="section"
-          style={{ paddingTop: trailerKey ? '30px' : '50px', paddingBottom: '30px' }}
-        >
+
+      {/* SEÇÃO TABULADA: ELENCO | FICHA TÉCNICA | MERCADO */}
+      <section className="section" style={{ paddingTop: '30px', paddingBottom: '30px' }}>
+        <div className="detail-info-tabs">
+          <button
+            className={`detail-info-tab ${activeInfoTab === 'cast' ? 'active' : ''}`}
+            onClick={() => setActiveInfoTab('cast')}
+          >
+            <Users size={15} />
+            Elenco Principal {castList.length > 0 ? `(${castList.length})` : ''}
+          </button>
+          <button
+            className={`detail-info-tab ${activeInfoTab === 'crew' ? 'active' : ''}`}
+            onClick={() => setActiveInfoTab('crew')}
+          >
+            <Sparkles size={15} />
+            Ficha Técnica
+          </button>
+          <button
+            className={`detail-info-tab ${activeInfoTab === 'market' ? 'active' : ''}`}
+            onClick={() => setActiveInfoTab('market')}
+          >
+            <DollarSign size={15} />
+            Mercado
+          </button>
+        </div>
+
+        {/* Conteúdo da aba ativa */}
+        {activeInfoTab === 'cast' && (
+          <div className="info-tab-content">
+            {castList.length > 0 ? (
+              <>
+                <div className="cast-grid">
+                  {visibleCast.map((actor, idx) => (
+                    <div key={idx} className="cast-card">
+                      {actor.profile_url ? (
+                        <img src={actor.profile_url} alt={actor.name} className="cast-photo" loading="lazy" />
+                      ) : (
+                        <div className="cast-photo-placeholder">
+                          <User size={28} color="var(--gray-500)" />
+                        </div>
+                      )}
+                      <div className="cast-info">
+                        <span className="cast-name" title={actor.name}>
+                          {actor.name}
+                        </span>
+                        <span className="cast-char" title={actor.character}>
+                          {actor.character || 'Personagem'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {hasMoreCast && (
+                  <button
+                    className="cast-show-more-btn"
+                    onClick={() => setShowAllCast(!showAllCast)}
+                  >
+                    {showAllCast ? (
+                      <>
+                        <ChevronUp size={15} />
+                        MOSTRAR MENOS
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={15} />
+                        MOSTRAR TODO O ELENCO ({castList.length - INITIAL_CAST_COUNT} a mais)
+                      </>
+                    )}
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="watch-providers-empty">
+                Elenco não informado para este título.
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeInfoTab === 'crew' && renderCrewTab()}
+        {activeInfoTab === 'market' && renderMarketTab()}
+      </section>
+
+      {/* SEÇÃO TÍTULOS RECOMENDADOS / SIMILARES */}
+      {movie.recommendations && movie.recommendations.length > 0 && (
+        <section className="section" style={{ paddingTop: '30px', paddingBottom: '30px' }}>
           <div className="section-header">
             <div className="section-title-group">
               <span className="section-num">
-                <Users size={18} />
+                <TrendingUp size={18} />
               </span>
-              <h2 className="section-title">Elenco Principal ({movie.cast.length})</h2>
+              <h2 className="section-title">Títulos Recomendados ({movie.recommendations.length})</h2>
+            </div>
+            <div className="carousel-controls">
+              <button
+                className="carousel-ctrl-btn"
+                onClick={() => scrollRecs('left')}
+                title="Rolar para esquerda"
+                aria-label="Rolar para esquerda"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                className="carousel-ctrl-btn"
+                onClick={() => scrollRecs('right')}
+                title="Rolar para direita"
+                aria-label="Rolar para direita"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
-          <div className="cast-grid">
-            {movie.cast.map((actor, idx) => (
-              <div key={idx} className="cast-card">
-                {actor.profile_url ? (
-                  <img src={actor.profile_url} alt={actor.name} className="cast-photo" loading="lazy" />
-                ) : (
-                  <div className="cast-photo-placeholder">
-                    <User size={28} color="var(--gray-500)" />
+
+          <div className="recommendations-wrap">
+            <div className="recommendations-carousel" ref={recsCarouselRef}>
+              {movie.recommendations.map((rec) => (
+                <div
+                  key={rec.tmdb_id}
+                  className="rec-card"
+                  onClick={() => navigate(`/movie/${rec.tmdb_id}?type=${rec.media_type || movie.media_type}`)}
+                >
+                  <img
+                    src={rec.poster_url || 'https://via.placeholder.com/300x450?text=Sem+Poster'}
+                    alt={rec.title}
+                    className="rec-poster"
+                    loading="lazy"
+                  />
+                  <div className="rec-info">
+                    <span className="rec-title" title={rec.title}>
+                      {rec.title}
+                    </span>
+                    <div className="rec-meta">
+                      <span>{rec.release_date ? rec.release_date.substring(0, 4) : ''}</span>
+                      {rec.tmdb_vote_average > 0 && (
+                        <span style={{ color: 'var(--accent)', fontWeight: 700 }}>
+                          ★ {rec.tmdb_vote_average.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
-                <div className="cast-info">
-                  <span className="cast-name" title={actor.name}>
-                    {actor.name}
-                  </span>
-                  <span className="cast-char" title={actor.character}>
-                    {actor.character || 'Personagem'}
-                  </span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
       )}
 
-      {/* SEÇÃO DE CRÍTICAS */}
-      <section
-        className="section"
-        style={{ paddingTop: trailerKey || (movie.cast && movie.cast.length > 0) ? '30px' : '50px' }}
-      >
+      {/* SEÇÃO DE CRÍTICAS DA COMUNIDADE */}
+      <section className="section" style={{ paddingTop: '30px', paddingBottom: '60px' }}>
         <div className="section-header">
           <div className="section-title-group">
             <span className="section-num">
@@ -431,6 +1094,7 @@ export default function MovieDetailPage() {
           </div>
         )}
       </section>
+
     </div>
   );
 }

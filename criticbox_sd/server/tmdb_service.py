@@ -204,6 +204,121 @@ def discover_by_genre(genre_id: int, page: int = 1) -> dict:
     return {"page": 1, "total_pages": 1, "total_results": 0, "results": []}
 
 
+def _extract_certification(data: dict, is_movie: bool = True) -> str:
+    if is_movie:
+        releases = data.get("release_dates", {}).get("results", [])
+        for r in releases:
+            if r.get("iso_3166_1") == "BR":
+                for rd in r.get("release_dates", []):
+                    c = (rd.get("certification") or "").strip()
+                    if c:
+                        return c
+        for r in releases:
+            if r.get("iso_3166_1") == "US":
+                for rd in r.get("release_dates", []):
+                    c = (rd.get("certification") or "").strip()
+                    if c:
+                        return c
+    else:
+        ratings = data.get("content_ratings", {}).get("results", [])
+        for r in ratings:
+            if r.get("iso_3166_1") == "BR":
+                c = (r.get("rating") or "").strip()
+                if c:
+                    return c
+        for r in ratings:
+            if r.get("iso_3166_1") == "US":
+                c = (r.get("rating") or "").strip()
+                if c:
+                    return c
+    return ""
+
+
+def _extract_crew(crew_list: list) -> dict:
+    writers = list(dict.fromkeys([
+        c.get("name", "") for c in crew_list
+        if c.get("job") in ("Screenplay", "Writer", "Story", "Author", "Comic Book", "Characters", "Teleplay") and c.get("name")
+    ]))[:8]
+    music_composers = list(dict.fromkeys([
+        c.get("name", "") for c in crew_list
+        if c.get("job") in ("Original Music Composer", "Music", "Score", "Music Producer", "Composer") and c.get("name")
+    ]))[:6]
+    cinematographers = list(dict.fromkeys([
+        c.get("name", "") for c in crew_list
+        if c.get("job") in ("Director of Photography", "Cinematography", "Camera Operator") and c.get("name")
+    ]))[:6]
+    producers = list(dict.fromkeys([
+        c.get("name", "") for c in crew_list
+        if c.get("job") in ("Producer", "Executive Producer") and c.get("name")
+    ]))[:8]
+    return {
+        "writers": writers,
+        "music_composers": music_composers,
+        "cinematographers": cinematographers,
+        "producers": producers,
+    }
+
+
+def _extract_watch_providers(providers_data: dict) -> dict:
+    br = providers_data.get("results", {}).get("BR", {})
+    def fmt(lst):
+        seen = set()
+        res = []
+        for p in lst:
+            name = (p.get("provider_name") or "").strip()
+            if name and name not in seen:
+                seen.add(name)
+                logo = p.get("logo_path") or ""
+                res.append({
+                    "provider_name": name,
+                    "logo_url": f"https://image.tmdb.org/t/p/w92{logo}" if logo else "",
+                })
+        return res
+    return {
+        "flatrate": fmt(br.get("flatrate", [])),
+        "rent": fmt(br.get("rent", [])),
+        "buy": fmt(br.get("buy", [])),
+    }
+
+
+def _extract_photos_and_logo(images_data: dict) -> tuple[str, list[str]]:
+    logos = images_data.get("logos", [])
+    logo_url = ""
+    best_logos = [l for l in logos if l.get("iso_639_1") in ("pt", "en")] or logos
+    if best_logos:
+        best_logo = sorted(best_logos, key=lambda x: x.get("vote_average", 0), reverse=True)[0]
+        lpath = best_logo.get("file_path")
+        if lpath:
+            logo_url = f"https://image.tmdb.org/t/p/w500{lpath}"
+
+    backdrops = images_data.get("backdrops", [])[:12]
+    photos = [
+        f"https://image.tmdb.org/t/p/w1280{b['file_path']}"
+        for b in backdrops if b.get("file_path")
+    ]
+    return logo_url, photos
+
+
+def _extract_recommendations(recs_data: dict, default_media_type: str = "movie") -> list[dict]:
+    raw_results = recs_data.get("results", [])
+    filtered = [m for m in raw_results if m.get("poster_path") and str(m.get("poster_path")).strip()]
+    return [_fmt(m, default_media_type=default_media_type) for m in filtered[:12]]
+
+
+def _extract_production_companies(companies_list: list) -> list[dict]:
+    res = []
+    for c in companies_list[:8]:
+        name = c.get("name") or ""
+        if name:
+            logo = c.get("logo_path") or ""
+            res.append({
+                "name": name,
+                "logo_url": f"https://image.tmdb.org/t/p/w185{logo}" if logo else "",
+                "origin_country": c.get("origin_country") or "",
+            })
+    return res
+
+
 def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
     if not API_KEY:
         return None
@@ -223,17 +338,20 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
     # Tenta buscar como filme
     try:
         movie_obj = tmdb.Movies(tmdb_id)
-        data = movie_obj.info(append_to_response="credits,videos", language="pt-BR")
+        data = movie_obj.info(append_to_response="credits,videos,images,release_dates,watch/providers,recommendations", language="pt-BR")
         res = _fmt(data, default_media_type="movie")
 
         # Diretores
         crew = data.get("credits", {}).get("crew", [])
         directors = [c.get("name", "") for c in crew if c.get("job") == "Director" and c.get("name")]
         directors = list(dict.fromkeys(directors))
+        crew_details = _extract_crew(crew)
 
-        # Elenco principal
+        # Elenco completo
         cast_list = []
-        for c in data.get("credits", {}).get("cast", [])[:12]:
+        for c in data.get("credits", {}).get("cast", []):
+            if not c.get("name"):
+                continue
             profile_path = c.get("profile_path")
             cast_list.append(
                 {
@@ -261,6 +379,14 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
             except Exception:
                 pass
 
+        logo_url, photos = _extract_photos_and_logo(data.get("images", {}))
+        cert = _extract_certification(data, is_movie=True)
+        wp = _extract_watch_providers(data.get("watch/providers", {}))
+        recs = _extract_recommendations(data.get("recommendations", {}), default_media_type="movie")
+        companies = _extract_production_companies(data.get("production_companies", []))
+        countries = [c.get("name", "") for c in data.get("production_countries", []) if c.get("name")]
+        spoken = [l.get("name") or l.get("english_name", "") for l in data.get("spoken_languages", []) if (l.get("name") or l.get("english_name"))]
+
         res.update(
             {
                 "genres": [g.get("name", "") for g in data.get("genres", [])],
@@ -273,6 +399,32 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
                 "number_of_seasons": 0,
                 "number_of_episodes": 0,
                 "seasons": [],
+                "original_title": data.get("original_title") or "",
+                "original_language": data.get("original_language") or "",
+                "spoken_languages": spoken,
+                "certification": cert,
+                "vote_count": int(data.get("vote_count", 0)),
+                "popularity": float(data.get("popularity", 0.0)),
+                "budget": int(data.get("budget", 0)),
+                "revenue": int(data.get("revenue", 0)),
+                "status": data.get("status") or "",
+                "imdb_id": data.get("imdb_id") or "",
+                "homepage": data.get("homepage") or "",
+                "logo_url": logo_url,
+                "photos": photos,
+                "writers": crew_details["writers"],
+                "music_composers": crew_details["music_composers"],
+                "cinematographers": crew_details["cinematographers"],
+                "producers": crew_details["producers"],
+                "production_companies": companies,
+                "production_countries": countries,
+                "networks": [],
+                "watch_providers": wp,
+                "recommendations": recs,
+                "last_episode_to_air": None,
+                "next_episode_to_air": None,
+                "first_air_date": data.get("release_date") or "",
+                "last_air_date": data.get("release_date") or "",
             }
         )
         _set_cache(cache_key, res)
@@ -290,7 +442,7 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
 def _get_tv_details(tmdb_id: int) -> dict | None:
     try:
         tv_obj = tmdb.TV(tmdb_id)
-        data = tv_obj.info(append_to_response="credits,videos", language="pt-BR")
+        data = tv_obj.info(append_to_response="credits,videos,images,content_ratings,watch/providers,recommendations", language="pt-BR")
         res = _fmt(data, default_media_type="tv")
 
         # Criadores / Diretores
@@ -299,10 +451,14 @@ def _get_tv_details(tmdb_id: int) -> dict | None:
             crew = data.get("credits", {}).get("crew", [])
             creators = [c.get("name", "") for c in crew if c.get("job") in ("Director", "Executive Producer") and c.get("name")]
         creators = list(dict.fromkeys(creators))
+        crew = data.get("credits", {}).get("crew", [])
+        crew_details = _extract_crew(crew)
 
-        # Elenco
+        # Elenco completo
         cast_list = []
-        for c in data.get("credits", {}).get("cast", [])[:12]:
+        for c in data.get("credits", {}).get("cast", []):
+            if not c.get("name"):
+                continue
             profile_path = c.get("profile_path")
             cast_list.append(
                 {
@@ -346,6 +502,50 @@ def _get_tv_details(tmdb_id: int) -> dict | None:
         episode_run_times = data.get("episode_run_time", [])
         runtime = episode_run_times[0] if episode_run_times else 0
 
+        logo_url, photos = _extract_photos_and_logo(data.get("images", {}))
+        cert = _extract_certification(data, is_movie=False)
+        wp = _extract_watch_providers(data.get("watch/providers", {}))
+        recs = _extract_recommendations(data.get("recommendations", {}), default_media_type="tv")
+        companies = _extract_production_companies(data.get("production_companies", []))
+        countries = [c.get("name", "") for c in data.get("production_countries", []) if c.get("name")]
+        spoken = [l.get("name") or l.get("english_name", "") for l in data.get("spoken_languages", []) if (l.get("name") or l.get("english_name"))]
+
+        networks = []
+        for n in data.get("networks", []):
+            name = n.get("name") or ""
+            if name:
+                logo = n.get("logo_path") or ""
+                networks.append({
+                    "name": name,
+                    "logo_url": f"https://image.tmdb.org/t/p/w185{logo}" if logo else "",
+                })
+
+        last_ep_raw = data.get("last_episode_to_air") or {}
+        last_ep = None
+        if last_ep_raw and last_ep_raw.get("name"):
+            last_ep = {
+                "name": last_ep_raw.get("name", ""),
+                "episode_number": last_ep_raw.get("episode_number", 0),
+                "season_number": last_ep_raw.get("season_number", 0),
+                "air_date": last_ep_raw.get("air_date", ""),
+                "overview": last_ep_raw.get("overview", ""),
+                "still_url": f"https://image.tmdb.org/t/p/w300{last_ep_raw.get('still_path')}" if last_ep_raw.get("still_path") else "",
+                "vote_average": float(last_ep_raw.get("vote_average", 0.0)),
+            }
+
+        next_ep_raw = data.get("next_episode_to_air") or {}
+        next_ep = None
+        if next_ep_raw and next_ep_raw.get("name"):
+            next_ep = {
+                "name": next_ep_raw.get("name", ""),
+                "episode_number": next_ep_raw.get("episode_number", 0),
+                "season_number": next_ep_raw.get("season_number", 0),
+                "air_date": next_ep_raw.get("air_date", ""),
+                "overview": next_ep_raw.get("overview", ""),
+                "still_url": f"https://image.tmdb.org/t/p/w300{next_ep_raw.get('still_path')}" if next_ep_raw.get("still_path") else "",
+                "vote_average": float(next_ep_raw.get("vote_average", 0.0)),
+            }
+
         res.update(
             {
                 "genres": [g.get("name", "") for g in data.get("genres", [])],
@@ -358,6 +558,32 @@ def _get_tv_details(tmdb_id: int) -> dict | None:
                 "number_of_seasons": data.get("number_of_seasons", len(seasons)),
                 "number_of_episodes": data.get("number_of_episodes", 0),
                 "seasons": seasons,
+                "original_title": data.get("original_name") or "",
+                "original_language": data.get("original_language") or "",
+                "spoken_languages": spoken,
+                "certification": cert,
+                "vote_count": int(data.get("vote_count", 0)),
+                "popularity": float(data.get("popularity", 0.0)),
+                "budget": 0,
+                "revenue": 0,
+                "status": data.get("status") or "",
+                "imdb_id": data.get("imdb_id") or "",
+                "homepage": data.get("homepage") or "",
+                "logo_url": logo_url,
+                "photos": photos,
+                "writers": crew_details["writers"],
+                "music_composers": crew_details["music_composers"],
+                "cinematographers": crew_details["cinematographers"],
+                "producers": crew_details["producers"],
+                "production_companies": companies,
+                "production_countries": countries,
+                "networks": networks,
+                "watch_providers": wp,
+                "recommendations": recs,
+                "last_episode_to_air": last_ep,
+                "next_episode_to_air": next_ep,
+                "first_air_date": data.get("first_air_date") or "",
+                "last_air_date": data.get("last_air_date") or "",
             }
         )
         return res
@@ -379,13 +605,29 @@ def get_season_episodes(tmdb_id: int, season_number: int) -> dict:
         poster_url = f"{TMDB_IMAGE_BASE}{poster_path}" if poster_path else ""
         episodes = []
         for ep in data.get("episodes", []):
+            ep_crew = ep.get("crew", [])
+            directors = list(dict.fromkeys([c.get("name", "") for c in ep_crew if c.get("job") == "Director" and c.get("name")]))
+            writers = list(dict.fromkeys([c.get("name", "") for c in ep_crew if c.get("job") in ("Writer", "Screenplay", "Teleplay") and c.get("name")]))
+            guest_stars = [
+                {
+                    "name": g.get("name", ""),
+                    "character": g.get("character", ""),
+                    "profile_url": f"https://image.tmdb.org/t/p/w185{g.get('profile_path')}" if g.get("profile_path") else "",
+                }
+                for g in ep.get("guest_stars", [])[:6]
+            ]
             episodes.append(
                 {
                     "episode_number": ep.get("episode_number"),
                     "name": ep.get("name") or f"Episódio {ep.get('episode_number')}",
                     "overview": ep.get("overview") or "",
                     "air_date": ep.get("air_date") or "",
-                    "vote_average": float(ep.get("vote_average", 0.0)),
+                    "vote_average": round(float(ep.get("vote_average", 0.0)), 1),
+                    "still_url": f"https://image.tmdb.org/t/p/w500{ep.get('still_path')}" if ep.get("still_path") else "",
+                    "runtime": ep.get("runtime", 0) or 0,
+                    "directors": directors,
+                    "writers": writers,
+                    "guest_stars": guest_stars,
                 }
             )
         result = {

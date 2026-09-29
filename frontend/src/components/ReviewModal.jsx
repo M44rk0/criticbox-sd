@@ -28,9 +28,16 @@ export default function ReviewModal() {
     setHoverRating(null);
     setModalComment('');
     setModalSpoilers(false);
-    setModalScope('series');
-    setModalSeason(1);
-    setModalEpisode(1);
+    const prefill = reviewModalMovie._prefill;
+    if (prefill && prefill.season) {
+      setModalScope(prefill.episode ? 'episode' : 'series');
+      setModalSeason(prefill.season);
+      if (prefill.episode) setModalEpisode(prefill.episode);
+    } else {
+      setModalScope('series');
+      setModalSeason(1);
+      setModalEpisode(1);
+    }
     setMovieDetails(reviewModalMovie);
 
     if (reviewModalMovie.media_type === 'tv') {
