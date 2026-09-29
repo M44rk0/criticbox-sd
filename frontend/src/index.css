@@ -2827,14 +2827,32 @@ body {
   color: var(--gray-400);
 }
 
-/* SELETOR DE TEMPORADAS - ZERO SCROLLBAR, FLEX WRAP COMPACTO */
+/* SELETOR DE TEMPORADAS - LINHA HORIZONTAL COM SCROLLBAR ESTILO TÍTULOS RECOMENDADOS */
 .season-selector-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0;
-  border-bottom: 2px solid var(--gray-700);
-  padding-bottom: 14px;
+  flex-wrap: nowrap;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-700) var(--bg-card);
+}
+
+.season-selector-bar::-webkit-scrollbar {
+  height: 5px;
+}
+
+.season-selector-bar::-webkit-scrollbar-track {
+  background: var(--bg-card);
+}
+
+.season-selector-bar::-webkit-scrollbar-thumb {
+  background: var(--gray-700);
+}
+
+.season-selector-bar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
 .season-selector-btn {
@@ -2852,6 +2870,8 @@ body {
   gap: 8px;
   transition: all 0.15s ease;
   user-select: none;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .season-selector-btn:hover {
