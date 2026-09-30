@@ -111,6 +111,11 @@ class ReviewCreateRequest(BaseModel):
         description="Título da obra avaliada",
         json_schema_extra={"example": "Interestelar"},
     )
+    poster_url: Optional[str] = Field(
+        default="",
+        description="URL do poster da obra avaliada",
+        json_schema_extra={"example": "https://image.tmdb.org/t/p/w500/..."},
+    )
 
     @field_validator("tmdb_id")
     @classmethod
@@ -149,6 +154,7 @@ class ReviewResponse(BaseModel):
     media_type: str = "movie"
     season_number: Optional[int] = None
     episode_number: Optional[int] = None
+    poster_url: str = ""
     success: bool = True
     message: str = "Review registrada com sucesso!"
 
@@ -167,6 +173,7 @@ class ReviewListItem(BaseModel):
     media_type: str = "movie"
     season_number: Optional[int] = None
     episode_number: Optional[int] = None
+    poster_url: str = ""
 
 
 # ----------------- Movie Schemas ----------------- #

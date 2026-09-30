@@ -42,31 +42,34 @@ export default function RecommendationsCarousel({
 
       <div className="recommendations-wrap">
         <div className="recommendations-carousel" ref={recsCarouselRef}>
-          {recommendations.map((rec) => (
-            <div
-              key={rec.id}
-              className="rec-card"
-              onClick={() => {
-                navigate(`/movie/${rec.id}?type=${rec.media_type || 'movie'}`);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              title={rec.title}
-            >
-              <img
-                src={
-                  rec.poster_url ||
-                  'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=400&q=80'
-                }
-                alt={rec.title}
-                className="rec-poster"
-                loading="lazy"
-              />
-              <div className="rec-info">
-                <span className="rec-title">{rec.title}</span>
-                <span className="rec-rating">★ {rec.tmdb_vote_average ? rec.tmdb_vote_average.toFixed(1) : '-'}</span>
+          {recommendations.map((rec) => {
+            const recId = rec.tmdb_id || rec.id;
+            return (
+              <div
+                key={recId}
+                className="rec-card"
+                onClick={() => {
+                  navigate(`/movie/${recId}?type=${rec.media_type || 'movie'}`);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                title={rec.title}
+              >
+                <img
+                  src={
+                    rec.poster_url ||
+                    'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=400&q=80'
+                  }
+                  alt={rec.title}
+                  className="rec-poster"
+                  loading="lazy"
+                />
+                <div className="rec-info">
+                  <span className="rec-title">{rec.title}</span>
+                  <span className="rec-rating">★ {rec.tmdb_vote_average ? rec.tmdb_vote_average.toFixed(1) : '-'}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

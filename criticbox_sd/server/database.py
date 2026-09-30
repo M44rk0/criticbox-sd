@@ -39,6 +39,20 @@ class DBClient:
         return self.conn.execute(adapted_query, params)
 
 
+import queue
+
+_SQLITE_POOL: queue.Queue = queue.Queue(maxsize=20)
+
+
+def _create_sqlite_conn() -> sqlite3.Connection:
+    conn = sqlite3.connect(get_sqlite_path(), timeout=10.0, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA synchronous = NORMAL;")
+    conn.execute("PRAGMA busy_timeout = 5000;")
+    return conn
+
+
 @contextlib.contextmanager
 def get_connection():
     if is_mysql():
@@ -56,16 +70,25 @@ def get_connection():
         finally:
             conn.close()
     else:
-        conn = sqlite3.connect(get_sqlite_path(), timeout=10.0)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode = WAL;")
-        conn.execute("PRAGMA synchronous = NORMAL;")
-        conn.execute("PRAGMA busy_timeout = 5000;")
+        conn = None
+        try:
+            conn = _SQLITE_POOL.get_nowait()
+        except queue.Empty:
+            conn = _create_sqlite_conn()
+
         try:
             with conn:
                 yield DBClient(conn, is_mysql_conn=False)
-        finally:
-            conn.close()
+            try:
+                _SQLITE_POOL.put_nowait(conn)
+            except queue.Full:
+                conn.close()
+        except Exception:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            raise
 
 
 def _hash_password(password: str) -> str:
@@ -111,6 +134,7 @@ def init_db():
                     season_number INT NULL,
                     episode_number INT NULL,
                     movie_title VARCHAR(255) NOT NULL DEFAULT '',
+                    poster_url VARCHAR(500) NOT NULL DEFAULT '',
                     PRIMARY KEY (id),
                     INDEX idx_reviews_tmdb_id (tmdb_id),
                     INDEX idx_reviews_user_id (user_id),
@@ -131,6 +155,10 @@ def init_db():
                 pass
             try:
                 client.execute("ALTER TABLE reviews ADD COLUMN movie_title VARCHAR(255) NOT NULL DEFAULT ''")
+            except Exception:
+                pass
+            try:
+                client.execute("ALTER TABLE reviews ADD COLUMN poster_url VARCHAR(500) NOT NULL DEFAULT ''")
             except Exception:
                 pass
         else:
@@ -155,7 +183,8 @@ def init_db():
                     media_type TEXT NOT NULL DEFAULT 'movie',
                     season_number INTEGER,
                     episode_number INTEGER,
-                    movie_title TEXT NOT NULL DEFAULT ''
+                    movie_title TEXT NOT NULL DEFAULT '',
+                    poster_url TEXT NOT NULL DEFAULT ''
                 );
             """)
             client.execute("CREATE INDEX IF NOT EXISTS idx_tmdb_id ON reviews(tmdb_id);")
@@ -171,8 +200,17 @@ def init_db():
                     client.execute("ALTER TABLE reviews ADD COLUMN episode_number INTEGER")
                 if "movie_title" not in cols:
                     client.execute("ALTER TABLE reviews ADD COLUMN movie_title TEXT NOT NULL DEFAULT ''")
+                if "poster_url" not in cols:
+                    client.execute("ALTER TABLE reviews ADD COLUMN poster_url TEXT NOT NULL DEFAULT ''")
             except Exception:
                 pass
+
+
+def update_review_poster(review_id: str, poster_url: str):
+    if not review_id or not poster_url:
+        return
+    with get_connection() as client:
+        client.execute("UPDATE reviews SET poster_url = ? WHERE id = ? AND (poster_url = '' OR poster_url IS NULL)", (poster_url, review_id))
 
 
 def clear_db():
@@ -243,6 +281,7 @@ def add_review(
     season_number: int | None = None,
     episode_number: int | None = None,
     movie_title: str = "",
+    poster_url: str = "",
 ) -> dict:
     media_type = media_type or "movie"
     with get_connection() as client:
@@ -282,6 +321,7 @@ def add_review(
                 "season_number": season_number or 0,
                 "episode_number": episode_number or 0,
                 "movie_title": movie_title,
+                "poster_url": poster_url or "",
                 "success": False,
                 "message": msg,
             }
@@ -290,9 +330,9 @@ def add_review(
         created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
         client.execute(
-            "INSERT INTO reviews (id, tmdb_id, user_id, rating, comment, contains_spoilers, created_at, media_type, season_number, episode_number, movie_title) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (review_id, tmdb_id, user_id, rating, comment, int(contains_spoilers), created_at, media_type, season_number, episode_number, movie_title or ""),
+            "INSERT INTO reviews (id, tmdb_id, user_id, rating, comment, contains_spoilers, created_at, media_type, season_number, episode_number, movie_title, poster_url) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (review_id, tmdb_id, user_id, rating, comment, int(contains_spoilers), created_at, media_type, season_number, episode_number, movie_title or "", poster_url or ""),
         )
     return {
         "review_id": review_id,
@@ -306,6 +346,7 @@ def add_review(
         "season_number": season_number or 0,
         "episode_number": episode_number or 0,
         "movie_title": movie_title,
+        "poster_url": poster_url or "",
         "success": True,
         "message": "Review registrada com sucesso!",
     }
@@ -353,6 +394,7 @@ def _format_review_row(r) -> dict:
     season_number = r["season_number"] if "season_number" in keys and r["season_number"] is not None else 0
     episode_number = r["episode_number"] if "episode_number" in keys and r["episode_number"] is not None else 0
     movie_title = r["movie_title"] if "movie_title" in keys and r["movie_title"] else ""
+    poster_url = r["poster_url"] if "poster_url" in keys and r["poster_url"] else ""
 
     return {
         "review_id": r["id"],
@@ -366,6 +408,7 @@ def _format_review_row(r) -> dict:
         "media_type": media_type,
         "season_number": int(season_number),
         "episode_number": int(episode_number),
+        "poster_url": poster_url,
         "success": True,
         "message": "",
     }

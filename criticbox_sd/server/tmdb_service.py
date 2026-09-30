@@ -62,6 +62,7 @@ def _fmt(m: dict, default_media_type: str = "movie") -> dict:
 
     return {
         "id": m.get("id", 0),
+        "tmdb_id": m.get("id", 0),
         "title": title,
         "release_date": release_date,
         "poster_url": f"{TMDB_IMAGE_BASE}{poster}" if poster else "",
@@ -168,6 +169,181 @@ def get_now_playing_movies(page: int = 1) -> dict:
         pass
 
     return {"page": 1, "total_pages": 1, "total_results": 0, "results": []}
+
+
+def get_trending_tv(time_window: str = "week", page: int = 1) -> dict:
+    """Retorna as séries de TV em alta na semana ou no dia."""
+    if not API_KEY:
+        return {"page": 1, "total_pages": 1, "total_results": 0, "results": []}
+
+    cache_key = f"trending_tv:{time_window}:{page}"
+    cached = _get_from_cache(cache_key)
+    if cached:
+        return cached
+
+    try:
+        data = tmdb.Trending(media_type="tv", time_window=time_window).info(page=page, language="pt-BR")
+        raw_results = data.get("results", [])
+        filtered = [m for m in raw_results if m.get("poster_path") and str(m.get("poster_path")).strip()]
+        results = [_fmt(m, default_media_type="tv") for m in filtered]
+        payload = {
+            "page": data.get("page", 1),
+            "total_pages": data.get("total_pages", 1),
+            "total_results": data.get("total_results", len(results)),
+            "results": results,
+        }
+        _set_cache(cache_key, payload)
+        return payload
+    except (requests.RequestException, KeyError, ValueError):
+        pass
+
+    return {"page": 1, "total_pages": 1, "total_results": 0, "results": []}
+
+
+def _fetch_seed_recommendations(seed_id: int, media_type: str, page: int = 1) -> list[dict]:
+    """Busca recomendações de uma seed individual com cache próprio."""
+    cache_key = f"seed_recs:{media_type}:{seed_id}:{page}"
+    cached = _get_from_cache(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        if media_type == "tv":
+            rec_data = tmdb.TV(seed_id).recommendations(page=page, language="pt-BR")
+        else:
+            rec_data = tmdb.Movies(seed_id).recommendations(page=page, language="pt-BR")
+
+        items = [
+            _fmt(item, default_media_type=media_type)
+            for item in rec_data.get("results", [])
+            if item.get("poster_path")
+        ]
+        _set_cache(cache_key, items)
+        return items
+    except Exception:
+        _set_cache(cache_key, [])
+        return []
+
+
+def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> dict:
+    """Retorna títulos recomendados com base nas reviews positivas do usuário.
+    Usa paralelismo para buscar recomendações de múltiplas seeds ao mesmo tempo.
+    Ranqueia por afinidade de gênero para dar preferência ao gosto real do usuário.
+    Se não houver reviews ou for anônimo, retorna os títulos mais aclamados (top-rated)."""
+    if not API_KEY:
+        return {"page": 1, "total_pages": 1, "total_results": 0, "results": []}
+
+    cache_key = f"user_recs:{user_id or 'anon'}:{page}"
+    cached = _get_from_cache(cache_key)
+    if cached:
+        return cached
+
+    seed_recs_lists = []
+    reviewed_ids = set()
+    genre_scores: dict[int, float] = {}
+
+    if user_id and str(user_id).strip():
+        try:
+            from criticbox_sd.server import database
+            user_reviews = database.get_reviews_by_user(str(user_id).strip())
+            reviewed_ids = {r["tmdb_id"] for r in user_reviews}
+
+            # Filtrar as melhores avaliações do usuário (nota >= 3.0)
+            positive_reviews = [r for r in user_reviews if r.get("rating", 0) >= 3.0]
+            positive_reviews.sort(key=lambda x: (x.get("rating", 0), x.get("created_at", "")), reverse=True)
+
+            # Obter sementes distintas para garantir diversidade
+            seen_seed_ids = set()
+            unique_seeds = []
+            for r in positive_reviews:
+                tid = r["tmdb_id"]
+                if tid not in seen_seed_ids:
+                    seen_seed_ids.add(tid)
+                    unique_seeds.append(r)
+
+            # Pegar até 8 títulos únicos com as maiores notas do usuário
+            top_seeds = unique_seeds[:8]
+
+            # Buscar recomendações de todas as seeds em paralelo
+            # + buscar genre_ids das seeds em paralelo para scoring
+            if top_seeds:
+                def _fetch_for_seed(seed):
+                    tid = seed["tmdb_id"]
+                    m_type = seed.get("media_type") or "movie"
+                    recs = _fetch_seed_recommendations(tid, m_type, page=page)
+                    # Tentar obter genre_ids da seed do cache de detalhes
+                    seed_genre_ids = []
+                    detail_cache_key = f"details:{m_type}:{tid}"
+                    cached_detail = _get_from_cache(detail_cache_key)
+                    if cached_detail:
+                        # get_movie_details retorna 'genres' como lista de nomes, mas _fmt retorna 'genre_ids'
+                        seed_genre_ids = cached_detail.get("genre_ids", [])
+                    return seed, recs, seed_genre_ids
+
+                with ThreadPoolExecutor(max_workers=min(len(top_seeds), 8)) as executor:
+                    futures = [executor.submit(_fetch_for_seed, s) for s in top_seeds]
+                    for fut in futures:
+                        try:
+                            seed, items, seed_gids = fut.result(timeout=4.0)
+                            if items:
+                                seed_recs_lists.append(items)
+                            # Acumular afinidade de gênero a partir dos gêneros das seeds
+                            rating = seed.get("rating", 3.0)
+                            for gid in seed_gids:
+                                genre_scores[gid] = genre_scores.get(gid, 0) + rating
+                            # Também inferir gêneros a partir das recomendações (mais itens com esses gêneros = mais relevância)
+                            if not seed_gids and items:
+                                for item in items[:3]:
+                                    for gid in item.get("genre_ids", []):
+                                        genre_scores[gid] = genre_scores.get(gid, 0) + (rating * 0.3)
+                        except Exception:
+                            pass
+
+        except Exception as e:
+            logger.warning("Falha ao calcular recomendações para user %s: %s", user_id, e)
+
+    # Intercalar (Round-Robin) entre todas as sementes para diversidade
+    seen_ids = set()
+    interleaved_recs = []
+    if seed_recs_lists:
+        max_depth = max(len(lst) for lst in seed_recs_lists)
+        for depth in range(max_depth):
+            for lst in seed_recs_lists:
+                if depth < len(lst):
+                    item = lst[depth]
+                    mid = item.get("id")
+                    if mid and mid not in seen_ids and mid not in reviewed_ids:
+                        seen_ids.add(mid)
+                        interleaved_recs.append(item)
+
+    # Ranquear por afinidade de gênero (se o usuário tiver histórico)
+    if genre_scores and interleaved_recs:
+        def _genre_affinity(item):
+            gids = item.get("genre_ids", [])
+            return sum(genre_scores.get(gid, 0) for gid in gids)
+
+        interleaved_recs.sort(key=_genre_affinity, reverse=True)
+
+    # Se não houver recomendações suficientes, fallback para top-rated
+    if len(interleaved_recs) < 5:
+        try:
+            top_rated = tmdb.Movies().top_rated(page=page, language="pt-BR")
+            for item in top_rated.get("results", []):
+                mid = item.get("id")
+                if item.get("poster_path") and mid not in seen_ids and mid not in reviewed_ids:
+                    seen_ids.add(mid)
+                    interleaved_recs.append(_fmt(item, default_media_type="movie"))
+        except Exception:
+            pass
+
+    payload = {
+        "page": page,
+        "total_pages": 10 if len(interleaved_recs) >= 10 else 1,
+        "total_results": len(interleaved_recs),
+        "results": interleaved_recs[:20],
+    }
+    _set_cache(cache_key, payload)
+    return payload
 
 
 def discover_by_genre(genre_id: int, page: int = 1) -> dict:
@@ -338,7 +514,11 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
     # Tenta buscar como filme
     try:
         movie_obj = tmdb.Movies(tmdb_id)
-        data = movie_obj.info(append_to_response="credits,videos,images,release_dates,watch/providers,recommendations", language="pt-BR")
+        data = movie_obj.info(
+            append_to_response="credits,videos,images,release_dates,watch/providers,recommendations",
+            language="pt-BR",
+            include_video_language="pt,en,null",
+        )
         res = _fmt(data, default_media_type="movie")
 
         # Diretores
@@ -361,23 +541,19 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
                 }
             )
 
-        # Trailer (YouTube)
+        # Trailer (YouTube): busca trailer em português primeiro, com fallback para inglês na mesma resposta
         videos = data.get("videos", {}).get("results", [])
         trailer_url = ""
         for v in videos:
             if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
-                trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
-                break
-
+                if v.get("iso_639_1") == "pt":
+                    trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
+                    break
         if not trailer_url:
-            try:
-                en_vids = movie_obj.videos(language="en-US").get("results", [])
-                for v in en_vids:
-                    if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
-                        trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
-                        break
-            except Exception:
-                pass
+            for v in videos:
+                if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
+                    trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
+                    break
 
         logo_url, photos = _extract_photos_and_logo(data.get("images", {}))
         cert = _extract_certification(data, is_movie=True)
@@ -442,7 +618,11 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
 def _get_tv_details(tmdb_id: int) -> dict | None:
     try:
         tv_obj = tmdb.TV(tmdb_id)
-        data = tv_obj.info(append_to_response="credits,videos,images,content_ratings,watch/providers,recommendations", language="pt-BR")
+        data = tv_obj.info(
+            append_to_response="credits,videos,images,content_ratings,watch/providers,recommendations",
+            language="pt-BR",
+            include_video_language="pt,en,null",
+        )
         res = _fmt(data, default_media_type="tv")
 
         # Criadores / Diretores
@@ -468,23 +648,19 @@ def _get_tv_details(tmdb_id: int) -> dict | None:
                 }
             )
 
-        # Trailer
+        # Trailer: busca trailer em português primeiro, com fallback para inglês na mesma resposta
         videos = data.get("videos", {}).get("results", [])
         trailer_url = ""
         for v in videos:
             if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
-                trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
-                break
-
+                if v.get("iso_639_1") == "pt":
+                    trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
+                    break
         if not trailer_url:
-            try:
-                en_vids = tv_obj.videos(language="en-US").get("results", [])
-                for v in en_vids:
-                    if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
-                        trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
-                        break
-            except Exception:
-                pass
+            for v in videos:
+                if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
+                    trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
+                    break
 
         # Temporadas (ignora especiais season_number 0 para simplificar escolha de temporadas)
         raw_seasons = data.get("seasons", [])
@@ -642,7 +818,7 @@ def get_season_episodes(tmdb_id: int, season_number: int) -> dict:
         return {"season_number": season_number, "name": f"Temporada {season_number}", "poster_url": "", "episodes": []}
 
 
-def get_all_series_episodes(tmdb_id: int) -> dict[str, list[dict]]:
+def get_all_series_episodes(tmdb_id: int, seasons_hint: list | None = None) -> dict[str, list[dict]]:
     """Busca todos os episódios de todas as temporadas de uma série em paralelo e retorna indexado por temporada."""
     if not API_KEY:
         return {}
@@ -652,9 +828,22 @@ def get_all_series_episodes(tmdb_id: int) -> dict[str, list[dict]]:
         return cached
 
     try:
-        tv_details = _get_tv_details(tmdb_id)
-        raw_seasons = tv_details.get("seasons", []) if tv_details else []
-        season_numbers = [s["season_number"] for s in raw_seasons if s.get("season_number", 0) > 0]
+        season_numbers = []
+        if seasons_hint:
+            for s in seasons_hint:
+                if isinstance(s, dict):
+                    sn = s.get("season_number", 0)
+                elif isinstance(s, int):
+                    sn = s
+                else:
+                    sn = 0
+                if sn > 0:
+                    season_numbers.append(sn)
+
+        if not season_numbers:
+            tv_details = _get_tv_details(tmdb_id)
+            raw_seasons = tv_details.get("seasons", []) if tv_details else []
+            season_numbers = [s["season_number"] for s in raw_seasons if s.get("season_number", 0) > 0]
 
         if not season_numbers:
             tv_obj = tmdb.TV(tmdb_id)

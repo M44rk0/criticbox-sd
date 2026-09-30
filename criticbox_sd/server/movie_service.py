@@ -153,11 +153,15 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
     def GetMovieDetails(self, request, context):
         media_type = getattr(request, "media_type", "") or ""
         logger.info("GetMovieDetails -> ID: %d (media_type: %s)", request.tmdb_id, media_type)
-        details = tmdb_service.get_movie_details(request.tmdb_id, media_type=media_type)
+        # Otimização 2: Busca paralela de detalhes do TMDB e stats do ReviewService
+        with futures.ThreadPoolExecutor(max_workers=2) as executor:
+            fut_details = executor.submit(tmdb_service.get_movie_details, request.tmdb_id, media_type=media_type)
+            fut_stats = executor.submit(_fetch_movie_stats_via_grpc, request.tmdb_id)
+            details = fut_details.result()
+            avg_rating, total_count = fut_stats.result()
+
         if not details:
             return m_pb2.MovieDetailsResponse(tmdb_id=request.tmdb_id, found=False)
-
-        avg_rating, total_count = _fetch_movie_stats_via_grpc(request.tmdb_id)
 
         cast_pbs = [
             m_pb2.CastMember(
@@ -287,6 +291,75 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
             first_air_date=details.get("first_air_date") or "",
             last_air_date=details.get("last_air_date") or "",
         )
+
+    def GetTrendingTV(self, request, context):
+        time_window = request.time_window or "week"
+        page = max(request.page, 1)
+        logger.info("GetTrendingTV -> Buscando séries em alta (%s, Página %d)", time_window, page)
+        data = tmdb_service.get_trending_tv(time_window=time_window, page=page)
+        results = data.get("results", [])
+        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
+        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
+        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
+        return m_pb2.SearchMoviesResponse(
+            movies=summaries,
+            page=data.get("page", 1),
+            total_results=data.get("total_results", len(summaries)),
+            total_pages=data.get("total_pages", 1),
+        )
+
+    def GetRecommendations(self, request, context):
+        user_id = request.user_id or ""
+        page = max(request.page, 1)
+        logger.info("GetRecommendations -> Buscando recomendações para @%s (Página %d)", user_id, page)
+        data = tmdb_service.get_recommendations_for_user(user_id=user_id, page=page)
+        results = data.get("results", [])
+        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
+        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
+        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
+        return m_pb2.SearchMoviesResponse(
+            movies=summaries,
+            page=data.get("page", 1),
+            total_results=data.get("total_results", len(summaries)),
+            total_pages=data.get("total_pages", 1),
+        )
+
+    def GetSeasonEpisodes(self, request, context):
+        logger.info("GetSeasonEpisodes -> tmdb_id=%d, season=%d", request.tmdb_id, request.season_number)
+        data = tmdb_service.get_season_episodes(request.tmdb_id, request.season_number)
+        eps = [
+            m_pb2.EpisodeSummary(
+                episode_number=e.get("episode_number", 0),
+                season_number=e.get("season_number", request.season_number),
+                name=e.get("name", ""),
+                air_date=e.get("air_date") or "",
+                overview=e.get("overview") or "",
+                still_url=e.get("still_url") or "",
+                vote_average=round(float(e.get("vote_average", 0.0)), 1),
+            )
+            for e in data.get("episodes", [])
+        ]
+        return m_pb2.SeasonEpisodesResponse(episodes=eps)
+
+    def GetAllEpisodes(self, request, context):
+        logger.info("GetAllEpisodes -> tmdb_id=%d", request.tmdb_id)
+        all_data = tmdb_service.get_all_series_episodes(request.tmdb_id)
+        seasons_map = {}
+        for s_num_str, eps_list in all_data.items():
+            eps = [
+                m_pb2.EpisodeSummary(
+                    episode_number=e.get("episode_number", 0),
+                    season_number=e.get("season_number", int(s_num_str) if s_num_str.isdigit() else 1),
+                    name=e.get("name", ""),
+                    air_date=e.get("air_date") or "",
+                    overview=e.get("overview") or "",
+                    still_url=e.get("still_url") or "",
+                    vote_average=round(float(e.get("vote_average", 0.0)), 1),
+                )
+                for e in eps_list
+            ]
+            seasons_map[s_num_str] = m_pb2.SeasonEpisodesList(episodes=eps)
+        return m_pb2.AllEpisodesResponse(seasons=seasons_map)
 
 
 

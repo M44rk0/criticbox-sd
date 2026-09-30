@@ -5,9 +5,13 @@ package movie;
 service MovieService {
   rpc SearchMovies (SearchMoviesRequest) returns (SearchMoviesResponse);
   rpc GetTrendingMovies (TrendingMoviesRequest) returns (SearchMoviesResponse);
+  rpc GetTrendingTV (TrendingMoviesRequest) returns (SearchMoviesResponse);
   rpc GetMovieDetails (MovieDetailsRequest) returns (MovieDetailsResponse);
   rpc DiscoverMovies (DiscoverMoviesRequest) returns (SearchMoviesResponse);
   rpc GetNowPlayingMovies (NowPlayingRequest) returns (SearchMoviesResponse);
+  rpc GetRecommendations (RecommendationsRequest) returns (SearchMoviesResponse);
+  rpc GetSeasonEpisodes (SeasonEpisodesRequest) returns (SeasonEpisodesResponse);
+  rpc GetAllEpisodes (AllEpisodesRequest) returns (AllEpisodesResponse);
 }
 
 message NowPlayingRequest {
@@ -142,4 +146,30 @@ message MovieDetailsResponse {
   EpisodeSummary next_episode_to_air = 44;
   string first_air_date = 45;
   string last_air_date = 46;
+}
+
+message RecommendationsRequest {
+  string user_id = 1;
+  int32 page = 2;
+}
+
+message SeasonEpisodesRequest {
+  int32 tmdb_id = 1;
+  int32 season_number = 2;
+}
+
+message SeasonEpisodesResponse {
+  repeated EpisodeSummary episodes = 1;
+}
+
+message AllEpisodesRequest {
+  int32 tmdb_id = 1;
+}
+
+message SeasonEpisodesList {
+  repeated EpisodeSummary episodes = 1;
+}
+
+message AllEpisodesResponse {
+  map<string, SeasonEpisodesList> seasons = 1;
 }

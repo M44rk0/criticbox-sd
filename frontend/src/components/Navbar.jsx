@@ -27,11 +27,6 @@ export default function Navbar() {
               INÍCIO
             </Link>
           </li>
-          <li>
-            <Link to="/search" className="nav-link">
-              BUSCAR
-            </Link>
-          </li>
         </ul>
       </div>
       <div className="nav-right">

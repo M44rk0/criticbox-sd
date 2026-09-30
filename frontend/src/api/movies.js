@@ -1,11 +1,20 @@
 import { apiFetch } from './client';
 
-export async function getTrendingMovies() {
-  return apiFetch('/movies/trending');
+export async function getTrendingMovies(page = 1) {
+  return apiFetch(`/movies/trending?page=${page}`);
 }
 
-export async function getNowPlayingMovies() {
-  return apiFetch('/movies/now-playing');
+export async function getTrendingTV(page = 1) {
+  return apiFetch(`/movies/trending-tv?page=${page}`);
+}
+
+export async function getNowPlayingMovies(page = 1) {
+  return apiFetch(`/movies/now-playing?page=${page}`);
+}
+
+export async function getRecommendations(userId = '', page = 1) {
+  const query = userId ? `?user_id=${encodeURIComponent(userId)}&page=${page}` : `?page=${page}`;
+  return apiFetch(`/movies/recommendations${query}`);
 }
 
 export async function getMovieDetails(id, mediaType = '') {

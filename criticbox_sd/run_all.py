@@ -52,6 +52,22 @@ def start_movie_service() -> grpc.Server:
     return server
 
 
+import threading
+
+
+def _warm_cache():
+    """Pré-aquece o cache de dados populares em background para garantir carregamento instantâneo."""
+    from criticbox_sd.server import tmdb_service
+    try:
+        logger.info("Iniciando pré-aquecimento de cache em background...")
+        tmdb_service.get_trending_movies(time_window="week", page=1)
+        tmdb_service.get_now_playing_movies(page=1)
+        tmdb_service.get_trending_tv(time_window="week", page=1)
+        logger.info("✓ Cache pré-aquecido com sucesso (trending, now-playing, trending-tv)")
+    except Exception as e:
+        logger.warning("Aviso durante pré-aquecimento de cache: %s", e)
+
+
 def main():
     logger.info("=" * 70)
     logger.info("INICIANDO ECOSSISTEMA DISTRIBUÍDO CRITICBOX (ENTREGA 2)")
@@ -63,7 +79,10 @@ def main():
 
     time.sleep(0.5)
 
-    # 2. Iniciar API Gateway (FastAPI / Uvicorn)
+    # 2. Pré-aquecer cache em background (não bloqueia inicialização)
+    threading.Thread(target=_warm_cache, daemon=True, name="CacheWarmer").start()
+
+    # 3. Iniciar API Gateway (FastAPI / Uvicorn)
     logger.info("✓ [REST] Iniciando API Gateway em http://0.0.0.0:%d", GATEWAY_PORT)
     logger.info("  -> Interface Web (Frontend): http://localhost:%d/app", GATEWAY_PORT)
     logger.info("  -> Documentação Swagger:   http://localhost:%d/docs", GATEWAY_PORT)

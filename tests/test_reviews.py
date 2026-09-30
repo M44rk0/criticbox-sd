@@ -64,6 +64,39 @@ class TestGetAllReviews(unittest.TestCase):
         self.assertEqual(first_review.comment, "Ótimo filme!")
         self.assertEqual(first_review.rating, 5.0)
 
+    def test_review_poster_url_and_user_reviews(self):
+        res = database.add_review(
+            tmdb_id=550,
+            user_id="poster_user",
+            rating=4.0,
+            comment="Com poster!",
+            poster_url="https://image.tmdb.org/t/p/w500/test.jpg",
+        )
+        self.assertTrue(res["success"])
+        self.assertEqual(res["poster_url"], "https://image.tmdb.org/t/p/w500/test.jpg")
+
+        reviews = database.get_reviews_by_user("poster_user")
+        self.assertEqual(len(reviews), 1)
+        self.assertEqual(reviews[0]["poster_url"], "https://image.tmdb.org/t/p/w500/test.jpg")
+
+        servicer = ReviewServiceServicer()
+        req = r_pb2.UserReviewsRequest(user_id="poster_user")
+        resp = servicer.GetReviewsByUser(req, None)
+        self.assertEqual(resp.total_count, 1)
+        self.assertEqual(resp.reviews[0].poster_url, "https://image.tmdb.org/t/p/w500/test.jpg")
+
+    def test_database_connection_pool(self):
+        import concurrent.futures
+        def worker(idx):
+            with database.get_connection() as client:
+                row = client.execute("SELECT 1 AS num").fetchone()
+                return row["num"] if hasattr(row, "keys") else row[0]
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            futs = [executor.submit(worker, i) for i in range(10)]
+            results = [f.result() for f in futs]
+        self.assertEqual(results, [1] * 10)
+
 
 if __name__ == "__main__":
     unittest.main()

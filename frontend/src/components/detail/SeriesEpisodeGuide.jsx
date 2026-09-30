@@ -1,6 +1,7 @@
 import React from 'react';
-import { Tv, Tv2, Calendar, Star } from 'lucide-react';
+import { Tv, Tv2, Calendar, Star, Check } from 'lucide-react';
 import { formatReleaseDate } from '../../utils/date';
+import { useReviewModal } from '../../context/ReviewModalContext';
 
 export default function SeriesEpisodeGuide({
   movie,
@@ -8,9 +9,11 @@ export default function SeriesEpisodeGuide({
   handleSelectSeason,
   loadingSeason,
   seasonEpisodesMap,
-  openReviewModal,
+  userReviews = [],
   loadData,
 }) {
+  const { openEpisodeReviewModal } = useReviewModal();
+
   if (movie.media_type !== 'tv' || !movie.seasons || movie.seasons.length === 0) {
     return null;
   }
@@ -166,19 +169,42 @@ export default function SeriesEpisodeGuide({
                       <div />
                     )}
 
-                    <button
-                      type="button"
-                      className="episode-eval-btn"
-                      onClick={() =>
-                        openReviewModal(movie, loadData, {
-                          season: selectedSeason,
-                          episode: ep.episode_number,
-                        })
+                    {(() => {
+                      const userEpReview = userReviews?.find(
+                        (r) =>
+                          Number(r.season_number) === Number(selectedSeason) &&
+                          Number(r.episode_number) === Number(ep.episode_number)
+                      );
+                      const isAlreadyReviewed = Boolean(userEpReview);
+
+                      if (isAlreadyReviewed) {
+                        return (
+                          <div
+                            className="episode-already-reviewed-badge"
+                            title={`Você já avaliou este episódio com nota ${userEpReview.rating?.toFixed(1)}`}
+                          >
+                            <Check size={12} />
+                            <span>AVALIADO</span>
+                            {userEpReview.rating > 0 && (
+                              <span className="episode-reviewed-score">★ {userEpReview.rating.toFixed(1)}</span>
+                            )}
+                          </div>
+                        );
                       }
-                    >
-                      <Star size={11} fill="currentColor" />
-                      AVALIAR
-                    </button>
+
+                      return (
+                        <button
+                          type="button"
+                          className="episode-eval-btn"
+                          onClick={() =>
+                            openEpisodeReviewModal(movie, ep, selectedSeason, loadData, userReviews)
+                          }
+                        >
+                          <Star size={11} fill="currentColor" />
+                          AVALIAR
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

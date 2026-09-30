@@ -240,6 +240,46 @@ def get_trending_movies(
         )
 
 
+@app.get("/movies/trending-tv", response_model=SearchMoviesResponse, summary="Séries em alta na semana via gRPC")
+async def get_trending_tv(
+    time_window: str = Query(default="week", pattern="^(day|week)$", description="Janela de tempo: day ou week"),
+    page: int = Query(default=1, ge=1, description="Página de resultados"),
+):
+    import asyncio
+    logger.info("Gateway GET /movies/trending-tv -> Chamando MovieService gRPC (%s, %d)", time_window, page)
+    grpc_manager = get_grpc_manager()
+    try:
+        loop = asyncio.get_event_loop()
+        data = await loop.run_in_executor(None, grpc_manager.get_trending_tv, time_window, page)
+        return SearchMoviesResponse(**data)
+    except grpc.RpcError as e:
+        logger.error("gRPC Error no MovieService: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Serviço interno de séries indisponível.",
+        )
+
+
+@app.get("/movies/recommendations", response_model=SearchMoviesResponse, summary="Recomendações personalizadas para o usuário via gRPC")
+async def get_recommendations_for_user(
+    user_id: str | None = Query(default=None, description="Username/ID do usuário para recomendações personalizadas"),
+    page: int = Query(default=1, ge=1, description="Página de resultados"),
+):
+    import asyncio
+    logger.info("Gateway GET /movies/recommendations -> Chamando MovieService gRPC (user_id=%s, page=%d)", user_id, page)
+    grpc_manager = get_grpc_manager()
+    try:
+        loop = asyncio.get_event_loop()
+        data = await loop.run_in_executor(None, grpc_manager.get_recommendations, user_id or "", page)
+        return SearchMoviesResponse(**data)
+    except grpc.RpcError as e:
+        logger.error("gRPC Error no MovieService: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Serviço interno de recomendações indisponível.",
+        )
+
+
 @app.get("/movies/discover", response_model=SearchMoviesResponse, summary="Explorar filmes por ID de gênero via gRPC")
 def discover_movies_by_genre(
     genre_id: int = Query(..., ge=1, description="ID do gênero TMDb"),
@@ -307,25 +347,37 @@ def get_movie_details(
         )
 
 
-from criticbox_sd.server import tmdb_service
-
-
-@app.get("/movies/{tmdb_id}/season/{season_number}", summary="Episódios de uma temporada de série")
+@app.get("/movies/{tmdb_id}/season/{season_number}", summary="Episódios de uma temporada de série via gRPC")
 def get_season_episodes(
     tmdb_id: int = Path(..., ge=1, description="ID TMDb da série"),
     season_number: int = Path(..., ge=1, description="Número da temporada"),
 ):
-    logger.info("Gateway GET /movies/%d/season/%d -> Buscando episódios", tmdb_id, season_number)
-    episodes = tmdb_service.get_season_episodes(tmdb_id, season_number)
-    return episodes
+    logger.info("Gateway GET /movies/%d/season/%d -> Chamando MovieService gRPC", tmdb_id, season_number)
+    grpc_manager = get_grpc_manager()
+    try:
+        return grpc_manager.get_season_episodes(tmdb_id, season_number)
+    except grpc.RpcError as e:
+        logger.error("gRPC Error no MovieService: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Serviço interno de episódios indisponível.",
+        )
 
 
-@app.get("/movies/{tmdb_id}/episodes", summary="Todos os episódios de todas as temporadas da série")
+@app.get("/movies/{tmdb_id}/episodes", summary="Todos os episódios de todas as temporadas da série via gRPC")
 def get_all_episodes(
     tmdb_id: int = Path(..., ge=1, description="ID TMDb da série"),
 ):
-    logger.info("Gateway GET /movies/%d/episodes -> Buscando todos os episódios de todas as temporadas", tmdb_id)
-    return tmdb_service.get_all_series_episodes(tmdb_id)
+    logger.info("Gateway GET /movies/%d/episodes -> Chamando MovieService gRPC", tmdb_id)
+    grpc_manager = get_grpc_manager()
+    try:
+        return grpc_manager.get_all_episodes(tmdb_id)
+    except grpc.RpcError as e:
+        logger.error("gRPC Error no MovieService: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Serviço interno de episódios indisponível.",
+        )
 
 
 # ----------------- Reviews Endpoints (gRPC ReviewService + JWT) ----------------- #
@@ -355,6 +407,7 @@ def create_review(
             season_number=payload.season_number,
             episode_number=payload.episode_number,
             movie_title=payload.movie_title or "",
+            poster_url=payload.poster_url or "",
         )
         if not res.get("success", False):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=res.get("message", "Erro ao registrar review"))
@@ -394,6 +447,29 @@ def list_movie_reviews(tmdb_id: int = Path(..., ge=1)):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Serviço interno de reviews indisponível.",
         )
+
+
+@app.get("/reviews/user/{user_id}", response_model=list[ReviewListItem], summary="Listar críticas de um usuário via gRPC")
+def list_user_reviews(user_id: str = Path(...)):
+    logger.info("Gateway GET /reviews/user/%s -> Chamando ReviewService gRPC", user_id)
+    grpc_manager = get_grpc_manager()
+    try:
+        return grpc_manager.get_reviews_by_user(user_id)
+    except grpc.RpcError as e:
+        logger.error("gRPC Error no ReviewService: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Serviço interno de reviews indisponível.",
+        )
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+def spa_fallback(request: Request, full_path: str):
+    accept = request.headers.get("accept", "")
+    react_index = os.path.join(FRONTEND_DIST_DIR, "index.html")
+    if os.path.exists(react_index) and ("text/html" in accept or "." not in full_path):
+        return FileResponse(react_index)
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Não encontrado.")
 
 
 def start():

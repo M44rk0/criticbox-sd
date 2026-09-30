@@ -74,6 +74,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
                 message="O identificador do usuário não pode estar em branco.",
             )
 
+        details = None
         # Regra de negócio: títulos não estreados não podem receber avaliação
         try:
             details = tmdb_service.get_movie_details(request.tmdb_id, media_type=media_type)
@@ -95,6 +96,11 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             except Exception:
                 movie_title = ""
 
+        # Obter poster_url do request ou resolver dos detalhes
+        poster_url = getattr(request, "poster_url", "") or ""
+        if not poster_url and details:
+            poster_url = details.get("poster_url", "") or ""
+
         res = database.add_review(
             tmdb_id=request.tmdb_id,
             user_id=request.user_id.strip(),
@@ -105,6 +111,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             season_number=season_num,
             episode_number=episode_num,
             movie_title=movie_title,
+            poster_url=poster_url,
         )
         return r_pb2.ReviewResponse(
             review_id=res["review_id"],
@@ -120,6 +127,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             season_number=res.get("season_number", 0),
             episode_number=res.get("episode_number", 0),
             movie_title=res.get("movie_title") or movie_title,
+            poster_url=res.get("poster_url") or poster_url,
         )
 
     def GetMovieStats(self, request, context):
@@ -148,10 +156,19 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         raw_reviews = database.get_all_reviews(limit=limit)
         items = []
         for r in raw_reviews:
-            # Code Judo: movie_title vem direto do banco, eliminando o gargalo N+1 de requests HTTP
+            # Code Judo: movie_title e poster_url vêm direto do banco, eliminando o gargalo N+1 de requests HTTP
             title = r.get("movie_title")
             if not title:
                 title = tmdb_service.get_movie_title(r["tmdb_id"], media_type=r.get("media_type") or "movie")
+            poster = r.get("poster_url") or ""
+            if not poster:
+                try:
+                    details = tmdb_service.get_movie_details(r["tmdb_id"], media_type=r.get("media_type") or "movie")
+                    if details and details.get("poster_url"):
+                        poster = details["poster_url"]
+                        database.update_review_poster(r["review_id"], poster)
+                except Exception:
+                    pass
             items.append(
                 r_pb2.ReviewItem(
                     review_id=r["review_id"],
@@ -165,6 +182,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
                     media_type=r.get("media_type") or "movie",
                     season_number=r.get("season_number", 0),
                     episode_number=r.get("episode_number", 0),
+                    poster_url=poster,
                 )
             )
         return r_pb2.GetAllReviewsResponse(reviews=items, total_count=len(items))
@@ -182,22 +200,68 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             media_type = getattr(request, "media_type", "movie") or "movie"
             movie_title = tmdb_service.get_movie_title(request.tmdb_id, media_type=media_type)
 
-        items = [
-            r_pb2.ReviewItem(
-                review_id=r["review_id"],
-                tmdb_id=r["tmdb_id"],
-                movie_title=r.get("movie_title") or movie_title,
-                user_id=r["user_id"],
-                rating=r["rating"],
-                comment=r["comment"],
-                contains_spoilers=r["contains_spoilers"],
-                created_at=r["created_at"],
-                media_type=r.get("media_type") or "movie",
-                season_number=r.get("season_number", 0),
-                episode_number=r.get("episode_number", 0),
+        items = []
+        for r in raw_reviews:
+            poster = r.get("poster_url") or ""
+            if not poster:
+                try:
+                    details = tmdb_service.get_movie_details(r["tmdb_id"], media_type=r.get("media_type") or "movie")
+                    if details and details.get("poster_url"):
+                        poster = details["poster_url"]
+                        database.update_review_poster(r["review_id"], poster)
+                except Exception:
+                    pass
+            items.append(
+                r_pb2.ReviewItem(
+                    review_id=r["review_id"],
+                    tmdb_id=r["tmdb_id"],
+                    movie_title=r.get("movie_title") or movie_title,
+                    user_id=r["user_id"],
+                    rating=r["rating"],
+                    comment=r["comment"],
+                    contains_spoilers=r["contains_spoilers"],
+                    created_at=r["created_at"],
+                    media_type=r.get("media_type") or "movie",
+                    season_number=r.get("season_number", 0),
+                    episode_number=r.get("episode_number", 0),
+                    poster_url=poster,
+                )
             )
-            for r in raw_reviews
-        ]
+        return r_pb2.GetAllReviewsResponse(reviews=items, total_count=len(items))
+
+    def GetReviewsByUser(self, request, context):
+        logger.info("GetReviewsByUser -> Buscando reviews para o usuário @%s", request.user_id)
+        raw_reviews = database.get_reviews_by_user(request.user_id)
+        items = []
+        for r in raw_reviews:
+            title = r.get("movie_title")
+            if not title:
+                title = tmdb_service.get_movie_title(r["tmdb_id"], media_type=r.get("media_type") or "movie")
+            poster = r.get("poster_url") or ""
+            if not poster:
+                try:
+                    details = tmdb_service.get_movie_details(r["tmdb_id"], media_type=r.get("media_type") or "movie")
+                    if details and details.get("poster_url"):
+                        poster = details["poster_url"]
+                        database.update_review_poster(r["review_id"], poster)
+                except Exception:
+                    pass
+            items.append(
+                r_pb2.ReviewItem(
+                    review_id=r["review_id"],
+                    tmdb_id=r["tmdb_id"],
+                    movie_title=title,
+                    user_id=r["user_id"],
+                    rating=r["rating"],
+                    comment=r["comment"],
+                    contains_spoilers=r["contains_spoilers"],
+                    created_at=r["created_at"],
+                    media_type=r.get("media_type") or "movie",
+                    season_number=r.get("season_number", 0),
+                    episode_number=r.get("episode_number", 0),
+                    poster_url=poster,
+                )
+            )
         return r_pb2.GetAllReviewsResponse(reviews=items, total_count=len(items))
 
 

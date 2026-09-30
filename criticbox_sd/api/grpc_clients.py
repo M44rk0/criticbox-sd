@@ -53,6 +53,7 @@ def _pb_to_review_dict(r) -> dict:
         "media_type": getattr(r, "media_type", "movie") or "movie",
         "season_number": r.season_number if getattr(r, "season_number", 0) > 0 else None,
         "episode_number": r.episode_number if getattr(r, "episode_number", 0) > 0 else None,
+        "poster_url": getattr(r, "poster_url", "") or "",
         "success": True,
         "message": "",
     }
@@ -99,6 +100,26 @@ class GatewayGRPCManager:
     def get_trending_movies(self, time_window: str = "week", page: int = 1) -> dict:
         req = m_pb2.TrendingMoviesRequest(time_window=time_window, page=page)
         res = self.movie_stub.GetTrendingMovies(req, timeout=5.0)
+        return {
+            "page": res.page,
+            "total_results": res.total_results,
+            "total_pages": res.total_pages or 1,
+            "movies": [_pb_to_movie_dict(m) for m in res.movies],
+        }
+
+    def get_trending_tv(self, time_window: str = "week", page: int = 1) -> dict:
+        req = m_pb2.TrendingMoviesRequest(time_window=time_window, page=page)
+        res = self.movie_stub.GetTrendingTV(req, timeout=5.0)
+        return {
+            "page": res.page,
+            "total_results": res.total_results,
+            "total_pages": res.total_pages or 1,
+            "movies": [_pb_to_movie_dict(m) for m in res.movies],
+        }
+
+    def get_recommendations(self, user_id: str = "", page: int = 1) -> dict:
+        req = m_pb2.RecommendationsRequest(user_id=user_id, page=page)
+        res = self.movie_stub.GetRecommendations(req, timeout=5.0)
         return {
             "page": res.page,
             "total_results": res.total_results,
@@ -260,6 +281,7 @@ class GatewayGRPCManager:
         season_number: int | None = None,
         episode_number: int | None = None,
         movie_title: str = "",
+        poster_url: str = "",
     ) -> dict:
         req = r_pb2.CreateReviewRequest(
             tmdb_id=tmdb_id,
@@ -271,6 +293,7 @@ class GatewayGRPCManager:
             season_number=season_number or 0,
             episode_number=episode_number or 0,
             movie_title=movie_title or "",
+            poster_url=poster_url or "",
         )
         res = self.review_stub.CreateReview(req, timeout=10.0)
         return {
@@ -285,6 +308,7 @@ class GatewayGRPCManager:
             "media_type": getattr(res, "media_type", "movie") or "movie",
             "season_number": res.season_number if res.season_number > 0 else None,
             "episode_number": res.episode_number if res.episode_number > 0 else None,
+            "poster_url": getattr(res, "poster_url", "") or poster_url,
             "success": res.success,
             "message": res.message,
         }
@@ -298,6 +322,48 @@ class GatewayGRPCManager:
         req = r_pb2.MovieReviewsRequest(tmdb_id=tmdb_id)
         res = self.review_stub.GetReviewsByMovie(req, timeout=10.0)
         return [_pb_to_review_dict(r) for r in res.reviews]
+
+    def get_reviews_by_user(self, user_id: str) -> list[dict]:
+        req = r_pb2.UserReviewsRequest(user_id=user_id)
+        res = self.review_stub.GetReviewsByUser(req, timeout=10.0)
+        return [_pb_to_review_dict(r) for r in res.reviews]
+
+    def get_season_episodes(self, tmdb_id: int, season_number: int) -> dict:
+        req = m_pb2.SeasonEpisodesRequest(tmdb_id=tmdb_id, season_number=season_number)
+        res = self.movie_stub.GetSeasonEpisodes(req, timeout=5.0)
+        return {
+            "episodes": [
+                {
+                    "episode_number": e.episode_number,
+                    "season_number": e.season_number,
+                    "name": e.name,
+                    "air_date": e.air_date,
+                    "overview": e.overview,
+                    "still_url": e.still_url,
+                    "vote_average": round(float(e.vote_average), 1),
+                }
+                for e in res.episodes
+            ]
+        }
+
+    def get_all_episodes(self, tmdb_id: int) -> dict:
+        req = m_pb2.AllEpisodesRequest(tmdb_id=tmdb_id)
+        res = self.movie_stub.GetAllEpisodes(req, timeout=8.0)
+        return {
+            str(k): [
+                {
+                    "episode_number": e.episode_number,
+                    "season_number": e.season_number,
+                    "name": e.name,
+                    "air_date": e.air_date,
+                    "overview": e.overview,
+                    "still_url": e.still_url,
+                    "vote_average": round(float(e.vote_average), 1),
+                }
+                for e in v.episodes
+            ]
+            for k, v in res.seasons.items()
+        }
 
 
 def get_grpc_manager() -> GatewayGRPCManager:

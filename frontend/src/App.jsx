@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AuthModal from './components/AuthModal';
 import ReviewModal from './components/ReviewModal';
+import EpisodeReviewModal from './components/EpisodeReviewModal';
 import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import MovieDetailPage from './pages/MovieDetailPage';
@@ -40,6 +41,7 @@ export default function App() {
           {/* Global Modals */}
           <AuthModal />
           <ReviewModal />
+          <EpisodeReviewModal />
         </ReviewModalProvider>
       </AuthProvider>
     </ToastProvider>

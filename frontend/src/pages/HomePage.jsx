@@ -1,14 +1,24 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Star, Film, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useReviewModal } from '../context/ReviewModalContext';
-import { getTrendingMovies, getNowPlayingMovies, getMovieDetails } from '../api/movies';
+import {
+  getTrendingMovies,
+  getNowPlayingMovies,
+  getTrendingTV,
+  getRecommendations,
+  getMovieDetails,
+} from '../api/movies';
 import { getRecentReviews } from '../api/reviews';
 import ReviewComment from '../components/ReviewComment';
+import MovieCarouselSection from '../components/MovieCarouselSection';
 import { formatReviewDate } from '../utils/date';
+import { isAnime } from '../utils/media';
 import {
   CACHE_KEY_TRENDING,
+  CACHE_KEY_TRENDING_TV,
+  CACHE_KEY_RECOMMENDED,
   CACHE_KEY_REVIEWS,
   CACHE_KEY_NOW_PLAYING,
   CACHE_TTL_MS,
@@ -16,7 +26,7 @@ import {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { isLoggedIn, openAuth } = useAuth();
+  const { isLoggedIn, username, openAuth } = useAuth();
   const { reviewRevision } = useReviewModal();
 
   const [trendingMovies, setTrendingMovies] = useState([]);
@@ -25,10 +35,15 @@ export default function HomePage() {
   const [reviewsPage, setReviewsPage] = useState(1);
   const REVIEWS_PER_PAGE = 10;
   const [posters, setPosters] = useState({});
+
   const [isLoadingTrending, setIsLoadingTrending] = useState(true);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
   const [isLoadingNowPlaying, setIsLoadingNowPlaying] = useState(true);
+  const [trendingTV, setTrendingTV] = useState([]);
+  const [isLoadingTrendingTV, setIsLoadingTrendingTV] = useState(true);
+  const [recommendedMovies, setRecommendedMovies] = useState([]);
+  const [isLoadingRecommended, setIsLoadingRecommended] = useState(false);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
 
   const totalReviewsPages = Math.max(1, Math.ceil(recentReviews.length / REVIEWS_PER_PAGE));
   const currentReviewsPage = Math.min(reviewsPage, totalReviewsPages);
@@ -71,12 +86,17 @@ export default function HomePage() {
     }
   }, [currentReviewsPage]);
 
+  // Otimização 4 & 5: Carregamento paralelo com Promise.allSettled e eliminação de N+1 de posters
   useEffect(() => {
     setReviewsPage(1);
 
-    let hasValidTrendingCache = false;
-    let hasValidReviewsCache = false;
+    let hasTrendingCache = false;
+    let hasReviewsCache = false;
+    let hasNowPlayingCache = false;
+    let hasTVCache = false;
+    let hasRecsCache = false;
 
+    // 1. Verificar caches rápidos do sessionStorage
     if (reviewRevision === 0) {
       try {
         const cached = sessionStorage.getItem(CACHE_KEY_TRENDING);
@@ -87,7 +107,7 @@ export default function HomePage() {
             if (parsed.heroMovie) setHeroMovie(parsed.heroMovie);
             if (parsed.posters) setPosters((prev) => ({ ...parsed.posters, ...prev }));
             setIsLoadingTrending(false);
-            hasValidTrendingCache = true;
+            hasTrendingCache = true;
           }
         }
       } catch (e) {}
@@ -98,135 +118,241 @@ export default function HomePage() {
           const parsed = JSON.parse(cached);
           if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.reviews) {
             setRecentReviews(parsed.reviews);
-            if (parsed.posters) setPosters((prev) => ({ ...parsed.posters, ...prev }));
+            const cachedPosters = { ...(parsed.posters || {}) };
+            parsed.reviews.forEach((r) => {
+              if (r.poster_url) {
+                cachedPosters[`${r.tmdb_id}_${r.media_type || 'movie'}`] = r.poster_url;
+                cachedPosters[r.tmdb_id] = r.poster_url;
+              }
+            });
+            setPosters((prev) => ({ ...cachedPosters, ...prev }));
             setIsLoadingReviews(false);
-            hasValidReviewsCache = true;
+            hasReviewsCache = true;
           }
         }
       } catch (e) {}
+
+      try {
+        const cached = sessionStorage.getItem(CACHE_KEY_NOW_PLAYING);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.movies?.length > 0) {
+            setNowPlayingMovies(parsed.movies);
+            setIsLoadingNowPlaying(false);
+            hasNowPlayingCache = true;
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const cached = sessionStorage.getItem(CACHE_KEY_TRENDING_TV);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.movies?.length > 0) {
+            setTrendingTV(parsed.movies);
+            setIsLoadingTrendingTV(false);
+            hasTVCache = true;
+          }
+        }
+      } catch (e) {}
+
+      if (isLoggedIn && username) {
+        const cacheKeyRecs = `${CACHE_KEY_RECOMMENDED}_${username}`;
+        try {
+          const cached = sessionStorage.getItem(cacheKeyRecs);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.movies?.length > 0) {
+              setRecommendedMovies(parsed.movies);
+              setIsLoadingRecommended(false);
+              hasRecsCache = true;
+            }
+          }
+        } catch (e) {}
+      } else {
+        setRecommendedMovies([]);
+        setIsLoadingRecommended(false);
+        hasRecsCache = true;
+      }
+    } else if (!isLoggedIn || !username) {
+      setRecommendedMovies([]);
+      setIsLoadingRecommended(false);
+      hasRecsCache = true;
     }
 
-    const fetchTrending = async () => {
-      try {
-        const data = await getTrendingMovies();
-        const list = data?.movies || [];
-        setTrendingMovies(list);
-        const hero = list.length > 0 ? list[0] : null;
-        if (hero) setHeroMovie(hero);
+    // 2. Disparar requisições em paralelo com Promise.allSettled
+    const fetchAllData = async () => {
+      const promises = [];
+      const keys = [];
 
-        const initialPosters = {};
-        list.forEach((m) => {
-          if (m.tmdb_id && m.poster_url) {
-            initialPosters[`${m.tmdb_id}_${m.media_type || 'movie'}`] = m.poster_url;
-            initialPosters[m.tmdb_id] = m.poster_url;
-          }
-        });
-        setPosters((prev) => ({ ...initialPosters, ...prev }));
-
-        try {
-          sessionStorage.setItem(
-            CACHE_KEY_TRENDING,
-            JSON.stringify({
-              movies: list,
-              heroMovie: hero,
-              posters: initialPosters,
-              timestamp: Date.now(),
-            })
-          );
-        } catch (e) {}
-      } catch (err) {
-        console.error('Erro ao carregar trending:', err);
-      } finally {
-        setIsLoadingTrending(false);
+      if (!hasTrendingCache) {
+        keys.push('trending');
+        promises.push(getTrendingMovies());
       }
-    };
+      if (!hasNowPlayingCache) {
+        keys.push('nowPlaying');
+        promises.push(getNowPlayingMovies());
+      }
+      if (!hasTVCache) {
+        keys.push('tv');
+        promises.push(getTrendingTV());
+      }
+      if (isLoggedIn && username && !hasRecsCache) {
+        setIsLoadingRecommended(true);
+        keys.push('recs');
+        promises.push(getRecommendations(username));
+      }
+      if (!hasReviewsCache) {
+        keys.push('reviews');
+        promises.push(getRecentReviews(100));
+      }
 
-    const fetchReviews = async () => {
-      try {
-        const data = await getRecentReviews(100);
-        const list = data || [];
-        setRecentReviews(list);
+      if (promises.length === 0) return;
 
-        const fetchedPosters = {};
-        const uniqueItems = Array.from(
-          new Map(list.map((r) => [`${r.tmdb_id}_${r.media_type || 'movie'}`, { id: r.tmdb_id, type: r.media_type || 'movie' }])).values()
-        );
-        await Promise.all(
-          uniqueItems.map(async ({ id, type }) => {
-            try {
-              const mData = await getMovieDetails(id, type);
-              if (mData?.poster_url) {
-                fetchedPosters[`${id}_${type}`] = mData.poster_url;
-                if (!fetchedPosters[id]) {
-                  fetchedPosters[id] = mData.poster_url;
-                }
-              }
-            } catch (e) {}
-          })
-        );
+      const results = await Promise.allSettled(promises);
 
-        setPosters((prev) => {
-          const merged = { ...prev, ...fetchedPosters };
+      results.forEach((res, idx) => {
+        const key = keys[idx];
+        if (res.status !== 'fulfilled' || !res.value) {
+          if (key === 'trending') setIsLoadingTrending(false);
+          if (key === 'nowPlaying') setIsLoadingNowPlaying(false);
+          if (key === 'tv') setIsLoadingTrendingTV(false);
+          if (key === 'recs') setIsLoadingRecommended(false);
+          if (key === 'reviews') setIsLoadingReviews(false);
+          return;
+        }
+
+        const data = res.value;
+
+        if (key === 'trending') {
+          const list = data?.movies || [];
+          setTrendingMovies(list);
+          const hero = list.length > 0 ? list[0] : null;
+          if (hero) setHeroMovie(hero);
+
+          const initialPosters = {};
+          list.forEach((m) => {
+            if (m.tmdb_id && m.poster_url) {
+              initialPosters[`${m.tmdb_id}_${m.media_type || 'movie'}`] = m.poster_url;
+              initialPosters[m.tmdb_id] = m.poster_url;
+            }
+          });
+          setPosters((prev) => ({ ...initialPosters, ...prev }));
           try {
             sessionStorage.setItem(
-              CACHE_KEY_REVIEWS,
+              CACHE_KEY_TRENDING,
               JSON.stringify({
-                reviews: list,
-                posters: merged,
+                movies: list,
+                heroMovie: hero,
+                posters: initialPosters,
                 timestamp: Date.now(),
               })
             );
           } catch (e) {}
-          return merged;
-        });
-      } catch (err) {
-        console.error('Erro ao carregar reviews:', err);
-      } finally {
-        setIsLoadingReviews(false);
-      }
-    };
-
-    if (!hasValidTrendingCache) fetchTrending();
-    if (!hasValidReviewsCache) fetchReviews();
-  }, [reviewRevision]);
-
-  useEffect(() => {
-    let hasCache = false;
-    try {
-      const cached = sessionStorage.getItem(CACHE_KEY_NOW_PLAYING);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.movies?.length > 0) {
-          setNowPlayingMovies(parsed.movies);
+          setIsLoadingTrending(false);
+        } else if (key === 'nowPlaying') {
+          const list = (data?.movies || []).filter((m) => m.poster_url);
+          setNowPlayingMovies(list);
+          try {
+            sessionStorage.setItem(
+              CACHE_KEY_NOW_PLAYING,
+              JSON.stringify({
+                movies: list,
+                timestamp: Date.now(),
+              })
+            );
+          } catch (e) {}
           setIsLoadingNowPlaying(false);
-          hasCache = true;
-        }
-      }
-    } catch (e) {}
+        } else if (key === 'tv') {
+          const list = (data?.movies || []).filter((m) => m.poster_url);
+          setTrendingTV(list);
+          try {
+            sessionStorage.setItem(
+              CACHE_KEY_TRENDING_TV,
+              JSON.stringify({
+                movies: list,
+                timestamp: Date.now(),
+              })
+            );
+          } catch (e) {}
+          setIsLoadingTrendingTV(false);
+        } else if (key === 'recs') {
+          const list = (data?.movies || []).filter((m) => m.poster_url);
+          setRecommendedMovies(list);
+          if (username) {
+            const cacheKey = `${CACHE_KEY_RECOMMENDED}_${username}`;
+            try {
+              sessionStorage.setItem(
+                cacheKey,
+                JSON.stringify({
+                  movies: list,
+                  timestamp: Date.now(),
+                })
+              );
+            } catch (e) {}
+          }
+          setIsLoadingRecommended(false);
+        } else if (key === 'reviews') {
+          const list = data || [];
+          setRecentReviews(list);
 
-    const fetchNowPlaying = async () => {
-      try {
-        const data = await getNowPlayingMovies();
-        const list = (data?.movies || []).filter((m) => m.poster_url);
-        setNowPlayingMovies(list);
-        try {
-          sessionStorage.setItem(
-            CACHE_KEY_NOW_PLAYING,
-            JSON.stringify({
-              movies: list,
-              timestamp: Date.now(),
-            })
-          );
-        } catch (e) {}
-      } catch (err) {
-        console.error('Erro ao carregar filmes em cartaz:', err);
-      } finally {
-        setIsLoadingNowPlaying(false);
-      }
+          // Otimização 5: Extrai poster_url diretamente dos objetos de review vindos do backend
+          // Eliminando até 50 requests HTTP individuais de getMovieDetails!
+          const fetchedPosters = {};
+          const missingItems = [];
+          list.forEach((r) => {
+            if (r.poster_url) {
+              fetchedPosters[`${r.tmdb_id}_${r.media_type || 'movie'}`] = r.poster_url;
+              if (!fetchedPosters[r.tmdb_id]) {
+                fetchedPosters[r.tmdb_id] = r.poster_url;
+              }
+            } else {
+              missingItems.push({ id: r.tmdb_id, type: r.media_type || 'movie' });
+            }
+          });
+
+          // Apenas para reviews legadas (se houver sem poster_url salvo no banco), busca sob demanda
+          if (missingItems.length > 0) {
+            const uniqueMissing = Array.from(
+              new Map(missingItems.map((item) => [`${item.id}_${item.type}`, item])).values()
+            );
+            Promise.all(
+              uniqueMissing.slice(0, 10).map(async ({ id, type }) => {
+                try {
+                  const mData = await getMovieDetails(id, type);
+                  if (mData?.poster_url) {
+                    setPosters((prev) => ({
+                      ...prev,
+                      [`${id}_${type}`]: mData.poster_url,
+                      [id]: mData.poster_url,
+                    }));
+                  }
+                } catch (e) {}
+              })
+            );
+          }
+
+          setPosters((prev) => {
+            const merged = { ...prev, ...fetchedPosters };
+            try {
+              sessionStorage.setItem(
+                CACHE_KEY_REVIEWS,
+                JSON.stringify({
+                  reviews: list,
+                  posters: merged,
+                  timestamp: Date.now(),
+                })
+              );
+            } catch (e) {}
+            return merged;
+          });
+          setIsLoadingReviews(false);
+        }
+      });
     };
 
-    if (!hasCache) fetchNowPlaying();
-  }, []);
+    fetchAllData();
+  }, [isLoggedIn, username, reviewRevision]);
 
   return (
     <>
@@ -257,7 +383,11 @@ export default function HomePage() {
             </div>
             <div className="hero-info">
               <div className="hero-kicker">
-                <span>[ {heroMovie.release_date ? heroMovie.release_date.substring(0, 4) : '2026'} • {heroMovie.media_type === 'tv' ? 'SÉRIE' : 'LONGA-METRAGEM'} • DESTAQUE DO PROJETOR ]</span>
+                <span>
+                  [ {heroMovie.release_date ? heroMovie.release_date.substring(0, 4) : '2026'} •{' '}
+                  {isAnime(heroMovie) ? 'ANIME' : heroMovie.media_type === 'tv' ? 'SÉRIE' : 'LONGA-METRAGEM'} • DESTAQUE
+                  DO PROJETOR ]
+                </span>
               </div>
               <h1 className="hero-title">{heroMovie.title}</h1>
               <p className="hero-synopsis">
@@ -292,7 +422,7 @@ export default function HomePage() {
                 </button>
                 <button
                   className="hero-btn hero-btn-ghost"
-                  onClick={() => navigate('/search')}
+                  onClick={() => navigate('/search?filter=trending')}
                 >
                   EXPLORAR ACERVO
                 </button>
@@ -302,115 +432,65 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* TRENDING SECTION */}
-      <section id="trending-section" className="section">
-        <div className="section-header">
-          <div className="section-title-group">
-            <span className="section-num">01</span>
-            <h2 className="section-title">Em Alta Esta Semana</h2>
-          </div>
-          <Link to="/search" className="section-link">
-            ACERVO COMPLETO
-            <ArrowRight size={13} />
-          </Link>
-        </div>
+      {/* SEÇÃO 01: EM ALTA NA SEMANA (CARROSSEL HORIZONTAL) */}
+      <MovieCarouselSection
+        id="trending-section"
+        sectionNum="01"
+        sectionTitle="Em Alta Esta Semana"
+        linkTo="/search?filter=trending"
+        linkLabel="ACERVO EM ALTA"
+        movies={trendingMovies}
+        isLoading={isLoadingTrending}
+        loadingMessage="SINCRONIZANDO CATÁLOGO EM DESTAQUE..."
+        navigate={navigate}
+      />
 
-        {isLoadingTrending ? (
-          <div className="loading-pulse">SINCRONIZANDO CATÁLOGO EM DESTAQUE...</div>
-        ) : (
-          <div className="movies-grid">
-            {trendingMovies.slice(0, 10).map((m, idx) => (
-              <div
-                key={m.tmdb_id}
-                className="movie-card"
-                onClick={() => navigate(`/movie/${m.tmdb_id}?type=${m.media_type || 'movie'}`)}
-                title={`Ver detalhes de ${m.title}`}
-              >
-                <div className="movie-card-poster">
-                  <img src={m.poster_url || 'https://via.placeholder.com/500x750?text=Sem+Poster'} alt={m.title} loading="lazy" />
-                  <span className="movie-card-rank">#{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
-                </div>
-                <div className="movie-card-info">
-                  <div className="movie-card-topline">
-                    <span className="movie-card-tag">
-                      {m.release_date ? m.release_date.substring(0, 4) : '2026'} • {m.media_type === 'tv' ? 'SÉRIE' : 'FILME'}
-                    </span>
-                    <span className="movie-card-score-pill">
-                      ★ {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
-                    </span>
-                  </div>
-                  <h3 className="movie-card-title">{m.title}</h3>
-                  <div className="movie-card-meta">
-                    {m.criticbox_rating > 0 ? (
-                      <span className="movie-card-cb-score">CRITICBOX: <strong>{m.criticbox_rating.toFixed(1)}</strong></span>
-                    ) : (
-                      <span className="movie-card-cb-empty">SEM CRÍTICAS</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* SEÇÃO 02: EM CARTAZ NOS CINEMAS (CARROSSEL HORIZONTAL) */}
+      <MovieCarouselSection
+        id="now-playing-section"
+        sectionNum="02"
+        sectionTitle="Em Cartaz nos Cinemas"
+        linkTo="/search?filter=now_playing"
+        linkLabel="SESSÕES EM CARTAZ"
+        movies={nowPlayingMovies}
+        isLoading={isLoadingNowPlaying}
+        loadingMessage="CONSULTANDO PROGRAMAÇÃO DAS SALAS..."
+        navigate={navigate}
+      />
 
-      {/* SEÇÃO 02: EM CARTAZ NOS CINEMAS */}
-      <section id="now-playing-section" className="section" style={{ paddingTop: 0 }}>
-        <div className="section-header">
-          <div className="section-title-group">
-            <span className="section-num">02</span>
-            <h2 className="section-title">Em Cartaz nos Cinemas</h2>
-          </div>
-          <Link to="/search" className="section-link">
-            SESSÕES EM CARTAZ
-            <ArrowRight size={13} />
-          </Link>
-        </div>
+      {/* SEÇÃO 03: SÉRIES EM ALTA ESSA SEMANA (CARROSSEL HORIZONTAL) */}
+      <MovieCarouselSection
+        id="tv-section"
+        sectionNum="03"
+        sectionTitle="Séries em Alta Esta Semana"
+        linkTo="/search?filter=series"
+        linkLabel="ACERVO DE SÉRIES"
+        movies={trendingTV}
+        isLoading={isLoadingTrendingTV}
+        loadingMessage="SINCRONIZANDO SÉRIES EM ALTA..."
+        navigate={navigate}
+      />
 
-        {isLoadingNowPlaying ? (
-          <div className="loading-pulse">CONSULTANDO PROGRAMAÇÃO DAS SALAS...</div>
-        ) : (
-          <div className="movies-grid">
-            {nowPlayingMovies.slice(0, 10).map((m, idx) => (
-              <div
-                key={m.tmdb_id}
-                className="movie-card"
-                onClick={() => navigate(`/movie/${m.tmdb_id}?type=${m.media_type || 'movie'}`)}
-                title={`Ver detalhes de ${m.title}`}
-              >
-                <div className="movie-card-poster">
-                  <img src={m.poster_url || 'https://via.placeholder.com/500x750?text=Sem+Poster'} alt={m.title} loading="lazy" />
-                  <span className="movie-card-rank">#{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
-                </div>
-                <div className="movie-card-info">
-                  <div className="movie-card-topline">
-                    <span className="movie-card-tag">
-                      {m.release_date ? m.release_date.substring(0, 4) : '2026'} • CINEMA
-                    </span>
-                    <span className="movie-card-score-pill">
-                      ★ {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
-                    </span>
-                  </div>
-                  <h3 className="movie-card-title">{m.title}</h3>
-                  <div className="movie-card-meta">
-                    {m.criticbox_rating > 0 ? (
-                      <span className="movie-card-cb-score">CRITICBOX: <strong>{m.criticbox_rating.toFixed(1)}</strong></span>
-                    ) : (
-                      <span className="movie-card-cb-empty">SEM CRÍTICAS</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* SEÇÃO 04: RECOMENDADOS PARA VOCÊ (CARROSSEL HORIZONTAL BASEADO EM REVIEWS - APENAS SE LOGADO) */}
+      {isLoggedIn && username && (
+        <MovieCarouselSection
+          id="recommended-section"
+          sectionNum="04"
+          sectionTitle="Recomendados para Você"
+          linkTo="/search?filter=recommended"
+          linkLabel="EXPLORAR RECOMENDAÇÕES"
+          movies={recommendedMovies}
+          isLoading={isLoadingRecommended}
+          loadingMessage="COMPILANDO RECOMENDAÇÕES PERSONALIZADAS..."
+          navigate={navigate}
+        />
+      )}
 
-      {/* RECENT REVIEWS SECTION */}
+      {/* SEÇÃO DE CRÍTICAS RECENTES DA COMUNIDADE */}
       <section id="reviews-section" className="section" style={{ paddingTop: 0 }}>
         <div className="section-header">
           <div className="section-title-group">
-            <span className="section-num">03</span>
+            <span className="section-num">{isLoggedIn && username ? '05' : '04'}</span>
             <h2 className="section-title">Críticas Recentes da Comunidade</h2>
           </div>
         </div>
@@ -434,7 +514,7 @@ export default function HomePage() {
                     title={`Ver detalhes de ${r.movie_title || 'Título'}`}
                   >
                     {(() => {
-                      const pUrl = posters[`${r.tmdb_id}_${r.media_type || 'movie'}`] || posters[r.tmdb_id];
+                      const pUrl = r.poster_url || posters[`${r.tmdb_id}_${r.media_type || 'movie'}`] || posters[r.tmdb_id];
                       return pUrl ? (
                         <img src={pUrl} alt={r.movie_title || 'Poster'} loading="lazy" />
                       ) : (
@@ -537,8 +617,7 @@ export default function HomePage() {
               <p>Junte-se à comunidade de cinéfilos. Registre seus votos, elabore ensaios e acompanhe os grandes lançamentos.</p>
             </div>
             <button className="cta-btn" onClick={() => openAuth('register')}>
-              CRIAR CONTA DE CRÍTICO
-              <ArrowRight size={16} />
+              CRIAR CONTA GRATUITA
             </button>
           </div>
         </section>

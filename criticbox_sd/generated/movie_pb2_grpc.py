@@ -47,6 +47,11 @@ class MovieServiceStub:
                 request_serializer=movie__pb2.TrendingMoviesRequest.SerializeToString,
                 response_deserializer=movie__pb2.SearchMoviesResponse.FromString,
                 _registered_method=True)
+        self.GetTrendingTV = channel.unary_unary(
+                '/movie.MovieService/GetTrendingTV',
+                request_serializer=movie__pb2.TrendingMoviesRequest.SerializeToString,
+                response_deserializer=movie__pb2.SearchMoviesResponse.FromString,
+                _registered_method=True)
         self.GetMovieDetails = channel.unary_unary(
                 '/movie.MovieService/GetMovieDetails',
                 request_serializer=movie__pb2.MovieDetailsRequest.SerializeToString,
@@ -62,6 +67,21 @@ class MovieServiceStub:
                 request_serializer=movie__pb2.NowPlayingRequest.SerializeToString,
                 response_deserializer=movie__pb2.SearchMoviesResponse.FromString,
                 _registered_method=True)
+        self.GetRecommendations = channel.unary_unary(
+                '/movie.MovieService/GetRecommendations',
+                request_serializer=movie__pb2.RecommendationsRequest.SerializeToString,
+                response_deserializer=movie__pb2.SearchMoviesResponse.FromString,
+                _registered_method=True)
+        self.GetSeasonEpisodes = channel.unary_unary(
+                '/movie.MovieService/GetSeasonEpisodes',
+                request_serializer=movie__pb2.SeasonEpisodesRequest.SerializeToString,
+                response_deserializer=movie__pb2.SeasonEpisodesResponse.FromString,
+                _registered_method=True)
+        self.GetAllEpisodes = channel.unary_unary(
+                '/movie.MovieService/GetAllEpisodes',
+                request_serializer=movie__pb2.AllEpisodesRequest.SerializeToString,
+                response_deserializer=movie__pb2.AllEpisodesResponse.FromString,
+                _registered_method=True)
 
 
 class MovieServiceServicer:
@@ -74,6 +94,12 @@ class MovieServiceServicer:
         raise NotImplementedError('Method not implemented!')
 
     def GetTrendingMovies(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetTrendingTV(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -97,6 +123,24 @@ class MovieServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetRecommendations(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetSeasonEpisodes(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetAllEpisodes(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MovieServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -107,6 +151,11 @@ def add_MovieServiceServicer_to_server(servicer, server):
             ),
             'GetTrendingMovies': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTrendingMovies,
+                    request_deserializer=movie__pb2.TrendingMoviesRequest.FromString,
+                    response_serializer=movie__pb2.SearchMoviesResponse.SerializeToString,
+            ),
+            'GetTrendingTV': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetTrendingTV,
                     request_deserializer=movie__pb2.TrendingMoviesRequest.FromString,
                     response_serializer=movie__pb2.SearchMoviesResponse.SerializeToString,
             ),
@@ -124,6 +173,21 @@ def add_MovieServiceServicer_to_server(servicer, server):
                     servicer.GetNowPlayingMovies,
                     request_deserializer=movie__pb2.NowPlayingRequest.FromString,
                     response_serializer=movie__pb2.SearchMoviesResponse.SerializeToString,
+            ),
+            'GetRecommendations': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetRecommendations,
+                    request_deserializer=movie__pb2.RecommendationsRequest.FromString,
+                    response_serializer=movie__pb2.SearchMoviesResponse.SerializeToString,
+            ),
+            'GetSeasonEpisodes': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetSeasonEpisodes,
+                    request_deserializer=movie__pb2.SeasonEpisodesRequest.FromString,
+                    response_serializer=movie__pb2.SeasonEpisodesResponse.SerializeToString,
+            ),
+            'GetAllEpisodes': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAllEpisodes,
+                    request_deserializer=movie__pb2.AllEpisodesRequest.FromString,
+                    response_serializer=movie__pb2.AllEpisodesResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -178,6 +242,33 @@ class MovieService:
             request,
             target,
             '/movie.MovieService/GetTrendingMovies',
+            movie__pb2.TrendingMoviesRequest.SerializeToString,
+            movie__pb2.SearchMoviesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetTrendingTV(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/movie.MovieService/GetTrendingTV',
             movie__pb2.TrendingMoviesRequest.SerializeToString,
             movie__pb2.SearchMoviesResponse.FromString,
             options,
@@ -261,6 +352,87 @@ class MovieService:
             '/movie.MovieService/GetNowPlayingMovies',
             movie__pb2.NowPlayingRequest.SerializeToString,
             movie__pb2.SearchMoviesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetRecommendations(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/movie.MovieService/GetRecommendations',
+            movie__pb2.RecommendationsRequest.SerializeToString,
+            movie__pb2.SearchMoviesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetSeasonEpisodes(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/movie.MovieService/GetSeasonEpisodes',
+            movie__pb2.SeasonEpisodesRequest.SerializeToString,
+            movie__pb2.SeasonEpisodesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetAllEpisodes(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/movie.MovieService/GetAllEpisodes',
+            movie__pb2.AllEpisodesRequest.SerializeToString,
+            movie__pb2.AllEpisodesResponse.FromString,
             options,
             channel_credentials,
             insecure,

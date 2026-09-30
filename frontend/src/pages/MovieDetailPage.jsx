@@ -13,16 +13,19 @@ import {
   Tv,
   Film,
   Globe,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useReviewModal } from '../context/ReviewModalContext';
-import { getMovieDetails, getSeasonEpisodes } from '../api/movies';
+import { getMovieDetails, getSeasonEpisodes, getSeriesEpisodes } from '../api/movies';
 import { getMovieReviews } from '../api/reviews';
 import ReviewCard from '../components/ReviewCard';
 import SeriesEpisodeGuide from '../components/detail/SeriesEpisodeGuide';
 import ProductionDossier from '../components/detail/ProductionDossier';
 import RecommendationsCarousel from '../components/detail/RecommendationsCarousel';
 import { formatReleaseDate, isUnreleased } from '../utils/date';
+import { SERIES_EPISODES_CACHE } from '../utils/constants';
+import { isAnime, getMediaTypeLabel } from '../utils/media';
 
 const INITIAL_CAST_COUNT = 6;
 
@@ -64,10 +67,26 @@ export default function MovieDetailPage() {
       setMovie(movieData);
       setReviews(reviewsData || []);
 
-      if (movieData.media_type === 'tv' && movieData.seasons && movieData.seasons.length > 0) {
-        const firstSeasonNum = movieData.seasons[0].season_number || 1;
-        setSelectedSeason(firstSeasonNum);
-        loadSeasonEpisodes(firstSeasonNum);
+      if (movieData.media_type === 'tv') {
+        const mid = movieData.tmdb_id || id;
+        if (SERIES_EPISODES_CACHE[mid]) {
+          setSeasonEpisodesMap((prev) => ({ ...prev, ...SERIES_EPISODES_CACHE[mid] }));
+        } else {
+          getSeriesEpisodes(mid)
+            .then((allEps) => {
+              if (allEps && typeof allEps === 'object' && Object.keys(allEps).length > 0) {
+                SERIES_EPISODES_CACHE[mid] = allEps;
+                setSeasonEpisodesMap((prev) => ({ ...prev, ...allEps }));
+              }
+            })
+            .catch((e) => console.warn('Falha ao carregar todos os episódios:', e));
+        }
+
+        if (movieData.seasons && movieData.seasons.length > 0) {
+          const firstSeasonNum = movieData.seasons[0].season_number || 1;
+          setSelectedSeason(firstSeasonNum);
+          loadSeasonEpisodes(firstSeasonNum);
+        }
       }
     } catch (err) {
       setError(err.message || 'Erro ao carregar detalhes do título.');
@@ -97,6 +116,26 @@ export default function MovieDetailPage() {
   const handleSelectSeason = (seasonNum) => {
     setSelectedSeason(seasonNum);
     loadSeasonEpisodes(seasonNum);
+  };
+
+  // Carrega episódios de temporadas que possuem críticas mas ainda não foram cacheadas
+  useEffect(() => {
+    if (movie?.media_type === 'tv' && reviews.length > 0) {
+      const reviewedSeasons = [...new Set(reviews.map((r) => r.season_number).filter(Boolean))];
+      reviewedSeasons.forEach((sNum) => {
+        if (!seasonEpisodesMap[sNum] && !seasonEpisodesMap[String(sNum)]) {
+          loadSeasonEpisodes(sNum);
+        }
+      });
+    }
+  }, [movie?.media_type, reviews, seasonEpisodesMap]);
+
+  // Helper para buscar nome e still do episódio avaliado
+  const getEpisodeDetails = (seasonNum, epNum) => {
+    if (!seasonNum || !epNum) return null;
+    const sEps = seasonEpisodesMap[seasonNum] || seasonEpisodesMap[String(seasonNum)];
+    if (!sEps || !Array.isArray(sEps)) return null;
+    return sEps.find((ep) => Number(ep.episode_number) === Number(epNum)) || null;
   };
 
   useEffect(() => {
@@ -134,8 +173,9 @@ export default function MovieDetailPage() {
 
   const userAlreadyReviewed = Boolean(
     username &&
-      movie.media_type !== 'tv' &&
-      userReviews.length > 0
+      (movie.media_type === 'tv'
+        ? userReviews.some((r) => (!r.season_number || r.season_number === 0) && (!r.episode_number || r.episode_number === 0))
+        : userReviews.length > 0)
   );
 
   const runtimeHours = movie.runtime ? Math.floor(movie.runtime / 60) : 0;
@@ -248,7 +288,7 @@ export default function MovieDetailPage() {
             ) : userAlreadyReviewed ? (
               <div className="movie-already-reviewed-badge">
                 <Check size={16} />
-                VOCÊ JÁ AVALIOU
+                {isAnime(movie) ? 'VOCÊ JÁ AVALIOU O ANIME' : movie.media_type === 'tv' ? 'VOCÊ JÁ AVALIOU A SÉRIE' : 'VOCÊ JÁ AVALIOU'}
               </div>
             ) : (
               <button
@@ -256,7 +296,7 @@ export default function MovieDetailPage() {
                 onClick={() => openReviewModal(movie, loadData)}
               >
                 <Star size={15} fill="currentColor" />
-                AVALIAR {movie.media_type === 'tv' ? 'ESTA SÉRIE / EPISÓDIO' : 'ESTE FILME'}
+                AVALIAR {isAnime(movie) ? (movie.media_type === 'tv' ? 'ANIME COMPLETO' : 'ESTE ANIME') : movie.media_type === 'tv' ? 'SÉRIE COMPLETA' : 'ESTE FILME'}
               </button>
             )}
 
@@ -293,8 +333,12 @@ export default function MovieDetailPage() {
 
             {/* KICKER DE CABEÇALHO BRUTALISTA */}
             <div className="movie-detail-kicker">
-              <span className={`movie-kicker-type ${movie.media_type === 'tv' ? 'series' : ''}`}>
-                {movie.media_type === 'tv' ? (
+              <span className={`movie-kicker-type ${isAnime(movie) ? 'anime' : movie.media_type === 'tv' ? 'series' : ''}`}>
+                {isAnime(movie) ? (
+                  <>
+                    <Sparkles size={11} /> ANIME
+                  </>
+                ) : movie.media_type === 'tv' ? (
                   <>
                     <Tv size={11} /> SÉRIE
                   </>
@@ -452,7 +496,7 @@ export default function MovieDetailPage() {
         handleSelectSeason={handleSelectSeason}
         loadingSeason={loadingSeason}
         seasonEpisodesMap={seasonEpisodesMap}
-        openReviewModal={openReviewModal}
+        userReviews={userReviews}
         loadData={loadData}
       />
 
@@ -523,12 +567,12 @@ export default function MovieDetailPage() {
           ) : userAlreadyReviewed ? (
             <span className="movie-already-reviewed-badge" style={{ padding: '6px 14px' }}>
               <Check size={14} />
-              SUA CRÍTICA JÁ FOI PUBLICADA
+              {isAnime(movie) ? 'AVALIAÇÃO DO ANIME PUBLICADA' : movie.media_type === 'tv' ? 'AVALIAÇÃO DA SÉRIE PUBLICADA' : 'SUA CRÍTICA JÁ FOI PUBLICADA'}
             </span>
           ) : (
             <button className="nav-btn nav-btn-accent" onClick={() => openReviewModal(movie, loadData)}>
               <Plus size={14} style={{ marginRight: '6px' }} />
-              ESCREVER CRÍTICA
+              {isAnime(movie) ? (movie.media_type === 'tv' ? 'AVALIAR ANIME COMPLETO' : 'AVALIAR ANIME') : movie.media_type === 'tv' ? 'AVALIAR SÉRIE COMPLETA' : 'ESCREVER CRÍTICA'}
             </button>
           )}
         </div>
@@ -545,7 +589,7 @@ export default function MovieDetailPage() {
             </p>
             {!unreleased && (
               <button className="nav-btn nav-btn-accent" onClick={() => openReviewModal(movie, loadData)}>
-                AVALIAR "{movie.title}" AGORA
+                {isAnime(movie) ? (movie.media_type === 'tv' ? 'AVALIAR ANIME COMPLETO AGORA' : `AVALIAR "${movie.title}" AGORA`) : movie.media_type === 'tv' ? 'AVALIAR SÉRIE COMPLETA AGORA' : `AVALIAR "${movie.title}" AGORA`}
                 <ArrowRight size={14} style={{ marginLeft: '6px' }} />
               </button>
             )}
@@ -560,9 +604,17 @@ export default function MovieDetailPage() {
               </div>
             )}
 
-            {userReviews.map((r) => (
-              <ReviewCard key={r.review_id} review={r} />
-            ))}
+            {userReviews.map((r) => {
+              const epDetails = getEpisodeDetails(r.season_number, r.episode_number);
+              return (
+                <ReviewCard
+                  key={r.review_id}
+                  review={r}
+                  episodeName={epDetails?.name}
+                  episodeStillUrl={epDetails?.still_url}
+                />
+              );
+            })}
 
             {userReviews.length > 0 && otherReviews.length > 0 && (
               <div className="movie-reviews-divider">
@@ -572,9 +624,17 @@ export default function MovieDetailPage() {
               </div>
             )}
 
-            {otherReviews.map((r) => (
-              <ReviewCard key={r.review_id} review={r} />
-            ))}
+            {otherReviews.map((r) => {
+              const epDetails = getEpisodeDetails(r.season_number, r.episode_number);
+              return (
+                <ReviewCard
+                  key={r.review_id}
+                  review={r}
+                  episodeName={epDetails?.name}
+                  episodeStillUrl={epDetails?.still_url}
+                />
+              );
+            })}
           </div>
         )}
       </section>

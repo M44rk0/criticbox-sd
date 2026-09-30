@@ -4,12 +4,29 @@ import { Star, Film } from 'lucide-react';
 import ReviewComment from './ReviewComment';
 import { formatReviewDate } from '../utils/date';
 
-export default function ReviewCard({ review, posterUrl, showPoster = false }) {
+export default function ReviewCard({
+  review,
+  posterUrl,
+  showPoster = false,
+  episodeName = '',
+  episodeStillUrl = '',
+}) {
   const navigate = useNavigate();
+
+  const episodeCode = review.season_number && review.episode_number
+    ? `T${review.season_number < 10 ? `0${review.season_number}` : review.season_number}E${review.episode_number < 10 ? `0${review.episode_number}` : review.episode_number}`
+    : review.season_number ? `T${review.season_number}` : null;
 
   if (showPoster) {
     return (
-      <div className="review-card review-card-with-poster">
+      <div className={`review-card review-card-with-poster ${episodeStillUrl ? 'review-card-has-still' : ''}`}>
+        {episodeStillUrl && (
+          <div
+            className="review-card-still-backdrop"
+            style={{ backgroundImage: `url(${episodeStillUrl})` }}
+            aria-hidden="true"
+          />
+        )}
         <div
           className="review-card-poster"
           onClick={() => navigate(`/movie/${review.tmdb_id}?type=${review.media_type || 'movie'}`)}
@@ -31,14 +48,14 @@ export default function ReviewCard({ review, posterUrl, showPoster = false }) {
               onClick={() => navigate(`/movie/${review.tmdb_id}?type=${review.media_type || 'movie'}`)}
             >
               {review.movie_title || `Título #${review.tmdb_id}`}
-              {review.season_number && review.episode_number ? (
+              {episodeCode && (
                 <span className="review-scope-chip">
-                  T{review.season_number < 10 ? `0${review.season_number}` : review.season_number}E
-                  {review.episode_number < 10 ? `0${review.episode_number}` : review.episode_number}
+                  {episodeCode}
                 </span>
-              ) : review.season_number ? (
-                <span className="review-scope-chip">T{review.season_number}</span>
-              ) : null}
+              )}
+              {episodeName && (
+                <span className="review-episode-name">"{episodeName}"</span>
+              )}
             </span>
             <div className="review-card-stars">
               <span className="review-card-score-badge">{review.rating ? review.rating.toFixed(1) : '-'}</span>
@@ -68,20 +85,27 @@ export default function ReviewCard({ review, posterUrl, showPoster = false }) {
 
   // Detail Page layout (without poster)
   return (
-    <div className="review-card">
+    <div className={`review-card ${episodeStillUrl ? 'review-card-has-still' : ''}`}>
+      {episodeStillUrl && (
+        <div
+          className="review-card-still-backdrop"
+          style={{ backgroundImage: `url(${episodeStillUrl})` }}
+          aria-hidden="true"
+        />
+      )}
       <div className="review-card-body">
         <div className="review-card-header">
           <div className="movie-review-author-info">
             <span className="review-card-avatar">{(review.user_id || 'U')[0].toUpperCase()}</span>
             <span className="review-card-username">@{review.user_id}</span>
-            {review.season_number && review.episode_number ? (
-              <span className="review-scope-chip">
-                T{review.season_number < 10 ? `0${review.season_number}` : review.season_number}E
-                {review.episode_number < 10 ? `0${review.episode_number}` : review.episode_number}
+            {episodeCode && (
+              <span className="review-scope-chip">{episodeCode}</span>
+            )}
+            {episodeName && (
+              <span className="review-episode-name" title={episodeName}>
+                "{episodeName}"
               </span>
-            ) : review.season_number ? (
-              <span className="review-scope-chip">T{review.season_number}</span>
-            ) : null}
+            )}
           </div>
           <div className="movie-review-rating-wrap">
             <div className="review-card-stars">

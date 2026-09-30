@@ -10,6 +10,7 @@ service ReviewService {
   rpc GetBatchMovieStats (BatchMovieStatsRequest) returns (BatchMovieStatsResponse);
   rpc GetAllReviews (GetAllReviewsRequest) returns (GetAllReviewsResponse);
   rpc GetReviewsByMovie (MovieReviewsRequest) returns (GetAllReviewsResponse);
+  rpc GetReviewsByUser (UserReviewsRequest) returns (GetAllReviewsResponse);
 }
 
 message RegisterUserRequest {
@@ -46,6 +47,7 @@ message CreateReviewRequest {
   int32 season_number = 7;
   int32 episode_number = 8;
   string movie_title = 9;
+  string poster_url = 10;
 }
 
 message ReviewResponse {
@@ -62,6 +64,7 @@ message ReviewResponse {
   int32 season_number = 11;
   int32 episode_number = 12;
   string movie_title = 13;
+  string poster_url = 14;
 }
 
 message MovieStatsRequest {
@@ -90,6 +93,10 @@ message MovieReviewsRequest {
   int32 tmdb_id = 1;
 }
 
+message UserReviewsRequest {
+  string user_id = 1;
+}
+
 message ReviewItem {
   string review_id = 1;
   int32 tmdb_id = 2;
@@ -102,6 +109,7 @@ message ReviewItem {
   string media_type = 9;
   int32 season_number = 10;
   int32 episode_number = 11;
+  string poster_url = 12;
 }
 
 message GetAllReviewsResponse {
