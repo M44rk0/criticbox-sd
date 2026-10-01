@@ -180,12 +180,11 @@ A camada de persistência foi unificada utilizando o **SQLAlchemy 2.0**, desacop
 - **Sessões Transacionais (`get_session`)**:
   - Gerenciador de contexto thread-safe que executa as operações atômicas, com `commit()` automático ao concluir o bloco e `rollback()` preventivo em caso de qualquer exceção.
 
-### 6.2. Eliminação do Gargalo N+1 e Otimização de Consultas
-Em versões preliminares, listar 50 reviews exigia fazer 50 requisições HTTP adicionais ao TMDb para descobrir o título e o poster de cada obra avaliada. 
-Na arquitetura atual:
-- Ao salvar a review, gravamos `movie_title` e `poster_url` diretamente na linha do banco de dados (desnormalização controlada).
-- Ao listar reviews (`GetAllReviews`, `GetReviewsByMovie`), os dados vêm imediatamente do banco de dados em uma única consulta, sem sobrecarregar a rede externa.
-- Um script de manutenção em background (`backfill_posters.py`) atualiza retroativamente registros antigos.
+### 6.2. Estratégia de Desnormalização e Otimização de Consultas
+Para garantir alta performance e tempo de resposta previsível na listagem de avaliações, o Criticbox adota uma estratégia de desnormalização controlada no momento da escrita:
+- **Persistência Atômica de Metadados**: Ao criar uma avaliação, os atributos essenciais da obra (`movie_title` e `poster_url`) são gravados diretamente no registro da review no banco de dados.
+- **Consultas em Etapa Única (Single-query Reads)**: Ao listar reviews (`GetAllReviews`, `GetReviewsByMovie`, `GetReviewsByUser`), os dados consolidados vêm imediatamente do banco de dados relacional em uma única consulta SQL, sem gerar requisições de rede adicionais durante a leitura.
+- **Isolamento de Dependências Externas**: As consultas da comunidade são completamente desacopladas da disponibilidade e de eventuais limites de requisições (rate limits) da API externa do TMDb.
 
 ### 6.3. Pré-aquecimento de Cache Concorrente
 Ao iniciar o ecossistema com `poetry run start` (`run_all.py`):
@@ -255,7 +254,7 @@ criticbox-sd/
 │   │   └── review.proto
 │   ├── generated/              # Código gerado pelo protoc para Python
 │   ├── tests/                  # Suíte de testes automatizados com pytest
-│   ├── scripts/                # Scripts utilitários e de migração
+│   ├── scripts/                # Scripts utilitários (compilação de protobufs)
 │   ├── pyproject.toml          # Dependências e scripts do Poetry
 │   ├── poetry.lock             # Lockfile de dependências Python
 │   └── run_all.py              # Orquestrador local de inicialização concorrente

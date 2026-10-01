@@ -91,7 +91,7 @@ criticbox-sd/
 │   ├── proto/                  # Contratos IDL Protocol Buffers
 │   ├── generated/              # Stubs Python gerados pelo protoc
 │   ├── tests/                  # Suíte de testes automatizados com pytest (124 testes)
-│   ├── scripts/                # Utilitários (compile_proto, backfill_posters)
+│   ├── scripts/                # Utilitários (compilação de protobufs)
 │   ├── pyproject.toml          # Dependências do Poetry e scripts de inicialização
 │   └── run_all.py              # Orquestrador unificado para inicialização concorrente
 │

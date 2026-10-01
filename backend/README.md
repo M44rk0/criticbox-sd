@@ -11,7 +11,7 @@ Microsserviços gRPC e API Gateway (FastAPI) para a plataforma Criticbox.
 - `proto/`: Contratos Protocol Buffers (`user.proto`, `movie.proto`, `review.proto`).
 - `generated/`: Stubs gRPC compilados para Python.
 - `tests/`: Suíte completa de testes automatizados com pytest.
-- `scripts/`: Utilitários (compilação de protobufs, backfill de posters, etc.).
+- `scripts/`: Utilitários (compilação de protobufs).
 
 ## Como Executar
 
