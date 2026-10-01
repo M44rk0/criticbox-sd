@@ -3,8 +3,6 @@ syntax = "proto3";
 package review;
 
 service ReviewService {
-  rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse);
-  rpc AuthenticateUser (AuthenticateUserRequest) returns (AuthenticateUserResponse);
   rpc CreateReview (CreateReviewRequest) returns (ReviewResponse);
   rpc GetMovieStats (MovieStatsRequest) returns (MovieStatsResponse);
   rpc GetBatchMovieStats (BatchMovieStatsRequest) returns (BatchMovieStatsResponse);
@@ -13,29 +11,6 @@ service ReviewService {
   rpc GetReviewsByUser (UserReviewsRequest) returns (GetAllReviewsResponse);
 }
 
-message RegisterUserRequest {
-  string username = 1;
-  string password = 2;
-}
-
-message RegisterUserResponse {
-  bool success = 1;
-  string message = 2;
-  string user_id = 3;
-  string username = 4;
-}
-
-message AuthenticateUserRequest {
-  string username = 1;
-  string password = 2;
-}
-
-message AuthenticateUserResponse {
-  bool success = 1;
-  string message = 2;
-  string user_id = 3;
-  string username = 4;
-}
 
 message CreateReviewRequest {
   int32 tmdb_id = 1;

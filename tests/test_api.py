@@ -9,25 +9,26 @@ import grpc
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
-
-os.environ["DATABASE_PATH"] = os.path.join(BASE_DIR, "tests", "criticbox_test.db")
+os.environ["USER_SERVICE_PORT"] = "50057"
 os.environ["MOVIE_SERVICE_PORT"] = "50055"
 os.environ["REVIEW_SERVICE_PORT"] = "50056"
 os.environ["API_PORT"] = "8000"
 
 from fastapi.testclient import TestClient
 
-from criticbox_sd.api.auth import create_access_token
 from criticbox_sd.api.grpc_clients import GatewayGRPCManager
 from criticbox_sd.api.main import app
 from criticbox_sd.generated import movie_pb2_grpc as m_pb2_grpc
 from criticbox_sd.generated import review_pb2_grpc as r_pb2_grpc
-from criticbox_sd.server import database
+from criticbox_sd.generated import user_pb2_grpc as u_pb2_grpc
+from criticbox_sd.server import storage as database
 from criticbox_sd.server.movie_service import MovieServiceServicer
 from criticbox_sd.server.review_service import ReviewServiceServicer
+from criticbox_sd.server.user_service import UserServiceServicer
 
 
 class TestCriticboxDistributedAPI(unittest.TestCase):
+    user_server = None
     movie_server = None
     review_server = None
 
@@ -35,6 +36,11 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
     def setUpClass(cls):
         # Reset gRPC manager instance to use the test ports
         GatewayGRPCManager._instance = None
+
+        cls.user_server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
+        u_pb2_grpc.add_UserServiceServicer_to_server(UserServiceServicer(), cls.user_server)
+        cls.user_server.add_insecure_port("0.0.0.0:50057")
+        cls.user_server.start()
 
         cls.review_server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         r_pb2_grpc.add_ReviewServiceServicer_to_server(ReviewServiceServicer(), cls.review_server)
@@ -48,10 +54,10 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
 
         time.sleep(0.5)
 
-
-
     @classmethod
     def tearDownClass(cls):
+        if cls.user_server:
+            cls.user_server.stop(0)
         if cls.movie_server:
             cls.movie_server.stop(0)
         if cls.review_server:
@@ -271,12 +277,64 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertIn("movies", data)
         self.assertIsInstance(data["movies"], list)
 
-    def test_discover_movies_by_genre_200(self):
-        response = self.client.get("/movies/discover?genre_id=878")
+    def test_get_trending_tv_200(self):
+        response = self.client.get("/movies/trending-tv")
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("movies", data)
         self.assertIsInstance(data["movies"], list)
+
+    def test_get_now_playing_movies_200(self):
+        response = self.client.get("/movies/now-playing")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("movies", data)
+        self.assertIsInstance(data["movies"], list)
+
+    def test_get_recommendations_for_user_endpoint_200(self):
+        response = self.client.get("/movies/recommendations?user_id=alice")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("movies", data)
+
+    def test_get_season_episodes_endpoint_200(self):
+        from unittest.mock import patch
+
+        with patch("criticbox_sd.server.tmdb.catalog.get_season_episodes") as mock_season:
+            mock_season.return_value = {"season_number": 1, "episodes": [{"episode_number": 1, "name": "Episódio 1"}]}
+            res = self.client.get("/movies/1396/season/1")
+            self.assertEqual(res.status_code, 200)
+            data = res.json()
+            self.assertIn("episodes", data)
+
+    def test_get_reviews_by_movie_endpoint_200(self):
+        database.add_review(tmdb_id=888, user_id="rev_user", rating=4.0, comment="Ótimo")
+        res = self.client.get("/reviews/movie/888")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["user_id"], "rev_user")
+
+    def test_get_reviews_by_user_endpoint_200(self):
+        database.add_review(tmdb_id=889, user_id="unique_user_rev", rating=5.0, comment="Sensacional")
+        res = self.client.get("/reviews/user/unique_user_rev")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["user_id"], "unique_user_rev")
+
+    def test_get_movie_details_200(self):
+        response = self.client.get("/movies/550?type=movie")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get("tmdb_id"), 550)
+        self.assertIn("title", data)
+        self.assertIn("genres", data)
+        self.assertIn("cast", data)
+
+    def test_get_movie_details_not_found_404(self):
+        response = self.client.get("/movies/999999999?type=movie")
+        self.assertEqual(response.status_code, 404)
 
     def test_create_review_series_episode_201(self):
         reg = self.client.post("/auth/register", json={"username": "tv_fan", "password": "password123"})
@@ -304,7 +362,10 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         reg = self.client.post("/auth/register", json={"username": "time_traveler", "password": "password123"})
         token = reg.json()["access_token"]
 
-        with patch("criticbox_sd.server.tmdb_service.get_movie_details", return_value={"release_date": "2099-01-01", "title": "Avatar 10"}):
+        with patch(
+            "criticbox_sd.server.tmdb.get_movie_details",
+            return_value={"release_date": "2099-01-01", "title": "Avatar 10"},
+        ):
             payload = {
                 "tmdb_id": 999999,
                 "rating": 5.0,
@@ -316,11 +377,12 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
 
     def test_get_all_series_episodes_200(self):
         from unittest.mock import patch
+
         mock_data = {
             "1": [{"episode_number": 1, "name": "Pilot"}],
             "2": [{"episode_number": 1, "name": "Seven Thirty-Seven"}],
         }
-        with patch("criticbox_sd.server.tmdb_service.get_all_series_episodes", return_value=mock_data):
+        with patch("criticbox_sd.server.tmdb.get_all_series_episodes", return_value=mock_data):
             res = self.client.get("/movies/1396/episodes")
             self.assertEqual(res.status_code, 200)
             data = res.json()
@@ -373,7 +435,119 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertEqual(res.stats[99999].total_count, 0)
         self.assertEqual(res.stats[99999].average_rating, 0.0)
 
+    # ----------------- Schema & Gateway UI Tests ----------------- #
+    def test_schema_user_register_validations(self):
+        res = self.client.post("/auth/register", json={"username": "   ", "password": "validpassword"})
+        self.assertEqual(res.status_code, 400)
+
+        res_short = self.client.post("/auth/register", json={"username": "ab", "password": "validpassword"})
+        self.assertEqual(res_short.status_code, 400)
+
+        res_pw = self.client.post("/auth/register", json={"username": "validuser", "password": "123"})
+        self.assertEqual(res_pw.status_code, 400)
+
+    def test_schema_user_login_validations(self):
+        res = self.client.post("/auth/login", json={"username": "   ", "password": "validpassword"})
+        self.assertEqual(res.status_code, 400)
+
+        res_pw = self.client.post("/auth/login", json={"username": "validuser", "password": "   "})
+        self.assertEqual(res_pw.status_code, 400)
+
+    def test_schema_review_create_validations(self):
+        reg = self.client.post("/auth/register", json={"username": "schema_validator", "password": "password123"})
+        token = reg.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Rating too low (< 0.5)
+        res_low = self.client.post("/reviews", headers=headers, json={"tmdb_id": 550, "rating": 0.2, "comment": "Low"})
+        self.assertEqual(res_low.status_code, 400)
+
+        # Rating too high (> 5.0)
+        res_high = self.client.post(
+            "/reviews", headers=headers, json={"tmdb_id": 550, "rating": 5.5, "comment": "High"}
+        )
+        self.assertEqual(res_high.status_code, 400)
+
+        # Comment too long (> 1000 characters)
+        long_comment = "x" * 1001
+        res_long = self.client.post(
+            "/reviews", headers=headers, json={"tmdb_id": 550, "rating": 4.0, "comment": long_comment}
+        )
+        self.assertEqual(res_long.status_code, 400)
+
+    def test_gateway_root_and_ui_endpoints(self):
+        # JSON status
+        res_json = self.client.get("/", headers={"accept": "application/json"})
+        self.assertEqual(res_json.status_code, 200)
+        self.assertEqual(res_json.json()["status"], "online")
+
+        # HTML accept
+        res_html = self.client.get("/", headers={"accept": "text/html"})
+        self.assertEqual(res_html.status_code, 200)
+
+        # /app endpoint
+        res_app = self.client.get("/app")
+        self.assertIn(res_app.status_code, (200, 404))
+
+        # SPA fallback route
+        res_spa = self.client.get("/explorar", headers={"accept": "text/html"})
+        self.assertIn(res_spa.status_code, (200, 404))
+
+        # Missing static file should return 404
+        res_missing = self.client.get("/static/missing_asset.png", headers={"accept": "*/*"})
+        self.assertEqual(res_missing.status_code, 404)
+
+    def test_main_start_function_mock(self):
+        from unittest.mock import patch
+
+        from criticbox_sd.api.main import start
+
+        with patch("uvicorn.run") as mock_uvicorn:
+            start()
+            self.assertTrue(mock_uvicorn.called)
+
+    def test_grpc_manager_singleton(self):
+        from criticbox_sd.api.grpc_clients import get_grpc_manager
+
+        mgr = get_grpc_manager()
+        self.assertIs(mgr, GatewayGRPCManager.get_instance())
+
+
+class TestExceptionHandlers(unittest.TestCase):
+    def test_grpc_exception_handler_status_mapping(self):
+        import asyncio
+        from unittest.mock import MagicMock
+
+        from fastapi import Request
+
+        from criticbox_sd.api.exception_handlers import grpc_exception_handler
+
+        class FakeRpcError(grpc.RpcError):
+            def __init__(self, code, details):
+                self._code = code
+                self._details = details
+
+            def code(self):
+                return self._code
+
+            def details(self):
+                return self._details
+
+        codes_and_expectations = [
+            (grpc.StatusCode.NOT_FOUND, 404),
+            (grpc.StatusCode.INVALID_ARGUMENT, 400),
+            (grpc.StatusCode.ALREADY_EXISTS, 409),
+            (grpc.StatusCode.UNAUTHENTICATED, 401),
+            (grpc.StatusCode.PERMISSION_DENIED, 403),
+            (grpc.StatusCode.UNAVAILABLE, 503),
+            (grpc.StatusCode.DEADLINE_EXCEEDED, 504),
+            (grpc.StatusCode.INTERNAL, 503),
+        ]
+        for grpc_code, expected_http in codes_and_expectations:
+            exc = FakeRpcError(grpc_code, "Detail error")
+            resp = asyncio.run(grpc_exception_handler(MagicMock(spec=Request), exc))
+            self.assertEqual(resp.status_code, expected_http)
+
 
 if __name__ == "__main__":
     unittest.main()
-

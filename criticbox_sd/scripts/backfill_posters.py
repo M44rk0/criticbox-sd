@@ -1,11 +1,13 @@
-import sys
 import os
+import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from criticbox_sd.server import database, tmdb_service
+from criticbox_sd.server import storage as database
+from criticbox_sd.server import tmdb as tmdb_service
+
 
 def backfill():
     database.init_db()
@@ -30,6 +32,7 @@ def backfill():
             except Exception as e:
                 print(f"[!] Erro ao buscar poster para {title}: {e}")
     print(f"Concluido! {updated} reviews atualizadas com poster_url.")
+
 
 if __name__ == "__main__":
     backfill()

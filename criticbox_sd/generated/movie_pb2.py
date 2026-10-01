@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bmovie.proto\x12\x05movie\"!\n\x11NowPlayingRequest\x12\x0c\n\x04page\x18\x01 \x01(\x05\"\\\n\nSeasonInfo\x12\x15\n\rseason_number\x18\x01 \x01(\x05\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x15\n\repisode_count\x18\x03 \x01(\x05\x12\x12\n\nposter_url\x18\x04 \x01(\t\"\xe9\x01\n\x0cMovieSummary\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\r\n\x05title\x18\x02 \x01(\t\x12\x14\n\x0crelease_date\x18\x03 \x01(\t\x12\x12\n\nposter_url\x18\x04 \x01(\t\x12\x14\n\x0c\x62\x61\x63kdrop_url\x18\x05 \x01(\t\x12\x10\n\x08overview\x18\x06 \x01(\t\x12\x19\n\x11tmdb_vote_average\x18\x07 \x01(\x02\x12\x18\n\x10\x63riticbox_rating\x18\x08 \x01(\x02\x12\x1e\n\x16\x63riticbox_review_count\x18\t \x01(\x05\x12\x12\n\nmedia_type\x18\n \x01(\t\"2\n\x13SearchMoviesRequest\x12\r\n\x05query\x18\x01 \x01(\t\x12\x0c\n\x04page\x18\x02 \x01(\x05\":\n\x15TrendingMoviesRequest\x12\x13\n\x0btime_window\x18\x01 \x01(\t\x12\x0c\n\x04page\x18\x02 \x01(\x05\"7\n\x15\x44iscoverMoviesRequest\x12\x10\n\x08genre_id\x18\x01 \x01(\x05\x12\x0c\n\x04page\x18\x02 \x01(\x05\"u\n\x14SearchMoviesResponse\x12#\n\x06movies\x18\x01 \x03(\x0b\x32\x13.movie.MovieSummary\x12\x0c\n\x04page\x18\x02 \x01(\x05\x12\x15\n\rtotal_results\x18\x03 \x01(\x05\x12\x13\n\x0btotal_pages\x18\x04 \x01(\x05\"B\n\nCastMember\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x11\n\tcharacter\x18\x02 \x01(\t\x12\x13\n\x0bprofile_url\x18\x03 \x01(\t\"-\n\x0bNetworkInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08logo_url\x18\x02 \x01(\t\"7\n\x0cProviderItem\x12\x15\n\rprovider_name\x18\x01 \x01(\t\x12\x10\n\x08logo_url\x18\x02 \x01(\t\"|\n\x0eWatchProviders\x12%\n\x08\x66latrate\x18\x01 \x03(\x0b\x32\x13.movie.ProviderItem\x12!\n\x04rent\x18\x02 \x03(\x0b\x32\x13.movie.ProviderItem\x12 \n\x03\x62uy\x18\x03 \x03(\x0b\x32\x13.movie.ProviderItem\"\x9a\x01\n\x0e\x45pisodeSummary\x12\x16\n\x0e\x65pisode_number\x18\x01 \x01(\x05\x12\x15\n\rseason_number\x18\x02 \x01(\x05\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x10\n\x08\x61ir_date\x18\x04 \x01(\t\x12\x10\n\x08overview\x18\x05 \x01(\t\x12\x11\n\tstill_url\x18\x06 \x01(\t\x12\x14\n\x0cvote_average\x18\x07 \x01(\x02\":\n\x13MovieDetailsRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\x12\n\nmedia_type\x18\x02 \x01(\t\"\xca\x08\n\x14MovieDetailsResponse\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\r\n\x05title\x18\x02 \x01(\t\x12\x14\n\x0crelease_date\x18\x03 \x01(\t\x12\x12\n\nposter_url\x18\x04 \x01(\t\x12\x14\n\x0c\x62\x61\x63kdrop_url\x18\x05 \x01(\t\x12\x10\n\x08overview\x18\x06 \x01(\t\x12\x19\n\x11tmdb_vote_average\x18\x07 \x01(\x02\x12\x18\n\x10\x63riticbox_rating\x18\x08 \x01(\x02\x12\x1e\n\x16\x63riticbox_review_count\x18\t \x01(\x05\x12\x0e\n\x06genres\x18\n \x03(\t\x12\x0f\n\x07runtime\x18\x0b \x01(\x05\x12\r\n\x05\x66ound\x18\x0c \x01(\x08\x12\x11\n\tdirectors\x18\r \x03(\t\x12\x1f\n\x04\x63\x61st\x18\x0e \x03(\x0b\x32\x11.movie.CastMember\x12\x13\n\x0btrailer_url\x18\x0f \x01(\t\x12\x0f\n\x07tagline\x18\x10 \x01(\t\x12\x12\n\nmedia_type\x18\x11 \x01(\t\x12\x19\n\x11number_of_seasons\x18\x12 \x01(\x05\x12\x1a\n\x12number_of_episodes\x18\x13 \x01(\x05\x12\"\n\x07seasons\x18\x14 \x03(\x0b\x32\x11.movie.SeasonInfo\x12\x16\n\x0eoriginal_title\x18\x15 \x01(\t\x12\x19\n\x11original_language\x18\x16 \x01(\t\x12\x18\n\x10spoken_languages\x18\x17 \x03(\t\x12\x15\n\rcertification\x18\x18 \x01(\t\x12\x12\n\nvote_count\x18\x19 \x01(\x05\x12\x12\n\npopularity\x18\x1a \x01(\x02\x12\x0e\n\x06\x62udget\x18\x1b \x01(\x03\x12\x0f\n\x07revenue\x18\x1c \x01(\x03\x12\x0e\n\x06status\x18\x1d \x01(\t\x12\x0f\n\x07imdb_id\x18\x1e \x01(\t\x12\x10\n\x08homepage\x18\x1f \x01(\t\x12\x10\n\x08logo_url\x18  \x01(\t\x12\x0e\n\x06photos\x18! \x03(\t\x12\x0f\n\x07writers\x18\" \x03(\t\x12\x17\n\x0fmusic_composers\x18# \x03(\t\x12\x18\n\x10\x63inematographers\x18$ \x03(\t\x12\x11\n\tproducers\x18% \x03(\t\x12$\n\x08networks\x18( \x03(\x0b\x32\x12.movie.NetworkInfo\x12.\n\x0fwatch_providers\x18) \x01(\x0b\x32\x15.movie.WatchProviders\x12,\n\x0frecommendations\x18* \x03(\x0b\x32\x13.movie.MovieSummary\x12\x32\n\x13last_episode_to_air\x18+ \x01(\x0b\x32\x15.movie.EpisodeSummary\x12\x32\n\x13next_episode_to_air\x18, \x01(\x0b\x32\x15.movie.EpisodeSummary\x12\x16\n\x0e\x66irst_air_date\x18- \x01(\t\x12\x15\n\rlast_air_date\x18. \x01(\t\"7\n\x16RecommendationsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x0c\n\x04page\x18\x02 \x01(\x05\"?\n\x15SeasonEpisodesRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\x15\n\rseason_number\x18\x02 \x01(\x05\"A\n\x16SeasonEpisodesResponse\x12\'\n\x08\x65pisodes\x18\x01 \x03(\x0b\x32\x15.movie.EpisodeSummary\"%\n\x12\x41llEpisodesRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\"=\n\x12SeasonEpisodesList\x12\'\n\x08\x65pisodes\x18\x01 \x03(\x0b\x32\x15.movie.EpisodeSummary\"\x9a\x01\n\x13\x41llEpisodesResponse\x12\x38\n\x07seasons\x18\x01 \x03(\x0b\x32\'.movie.AllEpisodesResponse.SeasonsEntry\x1aI\n\x0cSeasonsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.movie.SeasonEpisodesList:\x02\x38\x01\x32\xc7\x05\n\x0cMovieService\x12G\n\x0cSearchMovies\x12\x1a.movie.SearchMoviesRequest\x1a\x1b.movie.SearchMoviesResponse\x12N\n\x11GetTrendingMovies\x12\x1c.movie.TrendingMoviesRequest\x1a\x1b.movie.SearchMoviesResponse\x12J\n\rGetTrendingTV\x12\x1c.movie.TrendingMoviesRequest\x1a\x1b.movie.SearchMoviesResponse\x12J\n\x0fGetMovieDetails\x12\x1a.movie.MovieDetailsRequest\x1a\x1b.movie.MovieDetailsResponse\x12K\n\x0e\x44iscoverMovies\x12\x1c.movie.DiscoverMoviesRequest\x1a\x1b.movie.SearchMoviesResponse\x12L\n\x13GetNowPlayingMovies\x12\x18.movie.NowPlayingRequest\x1a\x1b.movie.SearchMoviesResponse\x12P\n\x12GetRecommendations\x12\x1d.movie.RecommendationsRequest\x1a\x1b.movie.SearchMoviesResponse\x12P\n\x11GetSeasonEpisodes\x12\x1c.movie.SeasonEpisodesRequest\x1a\x1d.movie.SeasonEpisodesResponse\x12G\n\x0eGetAllEpisodes\x12\x19.movie.AllEpisodesRequest\x1a\x1a.movie.AllEpisodesResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bmovie.proto\x12\x05movie\"!\n\x11NowPlayingRequest\x12\x0c\n\x04page\x18\x01 \x01(\x05\"\\\n\nSeasonInfo\x12\x15\n\rseason_number\x18\x01 \x01(\x05\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x15\n\repisode_count\x18\x03 \x01(\x05\x12\x12\n\nposter_url\x18\x04 \x01(\t\"\xe9\x01\n\x0cMovieSummary\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\r\n\x05title\x18\x02 \x01(\t\x12\x14\n\x0crelease_date\x18\x03 \x01(\t\x12\x12\n\nposter_url\x18\x04 \x01(\t\x12\x14\n\x0c\x62\x61\x63kdrop_url\x18\x05 \x01(\t\x12\x10\n\x08overview\x18\x06 \x01(\t\x12\x19\n\x11tmdb_vote_average\x18\x07 \x01(\x02\x12\x18\n\x10\x63riticbox_rating\x18\x08 \x01(\x02\x12\x1e\n\x16\x63riticbox_review_count\x18\t \x01(\x05\x12\x12\n\nmedia_type\x18\n \x01(\t\"2\n\x13SearchMoviesRequest\x12\r\n\x05query\x18\x01 \x01(\t\x12\x0c\n\x04page\x18\x02 \x01(\x05\":\n\x15TrendingMoviesRequest\x12\x13\n\x0btime_window\x18\x01 \x01(\t\x12\x0c\n\x04page\x18\x02 \x01(\x05\"u\n\x14SearchMoviesResponse\x12#\n\x06movies\x18\x01 \x03(\x0b\x32\x13.movie.MovieSummary\x12\x0c\n\x04page\x18\x02 \x01(\x05\x12\x15\n\rtotal_results\x18\x03 \x01(\x05\x12\x13\n\x0btotal_pages\x18\x04 \x01(\x05\"B\n\nCastMember\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x11\n\tcharacter\x18\x02 \x01(\t\x12\x13\n\x0bprofile_url\x18\x03 \x01(\t\"-\n\x0bNetworkInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08logo_url\x18\x02 \x01(\t\"7\n\x0cProviderItem\x12\x15\n\rprovider_name\x18\x01 \x01(\t\x12\x10\n\x08logo_url\x18\x02 \x01(\t\"|\n\x0eWatchProviders\x12%\n\x08\x66latrate\x18\x01 \x03(\x0b\x32\x13.movie.ProviderItem\x12!\n\x04rent\x18\x02 \x03(\x0b\x32\x13.movie.ProviderItem\x12 \n\x03\x62uy\x18\x03 \x03(\x0b\x32\x13.movie.ProviderItem\"\x9a\x01\n\x0e\x45pisodeSummary\x12\x16\n\x0e\x65pisode_number\x18\x01 \x01(\x05\x12\x15\n\rseason_number\x18\x02 \x01(\x05\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x10\n\x08\x61ir_date\x18\x04 \x01(\t\x12\x10\n\x08overview\x18\x05 \x01(\t\x12\x11\n\tstill_url\x18\x06 \x01(\t\x12\x14\n\x0cvote_average\x18\x07 \x01(\x02\":\n\x13MovieDetailsRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\x12\n\nmedia_type\x18\x02 \x01(\t\"\xca\x08\n\x14MovieDetailsResponse\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\r\n\x05title\x18\x02 \x01(\t\x12\x14\n\x0crelease_date\x18\x03 \x01(\t\x12\x12\n\nposter_url\x18\x04 \x01(\t\x12\x14\n\x0c\x62\x61\x63kdrop_url\x18\x05 \x01(\t\x12\x10\n\x08overview\x18\x06 \x01(\t\x12\x19\n\x11tmdb_vote_average\x18\x07 \x01(\x02\x12\x18\n\x10\x63riticbox_rating\x18\x08 \x01(\x02\x12\x1e\n\x16\x63riticbox_review_count\x18\t \x01(\x05\x12\x0e\n\x06genres\x18\n \x03(\t\x12\x0f\n\x07runtime\x18\x0b \x01(\x05\x12\r\n\x05\x66ound\x18\x0c \x01(\x08\x12\x11\n\tdirectors\x18\r \x03(\t\x12\x1f\n\x04\x63\x61st\x18\x0e \x03(\x0b\x32\x11.movie.CastMember\x12\x13\n\x0btrailer_url\x18\x0f \x01(\t\x12\x0f\n\x07tagline\x18\x10 \x01(\t\x12\x12\n\nmedia_type\x18\x11 \x01(\t\x12\x19\n\x11number_of_seasons\x18\x12 \x01(\x05\x12\x1a\n\x12number_of_episodes\x18\x13 \x01(\x05\x12\"\n\x07seasons\x18\x14 \x03(\x0b\x32\x11.movie.SeasonInfo\x12\x16\n\x0eoriginal_title\x18\x15 \x01(\t\x12\x19\n\x11original_language\x18\x16 \x01(\t\x12\x18\n\x10spoken_languages\x18\x17 \x03(\t\x12\x15\n\rcertification\x18\x18 \x01(\t\x12\x12\n\nvote_count\x18\x19 \x01(\x05\x12\x12\n\npopularity\x18\x1a \x01(\x02\x12\x0e\n\x06\x62udget\x18\x1b \x01(\x03\x12\x0f\n\x07revenue\x18\x1c \x01(\x03\x12\x0e\n\x06status\x18\x1d \x01(\t\x12\x0f\n\x07imdb_id\x18\x1e \x01(\t\x12\x10\n\x08homepage\x18\x1f \x01(\t\x12\x10\n\x08logo_url\x18  \x01(\t\x12\x0e\n\x06photos\x18! \x03(\t\x12\x0f\n\x07writers\x18\" \x03(\t\x12\x17\n\x0fmusic_composers\x18# \x03(\t\x12\x18\n\x10\x63inematographers\x18$ \x03(\t\x12\x11\n\tproducers\x18% \x03(\t\x12$\n\x08networks\x18( \x03(\x0b\x32\x12.movie.NetworkInfo\x12.\n\x0fwatch_providers\x18) \x01(\x0b\x32\x15.movie.WatchProviders\x12,\n\x0frecommendations\x18* \x03(\x0b\x32\x13.movie.MovieSummary\x12\x32\n\x13last_episode_to_air\x18+ \x01(\x0b\x32\x15.movie.EpisodeSummary\x12\x32\n\x13next_episode_to_air\x18, \x01(\x0b\x32\x15.movie.EpisodeSummary\x12\x16\n\x0e\x66irst_air_date\x18- \x01(\t\x12\x15\n\rlast_air_date\x18. \x01(\t\"7\n\x16RecommendationsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x0c\n\x04page\x18\x02 \x01(\x05\"?\n\x15SeasonEpisodesRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\x15\n\rseason_number\x18\x02 \x01(\x05\"A\n\x16SeasonEpisodesResponse\x12\'\n\x08\x65pisodes\x18\x01 \x03(\x0b\x32\x15.movie.EpisodeSummary\"%\n\x12\x41llEpisodesRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\"=\n\x12SeasonEpisodesList\x12\'\n\x08\x65pisodes\x18\x01 \x03(\x0b\x32\x15.movie.EpisodeSummary\"\x9a\x01\n\x13\x41llEpisodesResponse\x12\x38\n\x07seasons\x18\x01 \x03(\x0b\x32\'.movie.AllEpisodesResponse.SeasonsEntry\x1aI\n\x0cSeasonsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.movie.SeasonEpisodesList:\x02\x38\x01\x32\xfa\x04\n\x0cMovieService\x12G\n\x0cSearchMovies\x12\x1a.movie.SearchMoviesRequest\x1a\x1b.movie.SearchMoviesResponse\x12N\n\x11GetTrendingMovies\x12\x1c.movie.TrendingMoviesRequest\x1a\x1b.movie.SearchMoviesResponse\x12J\n\rGetTrendingTV\x12\x1c.movie.TrendingMoviesRequest\x1a\x1b.movie.SearchMoviesResponse\x12J\n\x0fGetMovieDetails\x12\x1a.movie.MovieDetailsRequest\x1a\x1b.movie.MovieDetailsResponse\x12L\n\x13GetNowPlayingMovies\x12\x18.movie.NowPlayingRequest\x1a\x1b.movie.SearchMoviesResponse\x12P\n\x12GetRecommendations\x12\x1d.movie.RecommendationsRequest\x1a\x1b.movie.SearchMoviesResponse\x12P\n\x11GetSeasonEpisodes\x12\x1c.movie.SeasonEpisodesRequest\x1a\x1d.movie.SeasonEpisodesResponse\x12G\n\x0eGetAllEpisodes\x12\x19.movie.AllEpisodesRequest\x1a\x1a.movie.AllEpisodesResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -43,38 +43,36 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_SEARCHMOVIESREQUEST']._serialized_end=437
   _globals['_TRENDINGMOVIESREQUEST']._serialized_start=439
   _globals['_TRENDINGMOVIESREQUEST']._serialized_end=497
-  _globals['_DISCOVERMOVIESREQUEST']._serialized_start=499
-  _globals['_DISCOVERMOVIESREQUEST']._serialized_end=554
-  _globals['_SEARCHMOVIESRESPONSE']._serialized_start=556
-  _globals['_SEARCHMOVIESRESPONSE']._serialized_end=673
-  _globals['_CASTMEMBER']._serialized_start=675
-  _globals['_CASTMEMBER']._serialized_end=741
-  _globals['_NETWORKINFO']._serialized_start=743
-  _globals['_NETWORKINFO']._serialized_end=788
-  _globals['_PROVIDERITEM']._serialized_start=790
-  _globals['_PROVIDERITEM']._serialized_end=845
-  _globals['_WATCHPROVIDERS']._serialized_start=847
-  _globals['_WATCHPROVIDERS']._serialized_end=971
-  _globals['_EPISODESUMMARY']._serialized_start=974
-  _globals['_EPISODESUMMARY']._serialized_end=1128
-  _globals['_MOVIEDETAILSREQUEST']._serialized_start=1130
-  _globals['_MOVIEDETAILSREQUEST']._serialized_end=1188
-  _globals['_MOVIEDETAILSRESPONSE']._serialized_start=1191
-  _globals['_MOVIEDETAILSRESPONSE']._serialized_end=2289
-  _globals['_RECOMMENDATIONSREQUEST']._serialized_start=2291
-  _globals['_RECOMMENDATIONSREQUEST']._serialized_end=2346
-  _globals['_SEASONEPISODESREQUEST']._serialized_start=2348
-  _globals['_SEASONEPISODESREQUEST']._serialized_end=2411
-  _globals['_SEASONEPISODESRESPONSE']._serialized_start=2413
-  _globals['_SEASONEPISODESRESPONSE']._serialized_end=2478
-  _globals['_ALLEPISODESREQUEST']._serialized_start=2480
-  _globals['_ALLEPISODESREQUEST']._serialized_end=2517
-  _globals['_SEASONEPISODESLIST']._serialized_start=2519
-  _globals['_SEASONEPISODESLIST']._serialized_end=2580
-  _globals['_ALLEPISODESRESPONSE']._serialized_start=2583
-  _globals['_ALLEPISODESRESPONSE']._serialized_end=2737
-  _globals['_ALLEPISODESRESPONSE_SEASONSENTRY']._serialized_start=2664
-  _globals['_ALLEPISODESRESPONSE_SEASONSENTRY']._serialized_end=2737
-  _globals['_MOVIESERVICE']._serialized_start=2740
-  _globals['_MOVIESERVICE']._serialized_end=3451
+  _globals['_SEARCHMOVIESRESPONSE']._serialized_start=499
+  _globals['_SEARCHMOVIESRESPONSE']._serialized_end=616
+  _globals['_CASTMEMBER']._serialized_start=618
+  _globals['_CASTMEMBER']._serialized_end=684
+  _globals['_NETWORKINFO']._serialized_start=686
+  _globals['_NETWORKINFO']._serialized_end=731
+  _globals['_PROVIDERITEM']._serialized_start=733
+  _globals['_PROVIDERITEM']._serialized_end=788
+  _globals['_WATCHPROVIDERS']._serialized_start=790
+  _globals['_WATCHPROVIDERS']._serialized_end=914
+  _globals['_EPISODESUMMARY']._serialized_start=917
+  _globals['_EPISODESUMMARY']._serialized_end=1071
+  _globals['_MOVIEDETAILSREQUEST']._serialized_start=1073
+  _globals['_MOVIEDETAILSREQUEST']._serialized_end=1131
+  _globals['_MOVIEDETAILSRESPONSE']._serialized_start=1134
+  _globals['_MOVIEDETAILSRESPONSE']._serialized_end=2232
+  _globals['_RECOMMENDATIONSREQUEST']._serialized_start=2234
+  _globals['_RECOMMENDATIONSREQUEST']._serialized_end=2289
+  _globals['_SEASONEPISODESREQUEST']._serialized_start=2291
+  _globals['_SEASONEPISODESREQUEST']._serialized_end=2354
+  _globals['_SEASONEPISODESRESPONSE']._serialized_start=2356
+  _globals['_SEASONEPISODESRESPONSE']._serialized_end=2421
+  _globals['_ALLEPISODESREQUEST']._serialized_start=2423
+  _globals['_ALLEPISODESREQUEST']._serialized_end=2460
+  _globals['_SEASONEPISODESLIST']._serialized_start=2462
+  _globals['_SEASONEPISODESLIST']._serialized_end=2523
+  _globals['_ALLEPISODESRESPONSE']._serialized_start=2526
+  _globals['_ALLEPISODESRESPONSE']._serialized_end=2680
+  _globals['_ALLEPISODESRESPONSE_SEASONSENTRY']._serialized_start=2607
+  _globals['_ALLEPISODESRESPONSE_SEASONSENTRY']._serialized_end=2680
+  _globals['_MOVIESERVICE']._serialized_start=2683
+  _globals['_MOVIESERVICE']._serialized_end=3317
 # @@protoc_insertion_point(module_scope)

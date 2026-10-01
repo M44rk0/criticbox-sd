@@ -1992,14 +1992,9 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  cursor: default;
 }
 
-.cast-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-3px);
-  box-shadow: 3px 3px 0 0 var(--accent);
-}
 
 .cast-photo {
   width: 100%;

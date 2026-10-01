@@ -14,7 +14,7 @@ from criticbox_sd.generated import movie_pb2 as m_pb2
 from criticbox_sd.generated import movie_pb2_grpc as m_pb2_grpc
 from criticbox_sd.generated import review_pb2 as r_pb2
 from criticbox_sd.generated import review_pb2_grpc as r_pb2_grpc
-from criticbox_sd.server import tmdb_service
+from criticbox_sd.server import tmdb as tmdb_service
 
 load_dotenv()
 
@@ -86,69 +86,38 @@ def _to_movie_summary_pb(item: dict, stats_map: dict[int, tuple[float, int]] | N
 
 
 class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
-    def SearchMovies(self, request, context):
-        page = max(request.page, 1)
-        query = request.query.strip()
-        logger.info("SearchMovies -> Buscando: '%s' (Página %d)", query, page)
-        data = tmdb_service.search_movies(query, page)
+    def _build_catalog_response(self, data: dict) -> m_pb2.SearchMoviesResponse:
         results = data.get("results", [])
         tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
         stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
         summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
-        logger.info("SearchMovies -> Encontrados %d títulos.", len(summaries))
         return m_pb2.SearchMoviesResponse(
             movies=summaries,
             page=data.get("page", 1),
             total_results=data.get("total_results", len(summaries)),
             total_pages=data.get("total_pages", 1),
         )
+
+    def SearchMovies(self, request, context):
+        page = max(request.page, 1)
+        query = request.query.strip()
+        logger.info("SearchMovies -> Buscando: '%s' (Página %d)", query, page)
+        data = tmdb_service.search_movies(query, page)
+        logger.info("SearchMovies -> Encontrados %d títulos.", len(data.get("results", [])))
+        return self._build_catalog_response(data)
 
     def GetTrendingMovies(self, request, context):
         time_window = request.time_window or "week"
         page = max(request.page, 1)
         logger.info("GetTrendingMovies -> Buscando destaques (%s, Página %d)", time_window, page)
         data = tmdb_service.get_trending_movies(time_window=time_window, page=page)
-        results = data.get("results", [])
-        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
-        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
-        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
-        return m_pb2.SearchMoviesResponse(
-            movies=summaries,
-            page=data.get("page", 1),
-            total_results=data.get("total_results", len(summaries)),
-            total_pages=data.get("total_pages", 1),
-        )
-
-    def DiscoverMovies(self, request, context):
-        page = max(request.page, 1)
-        genre_id = request.genre_id
-        logger.info("DiscoverMovies -> Buscando gênero ID: %d (Página %d)", genre_id, page)
-        data = tmdb_service.discover_by_genre(genre_id, page)
-        results = data.get("results", [])
-        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
-        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
-        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
-        return m_pb2.SearchMoviesResponse(
-            movies=summaries,
-            page=data.get("page", 1),
-            total_results=data.get("total_results", len(summaries)),
-            total_pages=data.get("total_pages", 1),
-        )
+        return self._build_catalog_response(data)
 
     def GetNowPlayingMovies(self, request, context):
         page = max(request.page, 1)
         logger.info("GetNowPlayingMovies -> Buscando filmes em cartaz (Página %d)", page)
         data = tmdb_service.get_now_playing_movies(page=page)
-        results = data.get("results", [])
-        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
-        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
-        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
-        return m_pb2.SearchMoviesResponse(
-            movies=summaries,
-            page=data.get("page", 1),
-            total_results=data.get("total_results", len(summaries)),
-            total_pages=data.get("total_pages", 1),
-        )
+        return self._build_catalog_response(data)
 
     def GetMovieDetails(self, request, context):
         media_type = getattr(request, "media_type", "") or ""
@@ -182,7 +151,6 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
             for s in details.get("seasons", [])
         ]
 
-
         networks_pbs = [
             m_pb2.NetworkInfo(
                 name=n.get("name", ""),
@@ -192,11 +160,13 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         ]
 
         wp_data = details.get("watch_providers", {})
+
         def _to_provider_item(p):
             return m_pb2.ProviderItem(
                 provider_name=p.get("provider_name", ""),
                 logo_url=p.get("logo_url", ""),
             )
+
         wp_pb = m_pb2.WatchProviders(
             flatrate=[_to_provider_item(p) for p in wp_data.get("flatrate", [])],
             rent=[_to_provider_item(p) for p in wp_data.get("rent", [])],
@@ -297,32 +267,14 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         page = max(request.page, 1)
         logger.info("GetTrendingTV -> Buscando séries em alta (%s, Página %d)", time_window, page)
         data = tmdb_service.get_trending_tv(time_window=time_window, page=page)
-        results = data.get("results", [])
-        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
-        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
-        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
-        return m_pb2.SearchMoviesResponse(
-            movies=summaries,
-            page=data.get("page", 1),
-            total_results=data.get("total_results", len(summaries)),
-            total_pages=data.get("total_pages", 1),
-        )
+        return self._build_catalog_response(data)
 
     def GetRecommendations(self, request, context):
         user_id = request.user_id or ""
         page = max(request.page, 1)
         logger.info("GetRecommendations -> Buscando recomendações para @%s (Página %d)", user_id, page)
         data = tmdb_service.get_recommendations_for_user(user_id=user_id, page=page)
-        results = data.get("results", [])
-        tmdb_ids = [m.get("id", 0) for m in results if m.get("id")]
-        stats_map = _fetch_batch_movie_stats_via_grpc(tmdb_ids)
-        summaries = [_to_movie_summary_pb(m, stats_map=stats_map) for m in results]
-        return m_pb2.SearchMoviesResponse(
-            movies=summaries,
-            page=data.get("page", 1),
-            total_results=data.get("total_results", len(summaries)),
-            total_pages=data.get("total_pages", 1),
-        )
+        return self._build_catalog_response(data)
 
     def GetSeasonEpisodes(self, request, context):
         logger.info("GetSeasonEpisodes -> tmdb_id=%d, season=%d", request.tmdb_id, request.season_number)
@@ -360,8 +312,6 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
             ]
             seasons_map[s_num_str] = m_pb2.SeasonEpisodesList(episodes=eps)
         return m_pb2.AllEpisodesResponse(seasons=seasons_map)
-
-
 
 
 def serve():

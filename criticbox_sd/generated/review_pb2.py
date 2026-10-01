@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0creview.proto\x12\x06review\"9\n\x13RegisterUserRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"[\n\x14RegisterUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x10\n\x08username\x18\x04 \x01(\t\"=\n\x17\x41uthenticateUserRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"_\n\x18\x41uthenticateUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x10\n\x08username\x18\x04 \x01(\t\"\xdf\x01\n\x13\x43reateReviewRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x0e\n\x06rating\x18\x03 \x01(\x02\x12\x0f\n\x07\x63omment\x18\x04 \x01(\t\x12\x19\n\x11\x63ontains_spoilers\x18\x05 \x01(\x08\x12\x12\n\nmedia_type\x18\x06 \x01(\t\x12\x15\n\rseason_number\x18\x07 \x01(\x05\x12\x16\n\x0e\x65pisode_number\x18\x08 \x01(\x05\x12\x13\n\x0bmovie_title\x18\t \x01(\t\x12\x12\n\nposter_url\x18\n \x01(\t\"\xa3\x02\n\x0eReviewResponse\x12\x11\n\treview_id\x18\x01 \x01(\t\x12\x0f\n\x07tmdb_id\x18\x02 \x01(\x05\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x0e\n\x06rating\x18\x04 \x01(\x02\x12\x0f\n\x07\x63omment\x18\x05 \x01(\t\x12\x19\n\x11\x63ontains_spoilers\x18\x06 \x01(\x08\x12\x12\n\ncreated_at\x18\x07 \x01(\t\x12\x0f\n\x07success\x18\x08 \x01(\x08\x12\x0f\n\x07message\x18\t \x01(\t\x12\x12\n\nmedia_type\x18\n \x01(\t\x12\x15\n\rseason_number\x18\x0b \x01(\x05\x12\x16\n\x0e\x65pisode_number\x18\x0c \x01(\x05\x12\x13\n\x0bmovie_title\x18\r \x01(\t\x12\x12\n\nposter_url\x18\x0e \x01(\t\"$\n\x11MovieStatsRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\"R\n\x12MovieStatsResponse\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\x16\n\x0e\x61verage_rating\x18\x02 \x01(\x02\x12\x13\n\x0btotal_count\x18\x03 \x01(\x05\"*\n\x16\x42\x61tchMovieStatsRequest\x12\x10\n\x08tmdb_ids\x18\x01 \x03(\x05\"\x9e\x01\n\x17\x42\x61tchMovieStatsResponse\x12\x39\n\x05stats\x18\x01 \x03(\x0b\x32*.review.BatchMovieStatsResponse.StatsEntry\x1aH\n\nStatsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.review.MovieStatsResponse:\x02\x38\x01\"%\n\x14GetAllReviewsRequest\x12\r\n\x05limit\x18\x01 \x01(\x05\"&\n\x13MovieReviewsRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\"%\n\x12UserReviewsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\"\xfd\x01\n\nReviewItem\x12\x11\n\treview_id\x18\x01 \x01(\t\x12\x0f\n\x07tmdb_id\x18\x02 \x01(\x05\x12\x13\n\x0bmovie_title\x18\x03 \x01(\t\x12\x0f\n\x07user_id\x18\x04 \x01(\t\x12\x0e\n\x06rating\x18\x05 \x01(\x02\x12\x0f\n\x07\x63omment\x18\x06 \x01(\t\x12\x19\n\x11\x63ontains_spoilers\x18\x07 \x01(\x08\x12\x12\n\ncreated_at\x18\x08 \x01(\t\x12\x12\n\nmedia_type\x18\t \x01(\t\x12\x15\n\rseason_number\x18\n \x01(\x05\x12\x16\n\x0e\x65pisode_number\x18\x0b \x01(\x05\x12\x12\n\nposter_url\x18\x0c \x01(\t\"Q\n\x15GetAllReviewsResponse\x12#\n\x07reviews\x18\x01 \x03(\x0b\x32\x12.review.ReviewItem\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\x32\x83\x05\n\rReviewService\x12I\n\x0cRegisterUser\x12\x1b.review.RegisterUserRequest\x1a\x1c.review.RegisterUserResponse\x12U\n\x10\x41uthenticateUser\x12\x1f.review.AuthenticateUserRequest\x1a .review.AuthenticateUserResponse\x12\x43\n\x0c\x43reateReview\x12\x1b.review.CreateReviewRequest\x1a\x16.review.ReviewResponse\x12\x46\n\rGetMovieStats\x12\x19.review.MovieStatsRequest\x1a\x1a.review.MovieStatsResponse\x12U\n\x12GetBatchMovieStats\x12\x1e.review.BatchMovieStatsRequest\x1a\x1f.review.BatchMovieStatsResponse\x12L\n\rGetAllReviews\x12\x1c.review.GetAllReviewsRequest\x1a\x1d.review.GetAllReviewsResponse\x12O\n\x11GetReviewsByMovie\x12\x1b.review.MovieReviewsRequest\x1a\x1d.review.GetAllReviewsResponse\x12M\n\x10GetReviewsByUser\x12\x1a.review.UserReviewsRequest\x1a\x1d.review.GetAllReviewsResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0creview.proto\x12\x06review\"\xdf\x01\n\x13\x43reateReviewRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x0e\n\x06rating\x18\x03 \x01(\x02\x12\x0f\n\x07\x63omment\x18\x04 \x01(\t\x12\x19\n\x11\x63ontains_spoilers\x18\x05 \x01(\x08\x12\x12\n\nmedia_type\x18\x06 \x01(\t\x12\x15\n\rseason_number\x18\x07 \x01(\x05\x12\x16\n\x0e\x65pisode_number\x18\x08 \x01(\x05\x12\x13\n\x0bmovie_title\x18\t \x01(\t\x12\x12\n\nposter_url\x18\n \x01(\t\"\xa3\x02\n\x0eReviewResponse\x12\x11\n\treview_id\x18\x01 \x01(\t\x12\x0f\n\x07tmdb_id\x18\x02 \x01(\x05\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x0e\n\x06rating\x18\x04 \x01(\x02\x12\x0f\n\x07\x63omment\x18\x05 \x01(\t\x12\x19\n\x11\x63ontains_spoilers\x18\x06 \x01(\x08\x12\x12\n\ncreated_at\x18\x07 \x01(\t\x12\x0f\n\x07success\x18\x08 \x01(\x08\x12\x0f\n\x07message\x18\t \x01(\t\x12\x12\n\nmedia_type\x18\n \x01(\t\x12\x15\n\rseason_number\x18\x0b \x01(\x05\x12\x16\n\x0e\x65pisode_number\x18\x0c \x01(\x05\x12\x13\n\x0bmovie_title\x18\r \x01(\t\x12\x12\n\nposter_url\x18\x0e \x01(\t\"$\n\x11MovieStatsRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\"R\n\x12MovieStatsResponse\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\x12\x16\n\x0e\x61verage_rating\x18\x02 \x01(\x02\x12\x13\n\x0btotal_count\x18\x03 \x01(\x05\"*\n\x16\x42\x61tchMovieStatsRequest\x12\x10\n\x08tmdb_ids\x18\x01 \x03(\x05\"\x9e\x01\n\x17\x42\x61tchMovieStatsResponse\x12\x39\n\x05stats\x18\x01 \x03(\x0b\x32*.review.BatchMovieStatsResponse.StatsEntry\x1aH\n\nStatsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.review.MovieStatsResponse:\x02\x38\x01\"%\n\x14GetAllReviewsRequest\x12\r\n\x05limit\x18\x01 \x01(\x05\"&\n\x13MovieReviewsRequest\x12\x0f\n\x07tmdb_id\x18\x01 \x01(\x05\"%\n\x12UserReviewsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\"\xfd\x01\n\nReviewItem\x12\x11\n\treview_id\x18\x01 \x01(\t\x12\x0f\n\x07tmdb_id\x18\x02 \x01(\x05\x12\x13\n\x0bmovie_title\x18\x03 \x01(\t\x12\x0f\n\x07user_id\x18\x04 \x01(\t\x12\x0e\n\x06rating\x18\x05 \x01(\x02\x12\x0f\n\x07\x63omment\x18\x06 \x01(\t\x12\x19\n\x11\x63ontains_spoilers\x18\x07 \x01(\x08\x12\x12\n\ncreated_at\x18\x08 \x01(\t\x12\x12\n\nmedia_type\x18\t \x01(\t\x12\x15\n\rseason_number\x18\n \x01(\x05\x12\x16\n\x0e\x65pisode_number\x18\x0b \x01(\x05\x12\x12\n\nposter_url\x18\x0c \x01(\t\"Q\n\x15GetAllReviewsResponse\x12#\n\x07reviews\x18\x01 \x03(\x0b\x32\x12.review.ReviewItem\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\x32\xe1\x03\n\rReviewService\x12\x43\n\x0c\x43reateReview\x12\x1b.review.CreateReviewRequest\x1a\x16.review.ReviewResponse\x12\x46\n\rGetMovieStats\x12\x19.review.MovieStatsRequest\x1a\x1a.review.MovieStatsResponse\x12U\n\x12GetBatchMovieStats\x12\x1e.review.BatchMovieStatsRequest\x1a\x1f.review.BatchMovieStatsResponse\x12L\n\rGetAllReviews\x12\x1c.review.GetAllReviewsRequest\x1a\x1d.review.GetAllReviewsResponse\x12O\n\x11GetReviewsByMovie\x12\x1b.review.MovieReviewsRequest\x1a\x1d.review.GetAllReviewsResponse\x12M\n\x10GetReviewsByUser\x12\x1a.review.UserReviewsRequest\x1a\x1d.review.GetAllReviewsResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,38 +33,30 @@ if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_BATCHMOVIESTATSRESPONSE_STATSENTRY']._loaded_options = None
   _globals['_BATCHMOVIESTATSRESPONSE_STATSENTRY']._serialized_options = b'8\001'
-  _globals['_REGISTERUSERREQUEST']._serialized_start=24
-  _globals['_REGISTERUSERREQUEST']._serialized_end=81
-  _globals['_REGISTERUSERRESPONSE']._serialized_start=83
-  _globals['_REGISTERUSERRESPONSE']._serialized_end=174
-  _globals['_AUTHENTICATEUSERREQUEST']._serialized_start=176
-  _globals['_AUTHENTICATEUSERREQUEST']._serialized_end=237
-  _globals['_AUTHENTICATEUSERRESPONSE']._serialized_start=239
-  _globals['_AUTHENTICATEUSERRESPONSE']._serialized_end=334
-  _globals['_CREATEREVIEWREQUEST']._serialized_start=337
-  _globals['_CREATEREVIEWREQUEST']._serialized_end=560
-  _globals['_REVIEWRESPONSE']._serialized_start=563
-  _globals['_REVIEWRESPONSE']._serialized_end=854
-  _globals['_MOVIESTATSREQUEST']._serialized_start=856
-  _globals['_MOVIESTATSREQUEST']._serialized_end=892
-  _globals['_MOVIESTATSRESPONSE']._serialized_start=894
-  _globals['_MOVIESTATSRESPONSE']._serialized_end=976
-  _globals['_BATCHMOVIESTATSREQUEST']._serialized_start=978
-  _globals['_BATCHMOVIESTATSREQUEST']._serialized_end=1020
-  _globals['_BATCHMOVIESTATSRESPONSE']._serialized_start=1023
-  _globals['_BATCHMOVIESTATSRESPONSE']._serialized_end=1181
-  _globals['_BATCHMOVIESTATSRESPONSE_STATSENTRY']._serialized_start=1109
-  _globals['_BATCHMOVIESTATSRESPONSE_STATSENTRY']._serialized_end=1181
-  _globals['_GETALLREVIEWSREQUEST']._serialized_start=1183
-  _globals['_GETALLREVIEWSREQUEST']._serialized_end=1220
-  _globals['_MOVIEREVIEWSREQUEST']._serialized_start=1222
-  _globals['_MOVIEREVIEWSREQUEST']._serialized_end=1260
-  _globals['_USERREVIEWSREQUEST']._serialized_start=1262
-  _globals['_USERREVIEWSREQUEST']._serialized_end=1299
-  _globals['_REVIEWITEM']._serialized_start=1302
-  _globals['_REVIEWITEM']._serialized_end=1555
-  _globals['_GETALLREVIEWSRESPONSE']._serialized_start=1557
-  _globals['_GETALLREVIEWSRESPONSE']._serialized_end=1638
-  _globals['_REVIEWSERVICE']._serialized_start=1641
-  _globals['_REVIEWSERVICE']._serialized_end=2284
+  _globals['_CREATEREVIEWREQUEST']._serialized_start=25
+  _globals['_CREATEREVIEWREQUEST']._serialized_end=248
+  _globals['_REVIEWRESPONSE']._serialized_start=251
+  _globals['_REVIEWRESPONSE']._serialized_end=542
+  _globals['_MOVIESTATSREQUEST']._serialized_start=544
+  _globals['_MOVIESTATSREQUEST']._serialized_end=580
+  _globals['_MOVIESTATSRESPONSE']._serialized_start=582
+  _globals['_MOVIESTATSRESPONSE']._serialized_end=664
+  _globals['_BATCHMOVIESTATSREQUEST']._serialized_start=666
+  _globals['_BATCHMOVIESTATSREQUEST']._serialized_end=708
+  _globals['_BATCHMOVIESTATSRESPONSE']._serialized_start=711
+  _globals['_BATCHMOVIESTATSRESPONSE']._serialized_end=869
+  _globals['_BATCHMOVIESTATSRESPONSE_STATSENTRY']._serialized_start=797
+  _globals['_BATCHMOVIESTATSRESPONSE_STATSENTRY']._serialized_end=869
+  _globals['_GETALLREVIEWSREQUEST']._serialized_start=871
+  _globals['_GETALLREVIEWSREQUEST']._serialized_end=908
+  _globals['_MOVIEREVIEWSREQUEST']._serialized_start=910
+  _globals['_MOVIEREVIEWSREQUEST']._serialized_end=948
+  _globals['_USERREVIEWSREQUEST']._serialized_start=950
+  _globals['_USERREVIEWSREQUEST']._serialized_end=987
+  _globals['_REVIEWITEM']._serialized_start=990
+  _globals['_REVIEWITEM']._serialized_end=1243
+  _globals['_GETALLREVIEWSRESPONSE']._serialized_start=1245
+  _globals['_GETALLREVIEWSRESPONSE']._serialized_end=1326
+  _globals['_REVIEWSERVICE']._serialized_start=1329
+  _globals['_REVIEWSERVICE']._serialized_end=1810
 # @@protoc_insertion_point(module_scope)

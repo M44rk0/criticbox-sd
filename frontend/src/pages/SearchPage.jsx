@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, X, ChevronLeft, ChevronRight, Film, TrendingUp, Sparkles, Tv } from 'lucide-react';
-import { apiFetch } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { getMediaTypeLabel } from '../utils/media';
+import {
+  getTrendingMovies,
+  getTrendingTV,
+  getNowPlayingMovies,
+  getRecommendations,
+  searchMovies,
+} from '../api/movies';
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -21,15 +27,15 @@ export default function SearchPage() {
   const fetchCatalog = async (q, filter, page) => {
     setLoading(true);
     try {
-      let endpoint = '';
+      let data = null;
       if (q && q.trim()) {
-        endpoint = `/movies?query=${encodeURIComponent(q.trim())}&page=${page}`;
+        data = await searchMovies(q.trim(), page);
       } else if (filter === 'trending') {
-        endpoint = `/movies/trending?page=${page}`;
+        data = await getTrendingMovies(page);
       } else if (filter === 'now_playing') {
-        endpoint = `/movies/now-playing?page=${page}`;
+        data = await getNowPlayingMovies(page);
       } else if (filter === 'series') {
-        endpoint = `/movies/trending-tv?page=${page}`;
+        data = await getTrendingTV(page);
       } else if (filter === 'recommended') {
         if (!username) {
           setResults([]);
@@ -38,7 +44,7 @@ export default function SearchPage() {
           setLoading(false);
           return;
         }
-        endpoint = `/movies/recommendations?page=${page}&user_id=${encodeURIComponent(username)}`;
+        data = await getRecommendations(username, page);
       } else {
         setResults([]);
         setTotalPages(1);
@@ -47,7 +53,6 @@ export default function SearchPage() {
         return;
       }
 
-      const data = await apiFetch(endpoint);
       const list = (data.movies || []).filter((m) => m.poster_url && !m.poster_url.includes('placeholder'));
       setResults(list);
       setTotalPages(Math.min(data.total_pages || 1, 50));

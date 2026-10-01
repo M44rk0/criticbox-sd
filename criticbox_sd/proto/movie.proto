@@ -7,7 +7,6 @@ service MovieService {
   rpc GetTrendingMovies (TrendingMoviesRequest) returns (SearchMoviesResponse);
   rpc GetTrendingTV (TrendingMoviesRequest) returns (SearchMoviesResponse);
   rpc GetMovieDetails (MovieDetailsRequest) returns (MovieDetailsResponse);
-  rpc DiscoverMovies (DiscoverMoviesRequest) returns (SearchMoviesResponse);
   rpc GetNowPlayingMovies (NowPlayingRequest) returns (SearchMoviesResponse);
   rpc GetRecommendations (RecommendationsRequest) returns (SearchMoviesResponse);
   rpc GetSeasonEpisodes (SeasonEpisodesRequest) returns (SeasonEpisodesResponse);
@@ -48,10 +47,6 @@ message TrendingMoviesRequest {
   int32 page = 2;
 }
 
-message DiscoverMoviesRequest {
-  int32 genre_id = 1;
-  int32 page = 2;
-}
 
 message SearchMoviesResponse {
   repeated MovieSummary movies = 1;

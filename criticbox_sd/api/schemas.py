@@ -214,9 +214,6 @@ class SeasonInfo(BaseModel):
     poster_url: str = ""
 
 
-
-
-
 class NetworkInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     name: str
@@ -284,8 +281,6 @@ class MovieDetailsResponse(MovieSummary):
     next_episode_to_air: Optional[EpisodeSummary] = None
     first_air_date: str = ""
     last_air_date: str = ""
-
-
 
 
 # ----------------- Error Schemas ----------------- #

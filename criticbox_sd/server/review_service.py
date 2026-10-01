@@ -14,7 +14,8 @@ from datetime import datetime, timezone
 
 from criticbox_sd.generated import review_pb2 as r_pb2
 from criticbox_sd.generated import review_pb2_grpc as r_pb2_grpc
-from criticbox_sd.server import database, tmdb_service
+from criticbox_sd.server import storage as database
+from criticbox_sd.server import tmdb as tmdb_service
 
 load_dotenv()
 
@@ -29,27 +30,8 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         database.init_db()
         logger.info("Banco de dados inicializado no ReviewService.")
 
-    def RegisterUser(self, request, context):
-        logger.info("RegisterUser -> Solicitado para username='%s'", request.username)
-        res = database.create_user(request.username, request.password)
-        return r_pb2.RegisterUserResponse(
-            success=res["success"],
-            message=res["message"],
-            user_id=res["user_id"],
-            username=res["username"],
-        )
-
-    def AuthenticateUser(self, request, context):
-        logger.info("AuthenticateUser -> Solicitado para username='%s'", request.username)
-        res = database.authenticate_user(request.username, request.password)
-        return r_pb2.AuthenticateUserResponse(
-            success=res["success"],
-            message=res["message"],
-            user_id=res["user_id"],
-            username=res["username"],
-        )
-
     def CreateReview(self, request, context):
+
         media_type = getattr(request, "media_type", "movie") or "movie"
         season_num = request.season_number if request.season_number > 0 else None
         episode_num = request.episode_number if request.episode_number > 0 else None

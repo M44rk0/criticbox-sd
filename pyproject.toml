@@ -25,10 +25,12 @@ packages = [{include = "criticbox_sd"}]
 
 [tool.poetry.scripts]
 api = "criticbox_sd.api.main:start"
+user-service = "criticbox_sd.server.user_service:serve"
 movie-service = "criticbox_sd.server.movie_service:serve"
 review-service = "criticbox_sd.server.review_service:serve"
 start = "criticbox_sd.run_all:main"
 compile-proto = "criticbox_sd.scripts.compile_proto:compile_proto"
+
 
 
 [tool.ruff]
@@ -55,5 +57,22 @@ build-backend = "poetry.core.masonry.api"
 dev = [
     "ruff (>=0.16.4,<0.17.0)",
     "httpx (>=0.28.1,<0.29.0)",
-    "pytest (>=9.1.1,<10.0.0)"
+    "pytest (>=9.1.1,<10.0.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)"
 ]
+
+[tool.coverage.run]
+omit = [
+    "criticbox_sd/generated/*",
+    "criticbox_sd/scripts/compile_proto.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+
+

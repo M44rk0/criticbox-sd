@@ -57,11 +57,6 @@ class MovieServiceStub:
                 request_serializer=movie__pb2.MovieDetailsRequest.SerializeToString,
                 response_deserializer=movie__pb2.MovieDetailsResponse.FromString,
                 _registered_method=True)
-        self.DiscoverMovies = channel.unary_unary(
-                '/movie.MovieService/DiscoverMovies',
-                request_serializer=movie__pb2.DiscoverMoviesRequest.SerializeToString,
-                response_deserializer=movie__pb2.SearchMoviesResponse.FromString,
-                _registered_method=True)
         self.GetNowPlayingMovies = channel.unary_unary(
                 '/movie.MovieService/GetNowPlayingMovies',
                 request_serializer=movie__pb2.NowPlayingRequest.SerializeToString,
@@ -106,12 +101,6 @@ class MovieServiceServicer:
         raise NotImplementedError('Method not implemented!')
 
     def GetMovieDetails(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def DiscoverMovies(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -163,11 +152,6 @@ def add_MovieServiceServicer_to_server(servicer, server):
                     servicer.GetMovieDetails,
                     request_deserializer=movie__pb2.MovieDetailsRequest.FromString,
                     response_serializer=movie__pb2.MovieDetailsResponse.SerializeToString,
-            ),
-            'DiscoverMovies': grpc.unary_unary_rpc_method_handler(
-                    servicer.DiscoverMovies,
-                    request_deserializer=movie__pb2.DiscoverMoviesRequest.FromString,
-                    response_serializer=movie__pb2.SearchMoviesResponse.SerializeToString,
             ),
             'GetNowPlayingMovies': grpc.unary_unary_rpc_method_handler(
                     servicer.GetNowPlayingMovies,
@@ -298,33 +282,6 @@ class MovieService:
             '/movie.MovieService/GetMovieDetails',
             movie__pb2.MovieDetailsRequest.SerializeToString,
             movie__pb2.MovieDetailsResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def DiscoverMovies(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/movie.MovieService/DiscoverMovies',
-            movie__pb2.DiscoverMoviesRequest.SerializeToString,
-            movie__pb2.SearchMoviesResponse.FromString,
             options,
             channel_credentials,
             insecure,

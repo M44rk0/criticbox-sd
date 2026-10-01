@@ -6,10 +6,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-os.environ["DATABASE_PATH"] = os.path.join(BASE_DIR, "tests", "criticbox_test.db")
 
 from criticbox_sd.generated import review_pb2 as r_pb2
-from criticbox_sd.server import database, tmdb_service
+from criticbox_sd.server import storage as database
+from criticbox_sd.server import tmdb as tmdb_service
 from criticbox_sd.server.review_service import ReviewServiceServicer
 
 
@@ -87,6 +87,7 @@ class TestGetAllReviews(unittest.TestCase):
 
     def test_database_connection_pool(self):
         import concurrent.futures
+
         def worker(idx):
             with database.get_connection() as client:
                 row = client.execute("SELECT 1 AS num").fetchone()

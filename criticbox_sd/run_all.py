@@ -18,8 +18,10 @@ load_dotenv()
 from criticbox_sd.api.main import app as gateway_app
 from criticbox_sd.generated import movie_pb2_grpc as m_pb2_grpc
 from criticbox_sd.generated import review_pb2_grpc as r_pb2_grpc
+from criticbox_sd.generated import user_pb2_grpc as u_pb2_grpc
 from criticbox_sd.server.movie_service import MovieServiceServicer
 from criticbox_sd.server.review_service import ReviewServiceServicer
+from criticbox_sd.server.user_service import UserServiceServicer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,9 +29,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger("CriticboxRunner")
 
+USER_PORT = int(os.getenv("USER_SERVICE_PORT", "50053"))
 MOVIE_PORT = int(os.getenv("MOVIE_SERVICE_PORT", "50051"))
 REVIEW_PORT = int(os.getenv("REVIEW_SERVICE_PORT", "50052"))
 GATEWAY_PORT = int(os.getenv("API_PORT", "8000"))
+
+
+def start_user_service() -> grpc.Server:
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    u_pb2_grpc.add_UserServiceServicer_to_server(UserServiceServicer(), server)
+    addr = f"0.0.0.0:{USER_PORT}"
+    server.add_insecure_port(addr)
+    server.start()
+    logger.info("✓ [gRPC] UserService ativo na porta %d", USER_PORT)
+    return server
 
 
 def start_review_service() -> grpc.Server:
@@ -57,7 +70,8 @@ import threading
 
 def _warm_cache():
     """Pré-aquece o cache de dados populares em background para garantir carregamento instantâneo."""
-    from criticbox_sd.server import tmdb_service
+    from criticbox_sd.server import tmdb as tmdb_service
+
     try:
         logger.info("Iniciando pré-aquecimento de cache em background...")
         tmdb_service.get_trending_movies(time_window="week", page=1)
@@ -74,6 +88,7 @@ def main():
     logger.info("=" * 70)
 
     # 1. Iniciar microsserviços gRPC
+    user_srv = start_user_service()
     review_srv = start_review_service()
     movie_srv = start_movie_service()
 
@@ -90,6 +105,7 @@ def main():
 
     def shutdown(sig, frame):
         logger.info("\nEncerrando serviços distribuídos...")
+        user_srv.stop(0)
         movie_srv.stop(0)
         review_srv.stop(0)
         logger.info("Servidores gRPC finalizados.")

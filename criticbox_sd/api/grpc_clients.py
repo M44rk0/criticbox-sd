@@ -9,14 +9,21 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from google.protobuf.json_format import MessageToDict
+
 from criticbox_sd.generated import movie_pb2 as m_pb2
 from criticbox_sd.generated import movie_pb2_grpc as m_pb2_grpc
 from criticbox_sd.generated import review_pb2 as r_pb2
 from criticbox_sd.generated import review_pb2_grpc as r_pb2_grpc
+from criticbox_sd.generated import user_pb2 as u_pb2
+from criticbox_sd.generated import user_pb2_grpc as u_pb2_grpc
 
 load_dotenv()
 
 logger = logging.getLogger("criticbox-gateway-grpc")
+
+USER_HOST = os.getenv("USER_SERVICE_HOST", "localhost")
+USER_PORT = os.getenv("USER_SERVICE_PORT", "50053")
 
 MOVIE_HOST = os.getenv("MOVIE_SERVICE_HOST", "localhost")
 MOVIE_PORT = os.getenv("MOVIE_SERVICE_PORT", "50051")
@@ -63,6 +70,8 @@ class GatewayGRPCManager:
     _instance = None
 
     def __init__(self):
+        self.user_channel = None
+        self.user_stub = None
         self.movie_channel = None
         self.movie_stub = None
         self.review_channel = None
@@ -76,15 +85,32 @@ class GatewayGRPCManager:
         return cls._instance
 
     def _init_channels(self):
+        user_target = f"{USER_HOST}:{USER_PORT}"
         movie_target = f"{MOVIE_HOST}:{MOVIE_PORT}"
         review_target = f"{REVIEW_HOST}:{REVIEW_PORT}"
-        logger.info("Inicializando canais gRPC: Movie -> %s | Review -> %s", movie_target, review_target)
+        logger.info(
+            "Inicializando canais gRPC: User -> %s | Movie -> %s | Review -> %s",
+            user_target,
+            movie_target,
+            review_target,
+        )
+
+        self.user_channel = grpc.insecure_channel(user_target)
+        self.user_stub = u_pb2_grpc.UserServiceStub(self.user_channel)
 
         self.movie_channel = grpc.insecure_channel(movie_target)
         self.movie_stub = m_pb2_grpc.MovieServiceStub(self.movie_channel)
 
         self.review_channel = grpc.insecure_channel(review_target)
         self.review_stub = r_pb2_grpc.ReviewServiceStub(self.review_channel)
+
+    def close_channels(self):
+        if self.user_channel:
+            self.user_channel.close()
+        if self.movie_channel:
+            self.movie_channel.close()
+        if self.review_channel:
+            self.review_channel.close()
 
     # ----------------- Movie Service Operations ----------------- #
     def search_movies(self, query: str, page: int = 1) -> dict:
@@ -127,16 +153,6 @@ class GatewayGRPCManager:
             "movies": [_pb_to_movie_dict(m) for m in res.movies],
         }
 
-    def discover_movies(self, genre_id: int, page: int = 1) -> dict:
-        req = m_pb2.DiscoverMoviesRequest(genre_id=genre_id, page=page)
-        res = self.movie_stub.DiscoverMovies(req, timeout=5.0)
-        return {
-            "page": res.page,
-            "total_results": res.total_results,
-            "total_pages": res.total_pages or 1,
-            "movies": [_pb_to_movie_dict(m) for m in res.movies],
-        }
-
     def get_now_playing_movies(self, page: int = 1) -> dict:
         req = m_pb2.NowPlayingRequest(page=page)
         res = self.movie_stub.GetNowPlayingMovies(req, timeout=5.0)
@@ -152,107 +168,34 @@ class GatewayGRPCManager:
         res = self.movie_stub.GetMovieDetails(req, timeout=5.0)
         if not res.found:
             return None
-        return {
-            "tmdb_id": res.tmdb_id,
-            "title": res.title,
-            "release_date": res.release_date,
-            "poster_url": res.poster_url,
-            "backdrop_url": res.backdrop_url,
-            "overview": res.overview,
-            "tmdb_vote_average": round(float(res.tmdb_vote_average), 1),
-            "criticbox_rating": round(float(res.criticbox_rating), 1),
-            "criticbox_review_count": res.criticbox_review_count,
-            "genres": list(res.genres),
-            "runtime": res.runtime,
-            "directors": list(res.directors),
-            "cast": [
-                {
-                    "name": c.name,
-                    "character": c.character,
-                    "profile_url": c.profile_url,
-                }
-                for c in res.cast
-            ],
-            "trailer_url": res.trailer_url,
-            "tagline": res.tagline,
-            "media_type": getattr(res, "media_type", "movie") or "movie",
-            "number_of_seasons": getattr(res, "number_of_seasons", 0),
-            "number_of_episodes": getattr(res, "number_of_episodes", 0),
-            "seasons": [
-                {
-                    "season_number": s.season_number,
-                    "name": s.name,
-                    "episode_count": s.episode_count,
-                    "poster_url": getattr(s, "poster_url", "") or "",
-                }
-                for s in getattr(res, "seasons", [])
-            ],
-            "original_title": getattr(res, "original_title", "") or "",
-            "original_language": getattr(res, "original_language", "") or "",
-            "spoken_languages": list(getattr(res, "spoken_languages", [])),
-            "certification": getattr(res, "certification", "") or "",
-            "vote_count": int(getattr(res, "vote_count", 0)),
-            "popularity": round(float(getattr(res, "popularity", 0.0)), 1),
-            "budget": int(getattr(res, "budget", 0)),
-            "revenue": int(getattr(res, "revenue", 0)),
-            "status": getattr(res, "status", "") or "",
-            "imdb_id": getattr(res, "imdb_id", "") or "",
-            "homepage": getattr(res, "homepage", "") or "",
-            "logo_url": getattr(res, "logo_url", "") or "",
-            "photos": list(getattr(res, "photos", [])),
-            "writers": list(getattr(res, "writers", [])),
-            "music_composers": list(getattr(res, "music_composers", [])),
-            "cinematographers": list(getattr(res, "cinematographers", [])),
-            "producers": list(getattr(res, "producers", [])),
 
-            "networks": [
-                {
-                    "name": n.name,
-                    "logo_url": getattr(n, "logo_url", "") or "",
-                }
-                for n in getattr(res, "networks", [])
-            ],
-            "watch_providers": {
-                "flatrate": [
-                    {"provider_name": p.provider_name, "logo_url": getattr(p, "logo_url", "") or ""}
-                    for p in getattr(getattr(res, "watch_providers", None), "flatrate", [])
-                ],
-                "rent": [
-                    {"provider_name": p.provider_name, "logo_url": getattr(p, "logo_url", "") or ""}
-                    for p in getattr(getattr(res, "watch_providers", None), "rent", [])
-                ],
-                "buy": [
-                    {"provider_name": p.provider_name, "logo_url": getattr(p, "logo_url", "") or ""}
-                    for p in getattr(getattr(res, "watch_providers", None), "buy", [])
-                ],
-            },
-            "recommendations": [_pb_to_movie_dict(m) for m in getattr(res, "recommendations", [])],
-            "last_episode_to_air": {
-                "name": res.last_episode_to_air.name,
-                "episode_number": res.last_episode_to_air.episode_number,
-                "season_number": res.last_episode_to_air.season_number,
-                "air_date": res.last_episode_to_air.air_date,
-                "overview": res.last_episode_to_air.overview,
-                "still_url": res.last_episode_to_air.still_url,
-                "vote_average": round(float(res.last_episode_to_air.vote_average), 1),
-            } if getattr(res, "last_episode_to_air", None) and res.last_episode_to_air.name else None,
-            "next_episode_to_air": {
-                "name": res.next_episode_to_air.name,
-                "episode_number": res.next_episode_to_air.episode_number,
-                "season_number": res.next_episode_to_air.season_number,
-                "air_date": res.next_episode_to_air.air_date,
-                "overview": res.next_episode_to_air.overview,
-                "still_url": res.next_episode_to_air.still_url,
-                "vote_average": round(float(res.next_episode_to_air.vote_average), 1),
-            } if getattr(res, "next_episode_to_air", None) and res.next_episode_to_air.name else None,
-            "first_air_date": getattr(res, "first_air_date", "") or "",
-            "last_air_date": getattr(res, "last_air_date", "") or "",
-        }
+        data = MessageToDict(
+            res,
+            preserving_proto_field_name=True,
+            always_print_fields_with_no_presence=True,
+        )
+        data["tmdb_vote_average"] = round(float(data.get("tmdb_vote_average", 0.0)), 1)
+        data["criticbox_rating"] = round(float(data.get("criticbox_rating", 0.0)), 1)
+        data["popularity"] = round(float(data.get("popularity", 0.0)), 1)
 
-    # ----------------- Review Service Operations ----------------- #
+        last_ep = data.get("last_episode_to_air")
+        if not last_ep or not last_ep.get("name"):
+            data["last_episode_to_air"] = None
+        else:
+            last_ep["vote_average"] = round(float(last_ep.get("vote_average", 0.0)), 1)
+
+        next_ep = data.get("next_episode_to_air")
+        if not next_ep or not next_ep.get("name"):
+            data["next_episode_to_air"] = None
+        else:
+            next_ep["vote_average"] = round(float(next_ep.get("vote_average", 0.0)), 1)
+
+        return data
+
+    # ----------------- User Service Operations ----------------- #
     def register_user(self, username: str, password: str) -> dict:
-        req = r_pb2.RegisterUserRequest(username=username, password=password)
-        res = self.review_stub.RegisterUser(req, timeout=5.0)
+        req = u_pb2.RegisterUserRequest(username=username, password=password)
+        res = self.user_stub.RegisterUser(req, timeout=5.0)
         return {
             "success": res.success,
             "message": res.message,
@@ -261,14 +204,16 @@ class GatewayGRPCManager:
         }
 
     def authenticate_user(self, username: str, password: str) -> dict:
-        req = r_pb2.AuthenticateUserRequest(username=username, password=password)
-        res = self.review_stub.AuthenticateUser(req, timeout=5.0)
+        req = u_pb2.AuthenticateUserRequest(username=username, password=password)
+        res = self.user_stub.AuthenticateUser(req, timeout=5.0)
         return {
             "success": res.success,
             "message": res.message,
             "user_id": res.user_id,
             "username": res.username,
         }
+
+    # ----------------- Review Service Operations ----------------- #
 
     def create_review(
         self,

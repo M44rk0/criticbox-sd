@@ -37,16 +37,6 @@ class ReviewServiceStub:
         Args:
             channel: A grpc.Channel.
         """
-        self.RegisterUser = channel.unary_unary(
-                '/review.ReviewService/RegisterUser',
-                request_serializer=review__pb2.RegisterUserRequest.SerializeToString,
-                response_deserializer=review__pb2.RegisterUserResponse.FromString,
-                _registered_method=True)
-        self.AuthenticateUser = channel.unary_unary(
-                '/review.ReviewService/AuthenticateUser',
-                request_serializer=review__pb2.AuthenticateUserRequest.SerializeToString,
-                response_deserializer=review__pb2.AuthenticateUserResponse.FromString,
-                _registered_method=True)
         self.CreateReview = channel.unary_unary(
                 '/review.ReviewService/CreateReview',
                 request_serializer=review__pb2.CreateReviewRequest.SerializeToString,
@@ -81,18 +71,6 @@ class ReviewServiceStub:
 
 class ReviewServiceServicer:
     """Missing associated documentation comment in .proto file."""
-
-    def RegisterUser(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def AuthenticateUser(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
 
     def CreateReview(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -133,16 +111,6 @@ class ReviewServiceServicer:
 
 def add_ReviewServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'RegisterUser': grpc.unary_unary_rpc_method_handler(
-                    servicer.RegisterUser,
-                    request_deserializer=review__pb2.RegisterUserRequest.FromString,
-                    response_serializer=review__pb2.RegisterUserResponse.SerializeToString,
-            ),
-            'AuthenticateUser': grpc.unary_unary_rpc_method_handler(
-                    servicer.AuthenticateUser,
-                    request_deserializer=review__pb2.AuthenticateUserRequest.FromString,
-                    response_serializer=review__pb2.AuthenticateUserResponse.SerializeToString,
-            ),
             'CreateReview': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateReview,
                     request_deserializer=review__pb2.CreateReviewRequest.FromString,
@@ -183,60 +151,6 @@ def add_ReviewServiceServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class ReviewService:
     """Missing associated documentation comment in .proto file."""
-
-    @staticmethod
-    def RegisterUser(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/review.ReviewService/RegisterUser',
-            review__pb2.RegisterUserRequest.SerializeToString,
-            review__pb2.RegisterUserResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def AuthenticateUser(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/review.ReviewService/AuthenticateUser',
-            review__pb2.AuthenticateUserRequest.SerializeToString,
-            review__pb2.AuthenticateUserResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
 
     @staticmethod
     def CreateReview(request,
