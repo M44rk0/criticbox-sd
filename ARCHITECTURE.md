@@ -8,7 +8,7 @@ Este documento descreve detalhadamente a arquitetura do projeto **Criticbox SD**
 
 O Criticbox foi estruturado segundo o padrão **API Gateway com Microsserviços Internos via gRPC**. 
 
-Em vez de uma aplicação monolítica onde rotas HTTP acessam o banco diretamente, o sistema foi desacoplado em 4 componentes autônomos que conversam entre si:
+Em vez de uma aplicação monolítica onde rotas HTTP acessam o banco diretamente, o sistema foi desacoplado em componentes especializados que conversam entre si:
 
 1. **Frontend (SPA React)**: Interface com o usuário no navegador.
 2. **API Gateway (FastAPI / REST)**: Ponto único de entrada para a web, responsável por segurança, validações e orquestração.
@@ -180,10 +180,10 @@ A camada de persistência foi unificada utilizando o **SQLAlchemy 2.0**, desacop
 - **Sessões Transacionais (`get_session`)**:
   - Gerenciador de contexto thread-safe que executa as operações atômicas, com `commit()` automático ao concluir o bloco e `rollback()` preventivo em caso de qualquer exceção.
 
-### 6.2. Eliminação do Gargalo N+1 ("Code Judo")
+### 6.2. Eliminação do Gargalo N+1 e Otimização de Consultas
 Em versões preliminares, listar 50 reviews exigia fazer 50 requisições HTTP adicionais ao TMDb para descobrir o título e o poster de cada obra avaliada. 
 Na arquitetura atual:
-- Ao salvar a review, gravamos `movie_title` e `poster_url` diretamente na linha do banco.
+- Ao salvar a review, gravamos `movie_title` e `poster_url` diretamente na linha do banco de dados (desnormalização controlada).
 - Ao listar reviews (`GetAllReviews`, `GetReviewsByMovie`), os dados vêm imediatamente do banco de dados em uma única consulta, sem sobrecarregar a rede externa.
 - Um script de manutenção em background (`backfill_posters.py`) atualiza retroativamente registros antigos.
 
