@@ -147,6 +147,7 @@ class ReviewResponse(BaseModel):
     tmdb_id: int
     movie_title: str = ""
     user_id: str
+    username: str = ""
     rating: float
     comment: str = ""
     contains_spoilers: bool = False
@@ -166,6 +167,7 @@ class ReviewListItem(BaseModel):
     tmdb_id: int
     movie_title: str = ""
     user_id: str
+    username: str = ""
     rating: float
     comment: str = ""
     contains_spoilers: bool = False

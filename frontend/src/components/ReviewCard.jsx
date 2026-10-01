@@ -74,8 +74,8 @@ export default function ReviewCard({
           </div>
           <ReviewComment comment={review.comment} containsSpoilers={review.contains_spoilers} />
           <div className="review-card-user">
-            <span className="review-card-avatar">{(review.user_id || 'U')[0].toUpperCase()}</span>
-            <span className="review-card-username">@{review.user_id}</span>
+            <span className="review-card-avatar">{(review.username || review.user_id || 'U')[0].toUpperCase()}</span>
+            <span className="review-card-username">@{review.username || review.user_id}</span>
             <span className="review-card-date">{formatReviewDate(review.created_at)}</span>
           </div>
         </div>
@@ -96,8 +96,8 @@ export default function ReviewCard({
       <div className="review-card-body">
         <div className="review-card-header">
           <div className="movie-review-author-info">
-            <span className="review-card-avatar">{(review.user_id || 'U')[0].toUpperCase()}</span>
-            <span className="review-card-username">@{review.user_id}</span>
+            <span className="review-card-avatar">{(review.username || review.user_id || 'U')[0].toUpperCase()}</span>
+            <span className="review-card-username">@{review.username || review.user_id}</span>
             {episodeCode && (
               <span className="review-scope-chip">{episodeCode}</span>
             )}

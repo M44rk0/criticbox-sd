@@ -83,6 +83,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         if not poster_url and details:
             poster_url = details.get("poster_url", "") or ""
 
+        username = getattr(request, "username", "") or ""
         res = database.add_review(
             tmdb_id=request.tmdb_id,
             user_id=request.user_id.strip(),
@@ -94,11 +95,13 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             episode_number=episode_num,
             movie_title=movie_title,
             poster_url=poster_url,
+            username=username.strip(),
         )
         return r_pb2.ReviewResponse(
             review_id=res["review_id"],
             tmdb_id=res["tmdb_id"],
             user_id=res["user_id"],
+            username=res.get("username", "") or username,
             rating=res["rating"],
             comment=res["comment"],
             contains_spoilers=res["contains_spoilers"],
@@ -157,6 +160,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
                     tmdb_id=r["tmdb_id"],
                     movie_title=title,
                     user_id=r["user_id"],
+                    username=r.get("username", "") or r["user_id"],
                     rating=r["rating"],
                     comment=r["comment"],
                     contains_spoilers=r["contains_spoilers"],
@@ -199,6 +203,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
                     tmdb_id=r["tmdb_id"],
                     movie_title=r.get("movie_title") or movie_title,
                     user_id=r["user_id"],
+                    username=r.get("username", "") or r["user_id"],
                     rating=r["rating"],
                     comment=r["comment"],
                     contains_spoilers=r["contains_spoilers"],
@@ -212,8 +217,13 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         return r_pb2.GetAllReviewsResponse(reviews=items, total_count=len(items))
 
     def GetReviewsByUser(self, request, context):
-        logger.info("GetReviewsByUser -> Buscando reviews para o usuário @%s", request.user_id)
-        raw_reviews = database.get_reviews_by_user(request.user_id)
+        req_username = getattr(request, "username", "") or ""
+        logger.info(
+            "GetReviewsByUser -> Buscando reviews para o usuário @%s (id=%s)",
+            req_username or request.user_id,
+            request.user_id,
+        )
+        raw_reviews = database.get_reviews_by_user(user_id=request.user_id, username=req_username)
         items = []
         for r in raw_reviews:
             title = r.get("movie_title")
@@ -234,6 +244,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
                     tmdb_id=r["tmdb_id"],
                     movie_title=title,
                     user_id=r["user_id"],
+                    username=r.get("username", "") or r["user_id"],
                     rating=r["rating"],
                     comment=r["comment"],
                     contains_spoilers=r["contains_spoilers"],

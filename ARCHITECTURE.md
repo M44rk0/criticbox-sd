@@ -159,7 +159,7 @@ Implementado em `criticbox_sd/server/review_service.py`, este microsserviço é 
 4. O Gateway valida o corpo da requisição (ex: garante que a nota está entre 0.5 e 5.0).
 5. O Gateway chama o RPC `CreateReview` no `ReviewService` via gRPC.
 6. O `ReviewService` verifica com o TMDb se o título já estreou. Se a data for futura, rejeita a review.
-7. O `ReviewService` grava a review no banco de dados com título e URL do poster inclusos de forma atômica (eliminando requisições extras posteriores).
+7. O `ReviewService` grava a review no banco de dados vinculada ao `user_id` (UUID imutável) e `username` (nome de exibição) do autor, com título e URL do poster inclusos de forma atômica (eliminando requisições extras posteriores).
 8. O `ReviewService` responde sucesso com o novo ID da review criada, e o Gateway retorna HTTP 201 Created ao navegador.
 
 ---

@@ -23,6 +23,7 @@ message CreateReviewRequest {
   int32 episode_number = 8;
   string movie_title = 9;
   string poster_url = 10;
+  string username = 11;
 }
 
 message ReviewResponse {
@@ -40,6 +41,7 @@ message ReviewResponse {
   int32 episode_number = 12;
   string movie_title = 13;
   string poster_url = 14;
+  string username = 15;
 }
 
 message MovieStatsRequest {
@@ -70,6 +72,7 @@ message MovieReviewsRequest {
 
 message UserReviewsRequest {
   string user_id = 1;
+  string username = 2;
 }
 
 message ReviewItem {
@@ -85,6 +88,7 @@ message ReviewItem {
   int32 season_number = 10;
   int32 episode_number = 11;
   string poster_url = 12;
+  string username = 13;
 }
 
 message GetAllReviewsResponse {

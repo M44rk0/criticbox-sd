@@ -112,6 +112,7 @@ def init_db():
                     id VARCHAR(36) NOT NULL,
                     tmdb_id INT NOT NULL,
                     user_id VARCHAR(50) NOT NULL,
+                    username VARCHAR(50) NOT NULL DEFAULT '',
                     rating DECIMAL(2, 1) NOT NULL,
                     comment TEXT NULL,
                     contains_spoilers TINYINT(1) NOT NULL DEFAULT 0,
@@ -124,9 +125,14 @@ def init_db():
                     PRIMARY KEY (id),
                     INDEX idx_reviews_tmdb_id (tmdb_id),
                     INDEX idx_reviews_user_id (user_id),
+                    INDEX idx_reviews_username (username),
                     INDEX idx_reviews_created_at (created_at DESC)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """)
+            try:
+                client.execute("ALTER TABLE reviews ADD COLUMN username VARCHAR(50) NOT NULL DEFAULT ''")
+            except Exception:
+                pass
             try:
                 client.execute("ALTER TABLE reviews ADD COLUMN media_type VARCHAR(20) NOT NULL DEFAULT 'movie'")
             except Exception:
@@ -162,6 +168,7 @@ def init_db():
                     id TEXT PRIMARY KEY,
                     tmdb_id INTEGER NOT NULL,
                     user_id TEXT NOT NULL,
+                    username TEXT NOT NULL DEFAULT '',
                     rating REAL NOT NULL,
                     comment TEXT,
                     contains_spoilers INTEGER NOT NULL DEFAULT 0,
@@ -178,6 +185,8 @@ def init_db():
             try:
                 cursor = client.execute("PRAGMA table_info(reviews)")
                 cols = [dict(c)["name"] if hasattr(c, "keys") else c[1] for c in cursor.fetchall()]
+                if "username" not in cols:
+                    client.execute("ALTER TABLE reviews ADD COLUMN username TEXT NOT NULL DEFAULT ''")
                 if "media_type" not in cols:
                     client.execute("ALTER TABLE reviews ADD COLUMN media_type TEXT NOT NULL DEFAULT 'movie'")
                 if "season_number" not in cols:
@@ -188,6 +197,10 @@ def init_db():
                     client.execute("ALTER TABLE reviews ADD COLUMN movie_title TEXT NOT NULL DEFAULT ''")
                 if "poster_url" not in cols:
                     client.execute("ALTER TABLE reviews ADD COLUMN poster_url TEXT NOT NULL DEFAULT ''")
+            except Exception:
+                pass
+            try:
+                client.execute("CREATE INDEX IF NOT EXISTS idx_username ON reviews(username);")
             except Exception:
                 pass
 

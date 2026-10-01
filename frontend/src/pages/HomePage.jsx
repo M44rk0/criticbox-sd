@@ -558,8 +558,8 @@ export default function HomePage() {
                     </div>
                     <ReviewComment comment={r.comment} containsSpoilers={r.contains_spoilers} />
                     <div className="review-card-user">
-                      <span className="review-card-avatar">{(r.user_id || 'U')[0].toUpperCase()}</span>
-                      <span className="review-card-username">@{r.user_id}</span>
+                      <span className="review-card-avatar">{(r.username || r.user_id || 'U')[0].toUpperCase()}</span>
+                      <span className="review-card-username">@{r.username || r.user_id}</span>
                       <span className="review-card-date">{formatReviewDate(r.created_at)}</span>
                     </div>
                   </div>

@@ -142,7 +142,9 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
 
     def test_create_review_success_201_with_jwt(self):
         reg = self.client.post("/auth/register", json={"username": "critico_mestre", "password": "senha_segura"})
-        token = reg.json()["access_token"]
+        reg_data = reg.json()
+        expected_user_id = reg_data["user_id"]
+        token = reg_data["access_token"]
 
         payload = {
             "tmdb_id": 550,
@@ -155,7 +157,8 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         data = res.json()
         self.assertTrue(data["success"])
         self.assertEqual(data["tmdb_id"], 550)
-        self.assertEqual(data["user_id"], "critico_mestre")
+        self.assertEqual(data["user_id"], expected_user_id)
+        self.assertEqual(data["username"], "critico_mestre")
         self.assertEqual(data["rating"], 4.5)
         self.assertEqual(data["comment"], "Filme clássico e excelente!")
         self.assertFalse(data["contains_spoilers"])
@@ -165,7 +168,8 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         db_reviews = database.get_all_reviews()
         self.assertEqual(len(db_reviews), 1)
         self.assertEqual(db_reviews[0]["review_id"], data["review_id"])
-        self.assertEqual(db_reviews[0]["user_id"], "critico_mestre")
+        self.assertEqual(db_reviews[0]["user_id"], expected_user_id)
+        self.assertEqual(db_reviews[0]["username"], "critico_mestre")
 
     def test_create_review_duplicate_forbidden_400(self):
         reg = self.client.post("/auth/register", json={"username": "user_duplicate_rev", "password": "password123"})

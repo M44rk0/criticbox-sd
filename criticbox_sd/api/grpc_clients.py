@@ -53,6 +53,7 @@ def _pb_to_review_dict(r) -> dict:
         "tmdb_id": r.tmdb_id,
         "movie_title": getattr(r, "movie_title", "") or "",
         "user_id": r.user_id,
+        "username": getattr(r, "username", "") or r.user_id,
         "rating": round(float(r.rating), 1),
         "comment": r.comment,
         "contains_spoilers": r.contains_spoilers,
@@ -227,6 +228,7 @@ class GatewayGRPCManager:
         episode_number: int | None = None,
         movie_title: str = "",
         poster_url: str = "",
+        username: str = "",
     ) -> dict:
         req = r_pb2.CreateReviewRequest(
             tmdb_id=tmdb_id,
@@ -239,6 +241,7 @@ class GatewayGRPCManager:
             episode_number=episode_number or 0,
             movie_title=movie_title or "",
             poster_url=poster_url or "",
+            username=username or user_id,
         )
         res = self.review_stub.CreateReview(req, timeout=10.0)
         return {
@@ -246,6 +249,7 @@ class GatewayGRPCManager:
             "tmdb_id": res.tmdb_id,
             "movie_title": getattr(res, "movie_title", "") or movie_title,
             "user_id": res.user_id,
+            "username": getattr(res, "username", "") or username or res.user_id,
             "rating": round(float(res.rating), 1),
             "comment": res.comment,
             "contains_spoilers": res.contains_spoilers,
@@ -268,8 +272,8 @@ class GatewayGRPCManager:
         res = self.review_stub.GetReviewsByMovie(req, timeout=10.0)
         return [_pb_to_review_dict(r) for r in res.reviews]
 
-    def get_reviews_by_user(self, user_id: str) -> list[dict]:
-        req = r_pb2.UserReviewsRequest(user_id=user_id)
+    def get_reviews_by_user(self, user_id: str = "", username: str = "") -> list[dict]:
+        req = r_pb2.UserReviewsRequest(user_id=user_id or username, username=username or user_id)
         res = self.review_stub.GetReviewsByUser(req, timeout=10.0)
         return [_pb_to_review_dict(r) for r in res.reviews]
 

@@ -21,9 +21,11 @@ def create_review(
     payload: ReviewCreateRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    author_user_id = current_user["username"] if current_user.get("username") else current_user["user_id"]
+    author_user_id = current_user["user_id"]
+    author_username = current_user.get("username", "")
     logger.info(
-        "Gateway POST /reviews -> Despachando via gRPC: @%s | ID: %d (%s) | Nota: %.1f",
+        "Gateway POST /reviews -> Despachando via gRPC: @%s (UUID: %s) | ID: %d (%s) | Nota: %.1f",
+        author_username,
         author_user_id,
         payload.tmdb_id,
         payload.media_type,
@@ -33,6 +35,7 @@ def create_review(
     res = grpc_manager.create_review(
         tmdb_id=payload.tmdb_id,
         user_id=author_user_id,
+        username=author_username,
         rating=payload.rating,
         comment=payload.comment or "",
         contains_spoilers=payload.contains_spoilers,
@@ -68,4 +71,4 @@ def list_movie_reviews(tmdb_id: int = Path(..., ge=1)):
 def list_user_reviews(user_id: str = Path(...)):
     logger.info("Gateway GET /reviews/user/%s -> Chamando ReviewService gRPC", user_id)
     grpc_manager = get_grpc_manager()
-    return grpc_manager.get_reviews_by_user(user_id)
+    return grpc_manager.get_reviews_by_user(user_id=user_id, username=user_id)

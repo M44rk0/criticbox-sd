@@ -11,12 +11,15 @@ def _format_review_row(r) -> dict:
     episode_number = r["episode_number"] if "episode_number" in keys and r["episode_number"] is not None else 0
     movie_title = r["movie_title"] if "movie_title" in keys and r["movie_title"] else ""
     poster_url = r["poster_url"] if "poster_url" in keys and r["poster_url"] else ""
+    user_id = r["user_id"] if "user_id" in keys and r["user_id"] else ""
+    username = r["username"] if "username" in keys and r["username"] else user_id
 
     return {
         "review_id": r["id"],
         "tmdb_id": r["tmdb_id"],
         "movie_title": movie_title,
-        "user_id": r["user_id"],
+        "user_id": user_id,
+        "username": username,
         "rating": float(r["rating"]),
         "comment": r["comment"] or "",
         "contains_spoilers": bool(r["contains_spoilers"]),
@@ -41,20 +44,26 @@ def add_review(
     episode_number: int | None = None,
     movie_title: str = "",
     poster_url: str = "",
+    username: str = "",
 ) -> dict:
     media_type = media_type or "movie"
+    username = username or user_id
     with get_connection() as client:
         if media_type == "movie":
-            dup_query = "SELECT id FROM reviews WHERE tmdb_id = ? AND user_id = ? AND (media_type = 'movie' OR media_type IS NULL)"
-            dup_params = (tmdb_id, user_id)
+            dup_query = """
+                SELECT id FROM reviews
+                WHERE tmdb_id = ? AND (user_id = ? OR (username != '' AND username = ?))
+                  AND (media_type = 'movie' OR media_type IS NULL)
+            """
+            dup_params = (tmdb_id, user_id, username)
         else:
             dup_query = """
                 SELECT id FROM reviews
-                WHERE tmdb_id = ? AND user_id = ? AND media_type = 'tv'
+                WHERE tmdb_id = ? AND (user_id = ? OR (username != '' AND username = ?)) AND media_type = 'tv'
                   AND COALESCE(season_number, 0) = ?
                   AND COALESCE(episode_number, 0) = ?
             """
-            dup_params = (tmdb_id, user_id, season_number or 0, episode_number or 0)
+            dup_params = (tmdb_id, user_id, username, season_number or 0, episode_number or 0)
 
         existing = client.execute(dup_query, dup_params).fetchone()
         if existing:
@@ -71,6 +80,7 @@ def add_review(
                 "review_id": "",
                 "tmdb_id": tmdb_id,
                 "user_id": user_id,
+                "username": username,
                 "rating": 0.0,
                 "comment": "",
                 "contains_spoilers": False,
@@ -88,12 +98,13 @@ def add_review(
         created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
         client.execute(
-            "INSERT INTO reviews (id, tmdb_id, user_id, rating, comment, contains_spoilers, created_at, media_type, season_number, episode_number, movie_title, poster_url) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO reviews (id, tmdb_id, user_id, username, rating, comment, contains_spoilers, created_at, media_type, season_number, episode_number, movie_title, poster_url) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 review_id,
                 tmdb_id,
                 user_id,
+                username,
                 rating,
                 comment,
                 int(contains_spoilers),
@@ -109,6 +120,7 @@ def add_review(
         "review_id": review_id,
         "tmdb_id": tmdb_id,
         "user_id": user_id,
+        "username": username,
         "rating": rating,
         "comment": comment,
         "contains_spoilers": contains_spoilers,
@@ -187,10 +199,12 @@ def get_reviews_by_movie(tmdb_id: int) -> list:
         return [_format_review_row(r) for r in rows]
 
 
-def get_reviews_by_user(user_id: str) -> list:
+def get_reviews_by_user(user_id: str = "", username: str = "") -> list:
     with get_connection() as client:
+        target_id = user_id or username
+        target_username = username or user_id
         rows = client.execute(
-            "SELECT * FROM reviews WHERE user_id = ? ORDER BY created_at DESC",
-            (user_id,),
+            "SELECT * FROM reviews WHERE user_id = ? OR username = ? ORDER BY created_at DESC",
+            (target_id, target_username),
         ).fetchall()
         return [_format_review_row(r) for r in rows]

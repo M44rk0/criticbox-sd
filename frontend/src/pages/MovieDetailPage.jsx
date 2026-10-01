@@ -165,10 +165,18 @@ export default function MovieDetailPage() {
 
   const unreleased = isUnreleased(movie.release_date);
   const userReviews = username
-    ? reviews.filter((r) => r.user_id && r.user_id.toLowerCase() === username.toLowerCase())
+    ? reviews.filter(
+        (r) =>
+          (r.username && r.username.toLowerCase() === username.toLowerCase()) ||
+          (r.user_id && r.user_id.toLowerCase() === username.toLowerCase())
+      )
     : [];
   const otherReviews = username
-    ? reviews.filter((r) => !r.user_id || r.user_id.toLowerCase() !== username.toLowerCase())
+    ? reviews.filter(
+        (r) =>
+          (!r.username || r.username.toLowerCase() !== username.toLowerCase()) &&
+          (!r.user_id || r.user_id.toLowerCase() !== username.toLowerCase())
+      )
     : reviews;
 
   const userAlreadyReviewed = Boolean(
