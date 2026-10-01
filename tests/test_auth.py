@@ -11,7 +11,7 @@ import jwt
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
-from criticbox_sd.api.auth import (
+from criticbox_sd.gateway.auth import (
     ALGORITHM,
     SECRET_KEY,
     create_access_token,

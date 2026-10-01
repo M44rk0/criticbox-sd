@@ -1,11 +1,11 @@
-from criticbox_sd.server.tmdb.cache import (
+from criticbox_sd.services.tmdb.cache import (
     _CACHE,
     _CACHE_LOCK,
     _get_from_cache,
     _set_cache,
     clear_cache,
 )
-from criticbox_sd.server.tmdb.catalog import (
+from criticbox_sd.services.tmdb.catalog import (
     _get_tv_details,
     get_all_series_episodes,
     get_movie_details,
@@ -16,8 +16,8 @@ from criticbox_sd.server.tmdb.catalog import (
     get_trending_tv,
     search_movies,
 )
-from criticbox_sd.server.tmdb.client import API_KEY, TMDB_IMAGE_BASE
-from criticbox_sd.server.tmdb.extractors import (
+from criticbox_sd.services.tmdb.client import API_KEY, TMDB_IMAGE_BASE
+from criticbox_sd.services.tmdb.extractors import (
     _extract_certification,
     _extract_crew,
     _extract_photos_and_logo,
@@ -25,7 +25,7 @@ from criticbox_sd.server.tmdb.extractors import (
     _extract_watch_providers,
     _fmt,
 )
-from criticbox_sd.server.tmdb.recommender import (
+from criticbox_sd.services.tmdb.recommender import (
     _fetch_seed_recommendations,
     get_recommendations_for_user,
 )

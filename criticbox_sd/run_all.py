@@ -16,13 +16,13 @@ if BASE_DIR not in sys.path:
 
 load_dotenv()
 
-from criticbox_sd.api.main import app as gateway_app
+from criticbox_sd.gateway.main import app as gateway_app
 from criticbox_sd.generated import movie_pb2_grpc as m_pb2_grpc
 from criticbox_sd.generated import review_pb2_grpc as r_pb2_grpc
 from criticbox_sd.generated import user_pb2_grpc as u_pb2_grpc
-from criticbox_sd.server.movie_service import MovieServiceServicer
-from criticbox_sd.server.review_service import ReviewServiceServicer
-from criticbox_sd.server.user_service import UserServiceServicer
+from criticbox_sd.services.movie_service import MovieServiceServicer
+from criticbox_sd.services.review_service import ReviewServiceServicer
+from criticbox_sd.services.user_service import UserServiceServicer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -68,7 +68,7 @@ def start_movie_service() -> grpc.Server:
 
 def _warm_cache():
     """Pré-aquece o cache de dados populares em background para garantir carregamento instantâneo."""
-    from criticbox_sd.server import tmdb as tmdb_service
+    from criticbox_sd.services import tmdb as tmdb_service
 
     try:
         logger.info("Iniciando pré-aquecimento de cache em background...")

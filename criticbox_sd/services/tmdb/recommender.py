@@ -3,9 +3,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 import tmdbsimple as tmdb
 
-from criticbox_sd.server.tmdb.cache import _get_from_cache, _set_cache
-from criticbox_sd.server.tmdb.client import API_KEY
-from criticbox_sd.server.tmdb.extractors import _fmt
+from criticbox_sd.services.tmdb.cache import _get_from_cache, _set_cache
+from criticbox_sd.services.tmdb.client import API_KEY
+from criticbox_sd.services.tmdb.extractors import _fmt
 
 logger = logging.getLogger("criticbox-tmdb-recommender")
 
@@ -52,7 +52,7 @@ def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> d
 
     if user_id and str(user_id).strip():
         try:
-            from criticbox_sd.server import storage as database
+            from criticbox_sd.services import storage as database
 
             user_reviews = database.get_reviews_by_user(str(user_id).strip())
             reviewed_ids = {r["tmdb_id"] for r in user_reviews}

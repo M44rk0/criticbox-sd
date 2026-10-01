@@ -12,7 +12,7 @@ if BASE_DIR not in sys.path:
 
 from criticbox_sd.generated import user_pb2 as u_pb2
 from criticbox_sd.generated import user_pb2_grpc as u_pb2_grpc
-from criticbox_sd.server import storage as database
+from criticbox_sd.services import storage as database
 
 load_dotenv()
 

@@ -4,9 +4,9 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 import tmdbsimple as tmdb
 
-from criticbox_sd.server.tmdb.cache import _get_from_cache, _set_cache
-from criticbox_sd.server.tmdb.client import API_KEY, TMDB_IMAGE_BASE
-from criticbox_sd.server.tmdb.extractors import (
+from criticbox_sd.services.tmdb.cache import _get_from_cache, _set_cache
+from criticbox_sd.services.tmdb.client import API_KEY, TMDB_IMAGE_BASE
+from criticbox_sd.services.tmdb.extractors import (
     _extract_certification,
     _extract_crew,
     _extract_photos_and_logo,

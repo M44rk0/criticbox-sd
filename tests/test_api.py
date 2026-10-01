@@ -16,15 +16,15 @@ os.environ["API_PORT"] = "8000"
 
 from fastapi.testclient import TestClient
 
-from criticbox_sd.api.grpc_clients import GatewayGRPCManager
-from criticbox_sd.api.main import app
+from criticbox_sd.gateway.grpc_clients import GatewayGRPCManager
+from criticbox_sd.gateway.main import app
 from criticbox_sd.generated import movie_pb2_grpc as m_pb2_grpc
 from criticbox_sd.generated import review_pb2_grpc as r_pb2_grpc
 from criticbox_sd.generated import user_pb2_grpc as u_pb2_grpc
-from criticbox_sd.server import storage as database
-from criticbox_sd.server.movie_service import MovieServiceServicer
-from criticbox_sd.server.review_service import ReviewServiceServicer
-from criticbox_sd.server.user_service import UserServiceServicer
+from criticbox_sd.services import storage as database
+from criticbox_sd.services.movie_service import MovieServiceServicer
+from criticbox_sd.services.review_service import ReviewServiceServicer
+from criticbox_sd.services.user_service import UserServiceServicer
 
 
 class TestCriticboxDistributedAPI(unittest.TestCase):
@@ -298,7 +298,7 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
     def test_get_season_episodes_endpoint_200(self):
         from unittest.mock import patch
 
-        with patch("criticbox_sd.server.tmdb.catalog.get_season_episodes") as mock_season:
+        with patch("criticbox_sd.services.tmdb.catalog.get_season_episodes") as mock_season:
             mock_season.return_value = {"season_number": 1, "episodes": [{"episode_number": 1, "name": "Episódio 1"}]}
             res = self.client.get("/movies/1396/season/1")
             self.assertEqual(res.status_code, 200)
@@ -361,7 +361,7 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         token = reg.json()["access_token"]
 
         with patch(
-            "criticbox_sd.server.tmdb.get_movie_details",
+            "criticbox_sd.services.tmdb.get_movie_details",
             return_value={"release_date": "2099-01-01", "title": "Avatar 10"},
         ):
             payload = {
@@ -380,7 +380,7 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
             "1": [{"episode_number": 1, "name": "Pilot"}],
             "2": [{"episode_number": 1, "name": "Seven Thirty-Seven"}],
         }
-        with patch("criticbox_sd.server.tmdb.get_all_series_episodes", return_value=mock_data):
+        with patch("criticbox_sd.services.tmdb.get_all_series_episodes", return_value=mock_data):
             res = self.client.get("/movies/1396/episodes")
             self.assertEqual(res.status_code, 200)
             data = res.json()
@@ -488,14 +488,14 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
     def test_main_start_function_mock(self):
         from unittest.mock import patch
 
-        from criticbox_sd.api.main import start
+        from criticbox_sd.gateway.main import start
 
         with patch("uvicorn.run") as mock_uvicorn:
             start()
             self.assertTrue(mock_uvicorn.called)
 
     def test_grpc_manager_singleton(self):
-        from criticbox_sd.api.grpc_clients import get_grpc_manager
+        from criticbox_sd.gateway.grpc_clients import get_grpc_manager
 
         mgr = get_grpc_manager()
         self.assertIs(mgr, GatewayGRPCManager.get_instance())
@@ -508,7 +508,7 @@ class TestExceptionHandlers(unittest.TestCase):
 
         from fastapi import Request
 
-        from criticbox_sd.api.exception_handlers import grpc_exception_handler
+        from criticbox_sd.gateway.exception_handlers import grpc_exception_handler
 
         class FakeRpcError(grpc.RpcError):
             def __init__(self, code, details):

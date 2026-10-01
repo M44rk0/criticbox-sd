@@ -12,7 +12,7 @@ from sqlalchemy import Engine, create_engine, delete, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from criticbox_sd.server.storage.models import Base, Review, User
+from criticbox_sd.services.storage.models import Base, Review, User
 
 load_dotenv()
 

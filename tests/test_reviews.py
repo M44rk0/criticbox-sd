@@ -8,9 +8,9 @@ if BASE_DIR not in sys.path:
 
 
 from criticbox_sd.generated import review_pb2 as r_pb2
-from criticbox_sd.server import storage as database
-from criticbox_sd.server import tmdb as tmdb_service
-from criticbox_sd.server.review_service import ReviewServiceServicer
+from criticbox_sd.services import storage as database
+from criticbox_sd.services import tmdb as tmdb_service
+from criticbox_sd.services.review_service import ReviewServiceServicer
 
 
 class TestGetAllReviews(unittest.TestCase):

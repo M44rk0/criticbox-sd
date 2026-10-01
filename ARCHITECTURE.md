@@ -108,13 +108,13 @@ No Criticbox SD, toda a comunicação interna no cluster de backend ocorre via g
 ## 4. Os Microsserviços Internos
 
 ### 4.1. UserService (Porta 50053)
-Implementado em `criticbox_sd/server/user_service.py`, este microsserviço é o guardião das identidades do sistema:
+Implementado em `criticbox_sd/services/user_service.py`, este microsserviço é o guardião das identidades do sistema:
 - **Autenticação Segura**: Armazena senhas com hash criptográfico usando `bcrypt`. A senha pura nunca é gravada no banco de dados.
 - **Cadastro e Login**: Provê os RPCs `RegisterUser` e `AuthenticateUser`.
 - **Separação de Responsabilidade (SRP)**: Isola regras de identidade e credenciais fora do escopo de reviews e mídias.
 
 ### 4.2. MovieService (Porta 50051)
-Implementado em `criticbox_sd/server/movie_service.py`, este microsserviço gerencia todo o universo de catálogo de filmes e séries:
+Implementado em `criticbox_sd/services/movie_service.py`, este microsserviço gerencia todo o universo de catálogo de filmes e séries:
 - **Integração com TMDb**: Realiza buscas, obtém detalhes, elenco, trailers do YouTube e plataformas de streaming (Netflix, Prime Video, etc.).
 - **Paralelismo Concorrente**: Ao buscar detalhes de uma série de TV, usa um `ThreadPoolExecutor` para carregar em paralelo os episódios de múltiplas temporadas.
 - **Cache Thread-Safe com TTL**: Armazena em memória os resultados de consultas frequentes por 10 minutos. Se o cache atingir o limite (`MAX_CACHE_SIZE = 1000`), remove automaticamente chaves expiradas ou os 20% mais antigos.
@@ -122,7 +122,7 @@ Implementado em `criticbox_sd/server/movie_service.py`, este microsserviço gere
 - **Cliente gRPC Inter-Serviço**: Para mostrar a nota média e o número de reviews do Criticbox junto com os dados do filme, o `MovieService` faz uma chamada gRPC direta ao `ReviewService` (`GetMovieStats` ou `GetBatchMovieStats`).
 
 ### 4.3. ReviewService (Porta 50052)
-Implementado em `criticbox_sd/server/review_service.py`, este microsserviço é focado exclusivamente na experiência da comunidade e avaliações:
+Implementado em `criticbox_sd/services/review_service.py`, este microsserviço é focado exclusivamente na experiência da comunidade e avaliações:
 - **Controle de Avaliações**:
   - Permite avaliar tanto um título completo (filme ou série) quanto episódios individuais (definindo temporada e número do episódio).
   - Regra de Negócio: Bloqueia avaliações de títulos que ainda não estrearam oficialmente nos cinemas ou na TV.
@@ -198,7 +198,7 @@ Ao iniciar o ecossistema com `poetry run start` (`run_all.py`):
 
 ## 7. Mapeamento de Falhas (gRPC ➔ HTTP)
 
-Para que o frontend receba códigos HTTP padronizados da web em vez de erros internos de socket, o arquivo `criticbox_sd/api/exception_handlers.py` faz a tradução:
+Para que o frontend receba códigos HTTP padronizados da web em vez de erros internos de socket, o arquivo `criticbox_sd/gateway/exception_handlers.py` faz a tradução:
 
 | Código gRPC Interno | Código HTTP Devolvido | Cenário |
 | :--- | :---: | :--- |
@@ -210,3 +210,50 @@ Para que o frontend receba códigos HTTP padronizados da web em vez de erros int
 | `UNAVAILABLE` | **503 Service Unavailable** | Microsserviço gRPC correspondente indisponível. |
 | `DEADLINE_EXCEEDED` | **504 Gateway Timeout** | Tempo limite esgotado aguardando o microsserviço. |
 | `INTERNAL` | **503 Service Unavailable** | Erro interno tratado com fallback seguro. |
+
+---
+
+## 8. Estrutura de Diretórios do Backend
+
+A estrutura do projeto segue o desacoplamento padrão de microsserviços modernos:
+
+```text
+criticbox_sd/
+├── gateway/                    # API Gateway (REST HTTP / FastAPI)
+│   ├── auth.py                 # Emissão e validação de tokens JWT (Bearer)
+│   ├── exception_handlers.py   # Mapeamento gRPC RpcError -> HTTP status
+│   ├── grpc_clients.py         # Pool de stubs e canais gRPC persistentes
+│   ├── main.py                 # Instância FastAPI e lifecycle das rotas
+│   ├── routers/                # Sub-rotas REST da API
+│   │   ├── auth.py             # Rotas /auth/register, /auth/login, /auth/me
+│   │   ├── movies.py           # Rotas /movies/... (detalhes, busca, trending)
+│   │   └── reviews.py          # Rotas /reviews/... (criação e listagem)
+│   └── schemas/                # Schemas Pydantic tipados e modularizados
+│       ├── auth.py             # Schemas de login, registro e perfil
+│       ├── movies.py           # Schemas de catálogo, elenco e episódios
+│       ├── reviews.py          # Schemas de criação e listagem de reviews
+│       └── common.py           # Schemas de erros de validação e respostas genéricas
+├── services/                   # Microsserviços Internos gRPC
+│   ├── user_service.py         # Servicer gRPC UserService (:50053)
+│   ├── movie_service.py        # Servicer gRPC MovieService (:50051)
+│   ├── review_service.py       # Servicer gRPC ReviewService (:50052)
+│   ├── storage/                # Camada de Persistência desacoplada
+│   │   ├── connection.py       # Engine e Session Factory (SQLAlchemy 2.0)
+│   │   ├── models.py           # Modelos ORM (User, Review)
+│   │   ├── user_repository.py  # Repository de usuários
+│   │   └── review_repository.py# Repository de avaliações
+│   └── tmdb/                   # Módulo de integração TMDb & Recomendações
+│       ├── client.py           # Cliente HTTP TMDb
+│       ├── catalog.py          # Operações de catálogo e temporadas
+│       ├── cache.py            # Cache thread-safe com TTL
+│       ├── extractors.py       # Normalização de payloads externos
+│       └── recommender.py      # Motor de recomendação baseado em afinidade
+├── proto/                      # Contratos de interface Protocol Buffers
+│   ├── user.proto
+│   ├── movie.proto
+│   └── review.proto
+├── generated/                  # Código gerado pelo protoc para Python
+├── scripts/                    # Scripts utilitários e de migração
+└── run_all.py                  # Orquestrador local de inicialização concorrente
+```
+

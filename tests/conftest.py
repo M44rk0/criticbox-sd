@@ -13,7 +13,7 @@ temp_db_fd, temp_db_path = tempfile.mkstemp(prefix="criticbox_test_", suffix=".d
 os.close(temp_db_fd)
 os.environ["DATABASE_PATH"] = temp_db_path
 
-from criticbox_sd.server.storage import clear_db, init_db
+from criticbox_sd.services.storage import clear_db, init_db
 
 
 @pytest.fixture(scope="session", autouse=True)

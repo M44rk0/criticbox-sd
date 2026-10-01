@@ -25,10 +25,10 @@ dependencies = [
 packages = [{include = "criticbox_sd"}]
 
 [tool.poetry.scripts]
-api = "criticbox_sd.api.main:start"
-user-service = "criticbox_sd.server.user_service:serve"
-movie-service = "criticbox_sd.server.movie_service:serve"
-review-service = "criticbox_sd.server.review_service:serve"
+api = "criticbox_sd.gateway.main:start"
+user-service = "criticbox_sd.services.user_service:serve"
+movie-service = "criticbox_sd.services.movie_service:serve"
+review-service = "criticbox_sd.services.review_service:serve"
 start = "criticbox_sd.run_all:main"
 compile-proto = "criticbox_sd.scripts.compile_proto:compile_proto"
 

@@ -14,7 +14,7 @@ from criticbox_sd.generated import movie_pb2 as m_pb2
 from criticbox_sd.generated import movie_pb2_grpc as m_pb2_grpc
 from criticbox_sd.generated import review_pb2 as r_pb2
 from criticbox_sd.generated import review_pb2_grpc as r_pb2_grpc
-from criticbox_sd.server import tmdb as tmdb_service
+from criticbox_sd.services import tmdb as tmdb_service
 
 load_dotenv()
 

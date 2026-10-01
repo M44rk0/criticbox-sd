@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select
 
-from criticbox_sd.server.storage.connection import get_session
-from criticbox_sd.server.storage.models import User
+from criticbox_sd.services.storage.connection import get_session
+from criticbox_sd.services.storage.models import User
 
 
 def _hash_password(password: str) -> str:

@@ -7,7 +7,7 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 
-from criticbox_sd.server.storage import (
+from criticbox_sd.services.storage import (
     _verify_password,
     add_review,
     authenticate_user,
@@ -187,8 +187,8 @@ class TestStorageLayer(unittest.TestCase):
         update_review_poster(rev_id, "")
 
     def test_format_review_row_dict_and_model(self):
-        from criticbox_sd.server.storage.models import Review
-        from criticbox_sd.server.storage.review_repository import _format_review_row
+        from criticbox_sd.services.storage.models import Review
+        from criticbox_sd.services.storage.review_repository import _format_review_row
 
         row_dict = {
             "id": "rev1",
@@ -233,7 +233,7 @@ class TestStorageLayer(unittest.TestCase):
             conn.execute("SELECT 1")
 
     def test_is_mysql_detection(self):
-        from criticbox_sd.server.storage.connection import is_mysql
+        from criticbox_sd.services.storage.connection import is_mysql
 
         self.assertFalse(is_mysql())
 
@@ -266,7 +266,7 @@ class TestStorageLayer(unittest.TestCase):
                 os.environ.pop("DB_TYPE", None)
 
     def test_get_sqlite_path(self):
-        from criticbox_sd.server.storage.connection import get_sqlite_path
+        from criticbox_sd.services.storage.connection import get_sqlite_path
 
         old_dp = os.environ.get("DATABASE_PATH")
         try:
@@ -283,7 +283,7 @@ class TestStorageLayer(unittest.TestCase):
     def test_dbclient_mysql_adaptation(self):
         from unittest.mock import MagicMock
 
-        from criticbox_sd.server.storage.connection import DBClient
+        from criticbox_sd.services.storage.connection import DBClient
 
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
@@ -300,10 +300,10 @@ class TestStorageLayer(unittest.TestCase):
     def test_get_connection_mysql_lifecycle(self):
         from unittest.mock import MagicMock, patch
 
-        from criticbox_sd.server.storage.connection import get_connection
+        from criticbox_sd.services.storage.connection import get_connection
 
         mock_conn = MagicMock()
-        with patch("criticbox_sd.server.storage.connection.is_mysql", return_value=True):
+        with patch("criticbox_sd.services.storage.connection.is_mysql", return_value=True):
             with patch("pymysql.connect", return_value=mock_conn):
                 with get_connection() as client:
                     self.assertTrue(client.is_mysql)
@@ -311,7 +311,7 @@ class TestStorageLayer(unittest.TestCase):
                 mock_conn.close.assert_called_once()
 
     def test_get_connection_exception_rolls_back_and_raises(self):
-        from criticbox_sd.server.storage.connection import get_connection
+        from criticbox_sd.services.storage.connection import get_connection
 
         with self.assertRaises(RuntimeError):
             with get_connection():
@@ -320,7 +320,7 @@ class TestStorageLayer(unittest.TestCase):
     def test_sqlite_pool_queue_full_cleanup(self):
         import queue
 
-        from criticbox_sd.server.storage.connection import _SQLITE_POOL, get_connection
+        from criticbox_sd.services.storage.connection import _SQLITE_POOL, get_connection
 
         dummy_conns = []
         try:
@@ -347,12 +347,12 @@ class TestStorageLayer(unittest.TestCase):
     def test_get_database_url_and_engine(self):
         from unittest.mock import patch
 
-        from criticbox_sd.server.storage.connection import get_database_url, get_engine
+        from criticbox_sd.services.storage.connection import get_database_url, get_engine
 
         sqlite_url = get_database_url()
         self.assertTrue(sqlite_url.startswith("sqlite:///"))
 
-        with patch("criticbox_sd.server.storage.connection.is_mysql", return_value=True):
+        with patch("criticbox_sd.services.storage.connection.is_mysql", return_value=True):
             mysql_url = get_database_url()
             self.assertTrue(mysql_url.startswith("mysql+pymysql://"))
 

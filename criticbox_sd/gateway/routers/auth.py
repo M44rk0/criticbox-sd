@@ -2,9 +2,9 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from criticbox_sd.api.auth import create_access_token, get_current_user
-from criticbox_sd.api.grpc_clients import get_grpc_manager
-from criticbox_sd.api.schemas import (
+from criticbox_sd.gateway.auth import create_access_token, get_current_user
+from criticbox_sd.gateway.grpc_clients import get_grpc_manager
+from criticbox_sd.gateway.schemas.auth import (
     AuthResponse,
     UserLoginRequest,
     UserProfileResponse,

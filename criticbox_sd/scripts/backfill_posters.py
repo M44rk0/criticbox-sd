@@ -5,8 +5,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from criticbox_sd.server import storage as database
-from criticbox_sd.server import tmdb as tmdb_service
+from criticbox_sd.services import storage as database
+from criticbox_sd.services import tmdb as tmdb_service
 
 
 def backfill():

@@ -1,4 +1,4 @@
-from criticbox_sd.server.tmdb.client import TMDB_IMAGE_BASE
+from criticbox_sd.services.tmdb.client import TMDB_IMAGE_BASE
 
 
 def _fmt(m: dict, default_media_type: str = "movie") -> dict:

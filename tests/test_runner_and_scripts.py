@@ -8,7 +8,7 @@ from criticbox_sd.run_all import (
     start_user_service,
 )
 from criticbox_sd.scripts.backfill_posters import backfill
-from criticbox_sd.server import storage
+from criticbox_sd.services import storage
 
 
 class TestRunnerAndScripts(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestRunnerAndScripts(unittest.TestCase):
         res = storage.add_review(tmdb_id=550, user_id="user_script", rating=4.0, poster_url="")
         self.assertTrue(res["success"])
 
-        with patch("criticbox_sd.server.tmdb.get_movie_details") as mock_details:
+        with patch("criticbox_sd.services.tmdb.get_movie_details") as mock_details:
             mock_details.return_value = {
                 "id": 550,
                 "title": "Fight Club",
@@ -37,7 +37,7 @@ class TestRunnerAndScripts(unittest.TestCase):
     def test_backfill_posters_handles_exceptions(self):
         storage.add_review(tmdb_id=999, user_id="user_err_script", rating=4.0, poster_url="")
 
-        with patch("criticbox_sd.server.tmdb.get_movie_details", side_effect=Exception("API failure")):
+        with patch("criticbox_sd.services.tmdb.get_movie_details", side_effect=Exception("API failure")):
             backfill()
 
         revs = storage.get_all_reviews(limit=1)
@@ -63,16 +63,16 @@ class TestRunnerAndScripts(unittest.TestCase):
             self.assertTrue(mock_srv.start.called)
 
     def test_run_all_warm_cache(self):
-        with patch("criticbox_sd.server.tmdb.get_trending_movies") as mock_trend:
-            with patch("criticbox_sd.server.tmdb.get_now_playing_movies") as mock_np:
-                with patch("criticbox_sd.server.tmdb.get_trending_tv") as mock_tv:
+        with patch("criticbox_sd.services.tmdb.get_trending_movies") as mock_trend:
+            with patch("criticbox_sd.services.tmdb.get_now_playing_movies") as mock_np:
+                with patch("criticbox_sd.services.tmdb.get_trending_tv") as mock_tv:
                     _warm_cache()
                     self.assertTrue(mock_trend.called)
                     self.assertTrue(mock_np.called)
                     self.assertTrue(mock_tv.called)
 
     def test_run_all_warm_cache_handles_exception(self):
-        with patch("criticbox_sd.server.tmdb.get_trending_movies", side_effect=Exception("Cache error")):
+        with patch("criticbox_sd.services.tmdb.get_trending_movies", side_effect=Exception("Cache error")):
             # Should catch and log warning without raising
             _warm_cache()
 

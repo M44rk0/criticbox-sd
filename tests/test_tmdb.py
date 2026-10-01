@@ -8,8 +8,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from criticbox_sd.server import storage
-from criticbox_sd.server.tmdb import (
+from criticbox_sd.services import storage
+from criticbox_sd.services.tmdb import (
     _CACHE,
     _extract_certification,
     _extract_crew,
@@ -30,8 +30,8 @@ from criticbox_sd.server.tmdb import (
     get_trending_tv,
     search_movies,
 )
-from criticbox_sd.server.tmdb.cache import MAX_CACHE_SIZE
-from criticbox_sd.server.tmdb.recommender import _fetch_seed_recommendations
+from criticbox_sd.services.tmdb.cache import MAX_CACHE_SIZE
+from criticbox_sd.services.tmdb.recommender import _fetch_seed_recommendations
 
 
 class TestTMDBModule(unittest.TestCase):
@@ -194,7 +194,7 @@ class TestTMDBModule(unittest.TestCase):
         storage.add_review(tmdb_id=550, user_id="cinephile_test", rating=5.0)
         storage.add_review(tmdb_id=680, user_id="cinephile_test", rating=4.5)
 
-        with patch("criticbox_sd.server.tmdb.recommender._fetch_seed_recommendations") as mock_seed:
+        with patch("criticbox_sd.services.tmdb.recommender._fetch_seed_recommendations") as mock_seed:
             mock_seed.return_value = [
                 {"id": 991, "title": "Rec For 550", "poster_path": "/r1.jpg", "genre_ids": [28, 18]},
                 {"id": 992, "title": "Rec For 680", "poster_path": "/r2.jpg", "genre_ids": [18, 53]},
@@ -218,12 +218,12 @@ class TestTMDBModule(unittest.TestCase):
         self.assertEqual(res["results"], [])
 
     def test_get_movie_title_fallback(self):
-        with patch("criticbox_sd.server.tmdb.catalog.get_movie_details", return_value=None):
+        with patch("criticbox_sd.services.tmdb.catalog.get_movie_details", return_value=None):
             title = get_movie_title(888888)
             self.assertEqual(title, "Título #888888")
 
     def test_get_all_series_episodes_seasons_hint(self):
-        with patch("criticbox_sd.server.tmdb.catalog.get_season_episodes") as mock_season:
+        with patch("criticbox_sd.services.tmdb.catalog.get_season_episodes") as mock_season:
             mock_season.return_value = {
                 "season_number": 1,
                 "episodes": [{"episode_number": 1, "name": "Pilot"}],
@@ -281,7 +281,7 @@ class TestTMDBModule(unittest.TestCase):
             self.assertEqual(err_recs, [])
 
     def test_recommender_api_key_empty_and_cache_hit(self):
-        with patch("criticbox_sd.server.tmdb.recommender.API_KEY", ""):
+        with patch("criticbox_sd.services.tmdb.recommender.API_KEY", ""):
             res = get_recommendations_for_user("user_any", page=1)
             self.assertEqual(res["results"], [])
 
@@ -295,7 +295,7 @@ class TestTMDBModule(unittest.TestCase):
 
         _set_cache("details:movie:101", {"genre_ids": [28, 878]})
 
-        with patch("criticbox_sd.server.tmdb.recommender._fetch_seed_recommendations") as mock_seed:
+        with patch("criticbox_sd.services.tmdb.recommender._fetch_seed_recommendations") as mock_seed:
             mock_seed.return_value = [
                 {"id": 201, "title": "SciFi Action", "poster_path": "/sf.jpg", "genre_ids": [28, 878]},
                 {"id": 202, "title": "Romance", "poster_path": "/ro.jpg", "genre_ids": [10749]},
@@ -307,7 +307,7 @@ class TestTMDBModule(unittest.TestCase):
                 self.assertEqual(res["results"][0]["id"], 201)
 
     def test_catalog_search_movies_cache_and_api_key_and_error(self):
-        with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
+        with patch("criticbox_sd.services.tmdb.catalog.API_KEY", ""):
             self.assertEqual(search_movies("Matrix")["results"], [])
 
         _set_cache("search:matrix:1", {"page": 1, "results": [{"id": 603, "title": "The Matrix"}]})
@@ -319,7 +319,7 @@ class TestTMDBModule(unittest.TestCase):
             self.assertEqual(search_movies("avatar", page=1)["results"], [])
 
     def test_catalog_trending_movies_cache_and_errors(self):
-        with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
+        with patch("criticbox_sd.services.tmdb.catalog.API_KEY", ""):
             self.assertEqual(get_trending_movies()["results"], [])
 
         _set_cache("trending:week:1", {"page": 1, "results": [{"id": 100}]})
@@ -331,7 +331,7 @@ class TestTMDBModule(unittest.TestCase):
             self.assertEqual(get_trending_movies(time_window="day", page=1)["results"], [])
 
     def test_catalog_now_playing_and_trending_tv_cache_and_errors(self):
-        with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
+        with patch("criticbox_sd.services.tmdb.catalog.API_KEY", ""):
             self.assertEqual(get_now_playing_movies()["results"], [])
 
         _set_cache("now_playing:1", {"page": 1, "results": [{"id": 101}]})
@@ -342,7 +342,7 @@ class TestTMDBModule(unittest.TestCase):
         with patch("tmdbsimple.Movies.now_playing", side_effect=requests.RequestException):
             self.assertEqual(get_now_playing_movies(page=2)["results"], [])
 
-        with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
+        with patch("criticbox_sd.services.tmdb.catalog.API_KEY", ""):
             self.assertEqual(get_trending_tv()["results"], [])
 
         _set_cache("trending_tv:week:1", {"page": 1, "results": [{"id": 102}]})
@@ -352,7 +352,7 @@ class TestTMDBModule(unittest.TestCase):
             self.assertEqual(get_trending_tv(time_window="day", page=2)["results"], [])
 
     def test_catalog_get_movie_details_cache_empty_and_tv_fallback(self):
-        with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
+        with patch("criticbox_sd.services.tmdb.catalog.API_KEY", ""):
             self.assertIsNone(get_movie_details(550))
 
         _set_cache("details::550", {"id": 550, "title": "Fight Club Cached"})
@@ -388,7 +388,7 @@ class TestTMDBModule(unittest.TestCase):
                 self.assertEqual(len(tv_res.get("seasons", [])), 1)
 
     def test_catalog_get_season_and_all_episodes_branches(self):
-        with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
+        with patch("criticbox_sd.services.tmdb.catalog.API_KEY", ""):
             s_res = get_season_episodes(1396, 1)
             self.assertEqual(s_res["episodes"], [])
 
@@ -399,25 +399,25 @@ class TestTMDBModule(unittest.TestCase):
             err_season = get_season_episodes(9999, 1)
             self.assertEqual(err_season["episodes"], [])
 
-        with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
+        with patch("criticbox_sd.services.tmdb.catalog.API_KEY", ""):
             self.assertEqual(get_all_series_episodes(1396), {})
 
         _set_cache("all_episodes:1396", {"1": [{"episode_number": 1}]})
         self.assertEqual(len(get_all_series_episodes(1396)["1"]), 1)
 
-        with patch("criticbox_sd.server.tmdb.catalog.get_season_episodes") as mock_season:
+        with patch("criticbox_sd.services.tmdb.catalog.get_season_episodes") as mock_season:
             mock_season.return_value = {"season_number": 2, "episodes": [{"episode_number": 1}]}
             hinted = get_all_series_episodes(2000, seasons_hint=[{"season_number": 2}, 0, "invalid"])
             self.assertIn("2", hinted)
 
-        with patch("criticbox_sd.server.tmdb.catalog._get_tv_details", side_effect=Exception):
+        with patch("criticbox_sd.services.tmdb.catalog._get_tv_details", side_effect=Exception):
             self.assertEqual(get_all_series_episodes(99999), {})
 
     def test_catalog_get_movie_title_details_hit(self):
         _set_cache("title:movie:777", "Oppenheimer")
         self.assertEqual(get_movie_title(777, media_type="movie"), "Oppenheimer")
 
-        with patch("criticbox_sd.server.tmdb.catalog.get_movie_details", return_value={"title": "Inception"}):
+        with patch("criticbox_sd.services.tmdb.catalog.get_movie_details", return_value={"title": "Inception"}):
             self.assertEqual(get_movie_title(27205, media_type="movie"), "Inception")
 
     def test_catalog_full_mock_parsers(self):

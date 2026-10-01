@@ -1,4 +1,4 @@
-from criticbox_sd.server.storage.connection import (
+from criticbox_sd.services.storage.connection import (
     DBClient,
     clear_db,
     get_connection,
@@ -9,12 +9,12 @@ from criticbox_sd.server.storage.connection import (
     init_db,
     is_mysql,
 )
-from criticbox_sd.server.storage.models import (
+from criticbox_sd.services.storage.models import (
     Base,
     Review,
     User,
 )
-from criticbox_sd.server.storage.review_repository import (
+from criticbox_sd.services.storage.review_repository import (
     _format_review_row,
     add_review,
     get_all_reviews,
@@ -24,7 +24,7 @@ from criticbox_sd.server.storage.review_repository import (
     get_reviews_by_user,
     update_review_poster,
 )
-from criticbox_sd.server.storage.user_repository import (
+from criticbox_sd.services.storage.user_repository import (
     _hash_password,
     _verify_password,
     authenticate_user,

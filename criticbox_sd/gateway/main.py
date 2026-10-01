@@ -15,8 +15,8 @@ if BASE_DIR not in sys.path:
 
 load_dotenv()
 
-from criticbox_sd.api.exception_handlers import register_exception_handlers
-from criticbox_sd.api.routers import auth_router, movies_router, reviews_router
+from criticbox_sd.gateway.exception_handlers import register_exception_handlers
+from criticbox_sd.gateway.routers import auth_router, movies_router, reviews_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [API Gateway] %(message)s")
 logger = logging.getLogger("criticbox-gateway")
@@ -89,7 +89,7 @@ def spa_fallback(request: Request, full_path: str):
 
 
 def start():
-    uvicorn.run("criticbox_sd.api.main:app", host="0.0.0.0", port=int(os.getenv("API_PORT", "8000")), reload=True)
+    uvicorn.run("criticbox_sd.gateway.main:app", host="0.0.0.0", port=int(os.getenv("API_PORT", "8000")), reload=True)
 
 
 if __name__ == "__main__":

@@ -3,8 +3,8 @@ import logging
 from fastapi import APIRouter, HTTPException, Path, Query, status
 from fastapi.responses import JSONResponse
 
-from criticbox_sd.api.grpc_clients import get_grpc_manager
-from criticbox_sd.api.schemas import MovieDetailsResponse, SearchMoviesResponse
+from criticbox_sd.gateway.grpc_clients import get_grpc_manager
+from criticbox_sd.gateway.schemas.movies import MovieDetailsResponse, SearchMoviesResponse
 
 logger = logging.getLogger("criticbox-gateway-movies")
 

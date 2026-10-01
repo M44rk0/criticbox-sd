@@ -2,9 +2,9 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 
-from criticbox_sd.api.auth import get_current_user
-from criticbox_sd.api.grpc_clients import get_grpc_manager
-from criticbox_sd.api.schemas import ReviewCreateRequest, ReviewListItem, ReviewResponse
+from criticbox_sd.gateway.auth import get_current_user
+from criticbox_sd.gateway.grpc_clients import get_grpc_manager
+from criticbox_sd.gateway.schemas.reviews import ReviewCreateRequest, ReviewListItem, ReviewResponse
 
 logger = logging.getLogger("criticbox-gateway-reviews")
 

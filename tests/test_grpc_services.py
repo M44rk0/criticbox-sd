@@ -12,14 +12,14 @@ if BASE_DIR not in sys.path:
 from criticbox_sd.generated import movie_pb2 as m_pb2
 from criticbox_sd.generated import review_pb2 as r_pb2
 from criticbox_sd.generated import user_pb2 as u_pb2
-from criticbox_sd.server import storage
-from criticbox_sd.server.movie_service import (
+from criticbox_sd.services import storage
+from criticbox_sd.services.movie_service import (
     MovieServiceServicer,
     _fetch_batch_movie_stats_via_grpc,
     _fetch_movie_stats_via_grpc,
 )
-from criticbox_sd.server.review_service import ReviewServiceServicer
-from criticbox_sd.server.user_service import UserServiceServicer
+from criticbox_sd.services.review_service import ReviewServiceServicer
+from criticbox_sd.services.user_service import UserServiceServicer
 
 
 class TestGRPCServices(unittest.TestCase):
@@ -74,7 +74,7 @@ class TestGRPCServices(unittest.TestCase):
     # ----------------- MovieServiceServicer Direct Tests ----------------- #
     def test_movie_servicer_trending_tv(self):
         servicer = MovieServiceServicer()
-        with patch("criticbox_sd.server.tmdb.get_trending_tv") as mock_tv:
+        with patch("criticbox_sd.services.tmdb.get_trending_tv") as mock_tv:
             mock_tv.return_value = {
                 "page": 1,
                 "total_pages": 1,
@@ -89,7 +89,7 @@ class TestGRPCServices(unittest.TestCase):
 
     def test_movie_servicer_now_playing(self):
         servicer = MovieServiceServicer()
-        with patch("criticbox_sd.server.tmdb.get_now_playing_movies") as mock_np:
+        with patch("criticbox_sd.services.tmdb.get_now_playing_movies") as mock_np:
             mock_np.return_value = {
                 "page": 1,
                 "total_pages": 1,
@@ -103,7 +103,7 @@ class TestGRPCServices(unittest.TestCase):
 
     def test_movie_servicer_recommendations(self):
         servicer = MovieServiceServicer()
-        with patch("criticbox_sd.server.tmdb.get_recommendations_for_user") as mock_recs:
+        with patch("criticbox_sd.services.tmdb.get_recommendations_for_user") as mock_recs:
             mock_recs.return_value = {
                 "page": 1,
                 "total_pages": 1,
@@ -117,7 +117,7 @@ class TestGRPCServices(unittest.TestCase):
 
     def test_movie_servicer_season_episodes(self):
         servicer = MovieServiceServicer()
-        with patch("criticbox_sd.server.tmdb.get_season_episodes") as mock_season:
+        with patch("criticbox_sd.services.tmdb.get_season_episodes") as mock_season:
             mock_season.return_value = {
                 "season_number": 1,
                 "name": "Temporada 1",
@@ -140,7 +140,7 @@ class TestGRPCServices(unittest.TestCase):
 
     def test_movie_servicer_all_episodes(self):
         servicer = MovieServiceServicer()
-        with patch("criticbox_sd.server.tmdb.get_all_series_episodes") as mock_all:
+        with patch("criticbox_sd.services.tmdb.get_all_series_episodes") as mock_all:
             mock_all.return_value = {
                 "1": [
                     {
@@ -160,7 +160,7 @@ class TestGRPCServices(unittest.TestCase):
 
     # ----------------- Interservice gRPC Fallback Tests ----------------- #
     def test_fetch_movie_stats_grpc_fallback_on_rpc_error(self):
-        with patch("criticbox_sd.server.movie_service._get_review_stub") as mock_get_stub:
+        with patch("criticbox_sd.services.movie_service._get_review_stub") as mock_get_stub:
             mock_stub = MagicMock()
             mock_stub.GetMovieStats.side_effect = grpc.RpcError("Connection failed")
             mock_get_stub.return_value = mock_stub
@@ -175,7 +175,7 @@ class TestGRPCServices(unittest.TestCase):
 
     def test_movie_servicer_tv_with_airing_episodes(self):
         servicer = MovieServiceServicer()
-        with patch("criticbox_sd.server.tmdb.get_movie_details") as mock_details:
+        with patch("criticbox_sd.services.tmdb.get_movie_details") as mock_details:
             mock_details.return_value = {
                 "id": 1396,
                 "title": "Breaking Bad",
@@ -199,7 +199,7 @@ class TestGRPCServices(unittest.TestCase):
                     "vote_average": 8.0,
                 },
             }
-            with patch("criticbox_sd.server.movie_service._fetch_movie_stats_via_grpc", return_value=(4.8, 100)):
+            with patch("criticbox_sd.services.movie_service._fetch_movie_stats_via_grpc", return_value=(4.8, 100)):
                 req = m_pb2.MovieDetailsRequest(tmdb_id=1396, media_type="tv")
                 res = servicer.GetMovieDetails(req, None)
                 self.assertTrue(res.found)
@@ -209,7 +209,7 @@ class TestGRPCServices(unittest.TestCase):
     # ----------------- ReviewService Premiere & Backfill Tests ----------------- #
     def test_review_servicer_create_review_unreleased_title(self):
         servicer = ReviewServiceServicer()
-        with patch("criticbox_sd.server.tmdb.get_movie_details") as mock_details:
+        with patch("criticbox_sd.services.tmdb.get_movie_details") as mock_details:
             mock_details.return_value = {
                 "id": 888,
                 "title": "Future Movie",
@@ -223,8 +223,8 @@ class TestGRPCServices(unittest.TestCase):
     def test_review_servicer_create_review_details_and_title_exceptions(self):
         servicer = ReviewServiceServicer()
         # tmdb.get_movie_details raises Exception, get_movie_title raises Exception
-        with patch("criticbox_sd.server.tmdb.get_movie_details", side_effect=Exception("API Error")):
-            with patch("criticbox_sd.server.tmdb.get_movie_title", side_effect=Exception("API Error")):
+        with patch("criticbox_sd.services.tmdb.get_movie_details", side_effect=Exception("API Error")):
+            with patch("criticbox_sd.services.tmdb.get_movie_title", side_effect=Exception("API Error")):
                 req = r_pb2.CreateReviewRequest(
                     tmdb_id=999,
                     user_id="u_err",
@@ -240,7 +240,7 @@ class TestGRPCServices(unittest.TestCase):
         servicer = ReviewServiceServicer()
 
         # 1. GetAllReviews backfill success
-        with patch("criticbox_sd.server.tmdb.get_movie_details") as mock_details:
+        with patch("criticbox_sd.services.tmdb.get_movie_details") as mock_details:
             mock_details.return_value = {"poster_url": "https://image.tmdb.org/t/p/w500/backfilled.jpg"}
             res = servicer.GetAllReviews(r_pb2.GetAllReviewsRequest(), None)
             self.assertEqual(len(res.reviews), 1)
@@ -251,22 +251,22 @@ class TestGRPCServices(unittest.TestCase):
         storage.add_review(tmdb_id=550, user_id="u_backfill", rating=4.0, poster_url="")
 
         # 2. GetReviewsByMovie backfill with exception
-        with patch("criticbox_sd.server.tmdb.get_movie_details", side_effect=Exception("Poster fetch failed")):
+        with patch("criticbox_sd.services.tmdb.get_movie_details", side_effect=Exception("Poster fetch failed")):
             res_movie = servicer.GetReviewsByMovie(r_pb2.MovieReviewsRequest(tmdb_id=550), None)
             self.assertEqual(len(res_movie.reviews), 1)
             self.assertEqual(res_movie.reviews[0].poster_url, "")
 
         # 3. GetReviewsByUser backfill with exception
-        with patch("criticbox_sd.server.tmdb.get_movie_details", side_effect=Exception("Poster fetch failed")):
+        with patch("criticbox_sd.services.tmdb.get_movie_details", side_effect=Exception("Poster fetch failed")):
             res_user = servicer.GetReviewsByUser(r_pb2.UserReviewsRequest(user_id="u_backfill"), None)
             self.assertEqual(len(res_user.reviews), 1)
             self.assertEqual(res_user.reviews[0].poster_url, "")
 
     # ----------------- Service Serve Lifecycle Tests ----------------- #
     def test_service_serve_functions(self):
-        from criticbox_sd.server.movie_service import serve as serve_movie
-        from criticbox_sd.server.review_service import serve as serve_review
-        from criticbox_sd.server.user_service import serve as serve_user
+        from criticbox_sd.services.movie_service import serve as serve_movie
+        from criticbox_sd.services.review_service import serve as serve_review
+        from criticbox_sd.services.user_service import serve as serve_user
 
         with patch("grpc.server") as mock_grpc_server:
             mock_srv = MagicMock()
@@ -315,7 +315,7 @@ class TestGRPCServices(unittest.TestCase):
         servicer = MovieServiceServicer()
 
         # SearchMovies
-        with patch("criticbox_sd.server.tmdb.search_movies") as mock_search:
+        with patch("criticbox_sd.services.tmdb.search_movies") as mock_search:
             mock_search.return_value = {
                 "page": 1,
                 "total_pages": 1,
@@ -327,7 +327,7 @@ class TestGRPCServices(unittest.TestCase):
             self.assertEqual(res.movies[0].title, "Fight Club")
 
         # GetTrendingMovies
-        with patch("criticbox_sd.server.tmdb.get_trending_movies") as mock_trend:
+        with patch("criticbox_sd.services.tmdb.get_trending_movies") as mock_trend:
             mock_trend.return_value = {
                 "page": 1,
                 "total_pages": 1,
@@ -339,7 +339,7 @@ class TestGRPCServices(unittest.TestCase):
             self.assertEqual(len(res_trend.movies), 1)
 
         # GetNowPlayingMovies
-        with patch("criticbox_sd.server.tmdb.get_now_playing_movies") as mock_np:
+        with patch("criticbox_sd.services.tmdb.get_now_playing_movies") as mock_np:
             mock_np.return_value = {
                 "page": 1,
                 "total_pages": 1,
@@ -350,13 +350,13 @@ class TestGRPCServices(unittest.TestCase):
             self.assertEqual(len(res_np.movies), 1)
 
         # GetMovieDetails Not Found
-        with patch("criticbox_sd.server.tmdb.get_movie_details", return_value=None):
-            with patch("criticbox_sd.server.movie_service._fetch_movie_stats_via_grpc", return_value=(0.0, 0)):
+        with patch("criticbox_sd.services.tmdb.get_movie_details", return_value=None):
+            with patch("criticbox_sd.services.movie_service._fetch_movie_stats_via_grpc", return_value=(0.0, 0)):
                 res_nf = servicer.GetMovieDetails(m_pb2.MovieDetailsRequest(tmdb_id=999999), None)
                 self.assertFalse(res_nf.found)
 
         # GetMovieDetails with Watch Providers
-        with patch("criticbox_sd.server.tmdb.get_movie_details") as mock_det:
+        with patch("criticbox_sd.services.tmdb.get_movie_details") as mock_det:
             mock_det.return_value = {
                 "id": 550,
                 "title": "Fight Club",
@@ -366,7 +366,7 @@ class TestGRPCServices(unittest.TestCase):
                     "buy": [{"provider_name": "Google Play", "logo_url": "/gplay.jpg"}],
                 },
             }
-            with patch("criticbox_sd.server.movie_service._fetch_movie_stats_via_grpc", return_value=(4.5, 10)):
+            with patch("criticbox_sd.services.movie_service._fetch_movie_stats_via_grpc", return_value=(4.5, 10)):
                 res_wp = servicer.GetMovieDetails(m_pb2.MovieDetailsRequest(tmdb_id=550), None)
                 self.assertTrue(res_wp.found)
                 self.assertEqual(len(res_wp.watch_providers.flatrate), 1)
