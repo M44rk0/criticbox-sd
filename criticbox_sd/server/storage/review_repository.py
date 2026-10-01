@@ -1,10 +1,33 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
-from criticbox_sd.server.storage.connection import get_connection
+from sqlalchemy import and_, func, or_, select, update
+
+from criticbox_sd.server.storage.connection import get_session
+from criticbox_sd.server.storage.models import Review
 
 
-def _format_review_row(r) -> dict:
+def _format_review_row(r: Any) -> dict:
+    if isinstance(r, Review):
+        return {
+            "review_id": r.id,
+            "tmdb_id": r.tmdb_id,
+            "movie_title": r.movie_title or "",
+            "user_id": r.user_id,
+            "username": r.username or r.user_id,
+            "rating": float(r.rating),
+            "comment": r.comment or "",
+            "contains_spoilers": bool(r.contains_spoilers),
+            "created_at": str(r.created_at),
+            "media_type": r.media_type or "movie",
+            "season_number": int(r.season_number or 0),
+            "episode_number": int(r.episode_number or 0),
+            "poster_url": r.poster_url or "",
+            "success": True,
+            "message": "",
+        }
+
     keys = r.keys() if hasattr(r, "keys") else []
     media_type = r["media_type"] if "media_type" in keys and r["media_type"] else "movie"
     season_number = r["season_number"] if "season_number" in keys and r["season_number"] is not None else 0
@@ -48,24 +71,25 @@ def add_review(
 ) -> dict:
     media_type = media_type or "movie"
     username = username or user_id
-    with get_connection() as client:
-        if media_type == "movie":
-            dup_query = """
-                SELECT id FROM reviews
-                WHERE tmdb_id = ? AND (user_id = ? OR (username != '' AND username = ?))
-                  AND (media_type = 'movie' OR media_type IS NULL)
-            """
-            dup_params = (tmdb_id, user_id, username)
-        else:
-            dup_query = """
-                SELECT id FROM reviews
-                WHERE tmdb_id = ? AND (user_id = ? OR (username != '' AND username = ?)) AND media_type = 'tv'
-                  AND COALESCE(season_number, 0) = ?
-                  AND COALESCE(episode_number, 0) = ?
-            """
-            dup_params = (tmdb_id, user_id, username, season_number or 0, episode_number or 0)
 
-        existing = client.execute(dup_query, dup_params).fetchone()
+    with get_session() as session:
+        user_cond = or_(Review.user_id == user_id, and_(Review.username != "", Review.username == username))
+        if media_type == "movie":
+            stmt = select(Review.id).where(
+                Review.tmdb_id == tmdb_id,
+                user_cond,
+                or_(Review.media_type == "movie", Review.media_type.is_(None)),
+            )
+        else:
+            stmt = select(Review.id).where(
+                Review.tmdb_id == tmdb_id,
+                user_cond,
+                Review.media_type == "tv",
+                func.coalesce(Review.season_number, 0) == (season_number or 0),
+                func.coalesce(Review.episode_number, 0) == (episode_number or 0),
+            )
+
+        existing = session.scalar(stmt)
         if existing:
             if media_type == "movie":
                 msg = "Você já avaliou este filme. Cada usuário pode enviar apenas uma avaliação por filme."
@@ -97,25 +121,23 @@ def add_review(
         review_id = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
-        client.execute(
-            "INSERT INTO reviews (id, tmdb_id, user_id, username, rating, comment, contains_spoilers, created_at, media_type, season_number, episode_number, movie_title, poster_url) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                review_id,
-                tmdb_id,
-                user_id,
-                username,
-                rating,
-                comment,
-                int(contains_spoilers),
-                created_at,
-                media_type,
-                season_number,
-                episode_number,
-                movie_title or "",
-                poster_url or "",
-            ),
+        new_review = Review(
+            id=review_id,
+            tmdb_id=tmdb_id,
+            user_id=user_id,
+            username=username,
+            rating=rating,
+            comment=comment,
+            contains_spoilers=bool(contains_spoilers),
+            created_at=created_at,
+            media_type=media_type,
+            season_number=season_number,
+            episode_number=episode_number,
+            movie_title=movie_title or "",
+            poster_url=poster_url or "",
         )
+        session.add(new_review)
+
     return {
         "review_id": review_id,
         "tmdb_id": tmdb_id,
@@ -138,21 +160,21 @@ def add_review(
 def update_review_poster(review_id: str, poster_url: str):
     if not review_id or not poster_url:
         return
-    with get_connection() as client:
-        client.execute(
-            "UPDATE reviews SET poster_url = ? WHERE id = ? AND (poster_url = '' OR poster_url IS NULL)",
-            (poster_url, review_id),
+    with get_session() as session:
+        session.execute(
+            update(Review)
+            .where(Review.id == review_id, or_(Review.poster_url == "", Review.poster_url.is_(None)))
+            .values(poster_url=poster_url)
         )
 
 
 def get_movie_stats(tmdb_id: int) -> dict:
-    with get_connection() as client:
-        row = client.execute(
-            "SELECT AVG(rating) AS avg_rating, COUNT(id) AS total_count FROM reviews WHERE tmdb_id = ?",
-            (tmdb_id,),
-        ).fetchone()
-        avg_rating = row["avg_rating"] if row and row["avg_rating"] is not None else 0.0
-        count = row["total_count"] if row and row["total_count"] is not None else 0
+    with get_session() as session:
+        row = session.execute(
+            select(func.avg(Review.rating), func.count(Review.id)).where(Review.tmdb_id == tmdb_id)
+        ).one_or_none()
+        avg_rating = row[0] if row and row[0] is not None else 0.0
+        count = row[1] if row and row[1] is not None else 0
         return {"average_rating": round(float(avg_rating), 1), "total_count": int(count)}
 
 
@@ -160,21 +182,18 @@ def get_batch_movie_stats(tmdb_ids: list[int]) -> dict[int, dict]:
     if not tmdb_ids:
         return {}
     unique_ids = list(set(tmdb_ids))
-    with get_connection() as client:
-        placeholders = ", ".join(["?"] * len(unique_ids))
-        query = f"""
-            SELECT tmdb_id, AVG(rating) AS avg_rating, COUNT(id) AS total_count
-            FROM reviews
-            WHERE tmdb_id IN ({placeholders})
-            GROUP BY tmdb_id
-        """
-        rows = client.execute(query, tuple(unique_ids)).fetchall()
+    with get_session() as session:
+        rows = session.execute(
+            select(Review.tmdb_id, func.avg(Review.rating), func.count(Review.id))
+            .where(Review.tmdb_id.in_(unique_ids))
+            .group_by(Review.tmdb_id)
+        ).all()
         stats_map = {}
-        for r in rows:
-            tid = r["tmdb_id"]
-            avg = r["avg_rating"] if r["avg_rating"] is not None else 0.0
-            cnt = r["total_count"] if r["total_count"] is not None else 0
-            stats_map[tid] = {"average_rating": round(float(avg), 1), "total_count": int(cnt)}
+        for tid, avg, cnt in rows:
+            stats_map[tid] = {
+                "average_rating": round(float(avg), 1) if avg is not None else 0.0,
+                "total_count": int(cnt) if cnt is not None else 0,
+            }
         for tid in unique_ids:
             if tid not in stats_map:
                 stats_map[tid] = {"average_rating": 0.0, "total_count": 0}
@@ -182,29 +201,24 @@ def get_batch_movie_stats(tmdb_ids: list[int]) -> dict[int, dict]:
 
 
 def get_all_reviews(limit: int = 50) -> list:
-    with get_connection() as client:
-        rows = client.execute(
-            "SELECT * FROM reviews ORDER BY created_at DESC LIMIT ?",
-            (limit,),
-        ).fetchall()
+    with get_session() as session:
+        rows = session.scalars(select(Review).order_by(Review.created_at.desc()).limit(limit)).all()
         return [_format_review_row(r) for r in rows]
 
 
 def get_reviews_by_movie(tmdb_id: int) -> list:
-    with get_connection() as client:
-        rows = client.execute(
-            "SELECT * FROM reviews WHERE tmdb_id = ? ORDER BY created_at DESC",
-            (tmdb_id,),
-        ).fetchall()
+    with get_session() as session:
+        rows = session.scalars(select(Review).where(Review.tmdb_id == tmdb_id).order_by(Review.created_at.desc())).all()
         return [_format_review_row(r) for r in rows]
 
 
 def get_reviews_by_user(user_id: str = "", username: str = "") -> list:
-    with get_connection() as client:
-        target_id = user_id or username
-        target_username = username or user_id
-        rows = client.execute(
-            "SELECT * FROM reviews WHERE user_id = ? OR username = ? ORDER BY created_at DESC",
-            (target_id, target_username),
-        ).fetchall()
+    target_id = user_id or username
+    target_username = username or user_id
+    with get_session() as session:
+        rows = session.scalars(
+            select(Review)
+            .where(or_(Review.user_id == target_id, Review.username == target_username))
+            .order_by(Review.created_at.desc())
+        ).all()
         return [_format_review_row(r) for r in rows]

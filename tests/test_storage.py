@@ -186,6 +186,48 @@ class TestStorageLayer(unittest.TestCase):
         update_review_poster("", "https://example.com/other.jpg")
         update_review_poster(rev_id, "")
 
+    def test_format_review_row_dict_and_model(self):
+        from criticbox_sd.server.storage.models import Review
+        from criticbox_sd.server.storage.review_repository import _format_review_row
+
+        row_dict = {
+            "id": "rev1",
+            "tmdb_id": 550,
+            "user_id": "u1",
+            "username": "user1",
+            "rating": 4.5,
+            "comment": "Nice",
+            "contains_spoilers": False,
+            "created_at": "2026-10-01 12:00:00",
+            "media_type": "movie",
+            "season_number": 0,
+            "episode_number": 0,
+            "movie_title": "Fight Club",
+            "poster_url": "https://img.jpg",
+        }
+        res_dict = _format_review_row(row_dict)
+        self.assertEqual(res_dict["review_id"], "rev1")
+        self.assertEqual(res_dict["username"], "user1")
+
+        model_rev = Review(
+            id="rev2",
+            tmdb_id=680,
+            user_id="u2",
+            username="user2",
+            rating=5.0,
+            comment="Awesome",
+            contains_spoilers=True,
+            created_at="2026-10-01 12:00:00",
+            media_type="movie",
+            season_number=0,
+            episode_number=0,
+            movie_title="Pulp Fiction",
+            poster_url="https://img2.jpg",
+        )
+        res_model = _format_review_row(model_rev)
+        self.assertEqual(res_model["review_id"], "rev2")
+        self.assertEqual(res_model["username"], "user2")
+
     def test_database_connection_context_manager(self):
         with get_connection() as conn:
             conn.execute("SELECT 1")
@@ -295,24 +337,27 @@ class TestStorageLayer(unittest.TestCase):
                 except queue.Empty:
                     break
 
-    def test_init_db_and_clear_db_mysql_branch(self):
-        from unittest.mock import MagicMock, patch
+    def test_init_db_and_clear_db(self):
+        init_db()
+        create_user("test_user_orm", "password123")
+        clear_db()
+        user_res = authenticate_user("test_user_orm", "password123")
+        self.assertFalse(user_res["success"])
 
-        from criticbox_sd.server.storage.connection import DBClient, clear_db, init_db
+    def test_get_database_url_and_engine(self):
+        from unittest.mock import patch
 
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_conn.cursor.return_value = mock_cursor
-        mock_client = DBClient(mock_conn, is_mysql_conn=True)
+        from criticbox_sd.server.storage.connection import get_database_url, get_engine
 
-        with patch("criticbox_sd.server.storage.connection.get_connection") as mock_get_conn:
-            mock_get_conn.return_value.__enter__.return_value = mock_client
-            init_db()
-            self.assertTrue(mock_cursor.execute.called)
+        sqlite_url = get_database_url()
+        self.assertTrue(sqlite_url.startswith("sqlite:///"))
 
-            mock_cursor.reset_mock()
-            clear_db()
-            self.assertTrue(mock_cursor.execute.called)
+        with patch("criticbox_sd.server.storage.connection.is_mysql", return_value=True):
+            mysql_url = get_database_url()
+            self.assertTrue(mysql_url.startswith("mysql+pymysql://"))
+
+        engine = get_engine()
+        self.assertIsNotNone(engine)
 
 
 if __name__ == "__main__":

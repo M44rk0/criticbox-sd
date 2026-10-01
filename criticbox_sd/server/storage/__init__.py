@@ -2,9 +2,17 @@ from criticbox_sd.server.storage.connection import (
     DBClient,
     clear_db,
     get_connection,
+    get_database_url,
+    get_engine,
+    get_session,
     get_sqlite_path,
     init_db,
     is_mysql,
+)
+from criticbox_sd.server.storage.models import (
+    Base,
+    Review,
+    User,
 )
 from criticbox_sd.server.storage.review_repository import (
     _format_review_row,
@@ -26,10 +34,16 @@ from criticbox_sd.server.storage.user_repository import (
 __all__ = [
     "is_mysql",
     "get_sqlite_path",
+    "get_database_url",
+    "get_engine",
+    "get_session",
     "DBClient",
     "get_connection",
     "init_db",
     "clear_db",
+    "Base",
+    "User",
+    "Review",
     "_hash_password",
     "_verify_password",
     "create_user",

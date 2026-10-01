@@ -4,7 +4,10 @@ import os
 import uuid
 from datetime import datetime, timezone
 
-from criticbox_sd.server.storage.connection import get_connection
+from sqlalchemy import select
+
+from criticbox_sd.server.storage.connection import get_session
+from criticbox_sd.server.storage.models import User
 
 
 def _hash_password(password: str) -> str:
@@ -31,8 +34,8 @@ def create_user(username: str, password: str) -> dict:
     if len(password) < 6:
         return {"success": False, "message": "A senha deve ter no mínimo 6 caracteres.", "user_id": "", "username": ""}
 
-    with get_connection() as client:
-        existing = client.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+    with get_session() as session:
+        existing = session.scalar(select(User).where(User.username == username))
         if existing:
             return {
                 "success": False,
@@ -45,10 +48,14 @@ def create_user(username: str, password: str) -> dict:
         created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         password_hash = _hash_password(password)
 
-        client.execute(
-            "INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)",
-            (user_id, username, password_hash, created_at),
+        new_user = User(
+            id=user_id,
+            username=username,
+            password_hash=password_hash,
+            created_at=created_at,
         )
+        session.add(new_user)
+
     return {
         "success": True,
         "message": "Usuário registrado com sucesso!",
@@ -59,15 +66,15 @@ def create_user(username: str, password: str) -> dict:
 
 def authenticate_user(username: str, password: str) -> dict:
     username = username.strip()
-    with get_connection() as client:
-        row = client.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
-        if not row:
+    with get_session() as session:
+        user = session.scalar(select(User).where(User.username == username))
+        if not user:
             return {"success": False, "message": "Usuário não encontrado.", "user_id": "", "username": ""}
-        if not _verify_password(password, row["password_hash"]):
+        if not _verify_password(password, user.password_hash):
             return {"success": False, "message": "Senha incorreta.", "user_id": "", "username": ""}
         return {
             "success": True,
             "message": "Autenticação realizada com sucesso!",
-            "user_id": row["id"],
-            "username": row["username"],
+            "user_id": user.id,
+            "username": user.username,
         }

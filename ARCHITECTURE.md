@@ -166,13 +166,19 @@ Implementado em `criticbox_sd/server/review_service.py`, este microsserviço é 
 
 ## 6. Camada de Persistência e Otimizações de Desempenho
 
-### 6.1. Banco de Dados com Suporte Duplo (SQLite e MySQL)
-A camada de persistência (`criticbox_sd/server/storage/connection.py`) é flexível:
-- **SQLite (Padrão para Desenvolvimento e Testes)**:
-  - Opera em modo **WAL (Write-Ahead Logging)**, permitindo múltiplas leituras simultâneas sem bloqueio durante escritas.
-  - Implementa um pool de conexões com fila thread-safe (`_SQLITE_POOL`) e timeout de 5 segundos.
-- **MySQL (Pronto para Produção)**:
-  - Se variáveis como `DB_HOST` ou `DB_TYPE=mysql` forem definidas no arquivo `.env`, o sistema conecta automaticamente ao MySQL usando tabelas com engine `InnoDB` (ACID) e charset `utf8mb4`.
+### 6.1. ORM com SQLAlchemy 2.0 e Suporte Híbrido (SQLite e Cloud SQL / MySQL)
+A camada de persistência foi unificada utilizando o **SQLAlchemy 2.0**, desacoplada através do **Padrão Repository** (`models.py`, `connection.py`, `user_repository.py` e `review_repository.py`):
+- **Modelos Declarativos Tipados (`models.py`)**:
+  - `User`: Entidade de usuário com chave primária em UUID (`id`), login único indexado (`username`), `password_hash` e timestamp.
+  - `Review`: Entidade de avaliações mapeando `id` (UUID), `tmdb_id`, `user_id` (UUID do autor), `username` (nome de exibição), nota (`rating`), comentários, spoilers, data e campos de série/filme (`media_type`, `season_number`, `episode_number`, `movie_title`, `poster_url`).
+- **Auto-criação de Esquemas (`Base.metadata.create_all`)**:
+  - Ao subir a aplicação ou executar testes, o SQLAlchemy inspeciona as entidades e cria automaticamente as tabelas e índices necessários no banco de destino.
+  - Elimina a necessidade de scripts manuais de criação de tabelas ao fazer deploy no Google Cloud (Cloud SQL).
+- **Flexibilidade de Ambientes**:
+  - **SQLite (Desenvolvimento Local & Testes)**: Conexão via `sqlite:///{path}` configurada com modo **WAL (Write-Ahead Logging)**, `PRAGMA synchronous = NORMAL` e timeout para leituras e escritas concorrentes sem travamentos.
+  - **Cloud SQL / MySQL (Produção GCP)**: Se variáveis como `DB_HOST`, `DB_USER`, `DB_PASSWORD` ou `DB_NAME` forem preenchidas no `.env`, a conexão é estabelecida de forma transparente via `mysql+pymysql://...` com pool de conexões reciclado e `pool_pre_ping`.
+- **Sessões Transacionais (`get_session`)**:
+  - Gerenciador de contexto thread-safe que executa as operações atômicas, com `commit()` automático ao concluir o bloco e `rollback()` preventivo em caso de qualquer exceção.
 
 ### 6.2. Eliminação do Gargalo N+1 ("Code Judo")
 Em versões preliminares, listar 50 reviews exigia fazer 50 requisições HTTP adicionais ao TMDb para descobrir o título e o poster de cada obra avaliada. 
