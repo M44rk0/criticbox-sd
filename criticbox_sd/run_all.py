@@ -2,6 +2,7 @@ import logging
 import os
 import signal
 import sys
+import threading
 import time
 from concurrent import futures
 
@@ -63,9 +64,6 @@ def start_movie_service() -> grpc.Server:
     server.start()
     logger.info("✓ [gRPC] MovieService ativo na porta %d", MOVIE_PORT)
     return server
-
-
-import threading
 
 
 def _warm_cache():

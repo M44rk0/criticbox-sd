@@ -39,7 +39,6 @@ export default function ProductionDossier({
     return map[s] || s;
   };
 
-  // Renderização da aba Ficha Técnica (Dossiê Industrial - Máx 6 itens)
   const renderCrewTab = () => {
     const cards = [];
     if (movie.directors && movie.directors.length > 0) {
@@ -122,7 +121,6 @@ export default function ProductionDossier({
     );
   };
 
-  // Renderização da aba Mercado
   const renderMarketTab = () => (
     <div className="info-tab-content">
       <div className="dossier-grid">

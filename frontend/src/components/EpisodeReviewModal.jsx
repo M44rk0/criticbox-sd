@@ -29,7 +29,6 @@ export default function EpisodeReviewModal() {
   const { movie, episode, season } = episodeModalData;
   const displayedRating = hoverRating !== null ? hoverRating : modalRating;
 
-  // Imagem do episódio
   const episodeImage = episode.still_url || movie.backdrop_url || movie.poster_url;
   const episodeNumStr = episode.episode_number < 10 ? `0${episode.episode_number}` : episode.episode_number;
 

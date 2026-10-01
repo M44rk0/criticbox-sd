@@ -57,7 +57,6 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             )
 
         details = None
-        # Regra de negócio: títulos não estreados não podem receber avaliação
         try:
             details = tmdb_service.get_movie_details(request.tmdb_id, media_type=media_type)
             if details and details.get("release_date"):
@@ -70,7 +69,6 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         except Exception as e:
             logger.warning("Falha ao verificar estreia do título %d: %s", request.tmdb_id, e)
 
-        # Obter movie_title do request ou resolver previamente
         movie_title = getattr(request, "movie_title", "") or ""
         if not movie_title:
             try:
@@ -78,7 +76,6 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             except Exception:
                 movie_title = ""
 
-        # Obter poster_url do request ou resolver dos detalhes
         poster_url = getattr(request, "poster_url", "") or ""
         if not poster_url and details:
             poster_url = details.get("poster_url", "") or ""
@@ -141,7 +138,6 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         raw_reviews = database.get_all_reviews(limit=limit)
         items = []
         for r in raw_reviews:
-            # Code Judo: movie_title e poster_url vêm direto do banco, eliminando o gargalo N+1 de requests HTTP
             title = r.get("movie_title")
             if not title:
                 title = tmdb_service.get_movie_title(r["tmdb_id"], media_type=r.get("media_type") or "movie")
@@ -176,7 +172,6 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
     def GetReviewsByMovie(self, request, context):
         logger.info("GetReviewsByMovie -> Buscando reviews para o filme tmdb_id=%d", request.tmdb_id)
         raw_reviews = database.get_reviews_by_movie(request.tmdb_id)
-        # Obter movie_title da primeira review ou resolver uma única vez para toda a lista
         movie_title = ""
         for r in raw_reviews:
             if r.get("movie_title"):

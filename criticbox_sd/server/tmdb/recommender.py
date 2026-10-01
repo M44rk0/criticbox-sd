@@ -57,11 +57,9 @@ def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> d
             user_reviews = database.get_reviews_by_user(str(user_id).strip())
             reviewed_ids = {r["tmdb_id"] for r in user_reviews}
 
-            # Filtrar as melhores avaliações do usuário (nota >= 3.0)
             positive_reviews = [r for r in user_reviews if r.get("rating", 0) >= 3.0]
             positive_reviews.sort(key=lambda x: (x.get("rating", 0), x.get("created_at", "")), reverse=True)
 
-            # Obter sementes distintas para garantir diversidade
             seen_seed_ids = set()
             unique_seeds = []
             for r in positive_reviews:
@@ -70,7 +68,6 @@ def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> d
                     seen_seed_ids.add(tid)
                     unique_seeds.append(r)
 
-            # Pegar até 8 títulos únicos com as maiores notas do usuário
             top_seeds = unique_seeds[:8]
 
             if top_seeds:
@@ -106,7 +103,6 @@ def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> d
         except Exception as e:
             logger.warning("Falha ao calcular recomendações para user %s: %s", user_id, e)
 
-    # Intercalar (Round-Robin) entre todas as sementes para diversidade
     seen_ids = set()
     interleaved_recs = []
     if seed_recs_lists:
@@ -120,7 +116,6 @@ def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> d
                         seen_ids.add(mid)
                         interleaved_recs.append(item)
 
-    # Ranquear por afinidade de gênero
     if genre_scores and interleaved_recs:
 
         def _genre_affinity(item):
@@ -129,7 +124,6 @@ def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> d
 
         interleaved_recs.sort(key=_genre_affinity, reverse=True)
 
-    # Fallback para top-rated se não houver recomendações suficientes
     if len(interleaved_recs) < 5:
         try:
             top_rated = tmdb.Movies().top_rated(page=page, language="pt-BR")

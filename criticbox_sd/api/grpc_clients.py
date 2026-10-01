@@ -113,7 +113,6 @@ class GatewayGRPCManager:
         if self.review_channel:
             self.review_channel.close()
 
-    # ----------------- Movie Service Operations ----------------- #
     def search_movies(self, query: str, page: int = 1) -> dict:
         req = m_pb2.SearchMoviesRequest(query=query, page=page)
         res = self.movie_stub.SearchMovies(req, timeout=5.0)
@@ -193,7 +192,6 @@ class GatewayGRPCManager:
 
         return data
 
-    # ----------------- User Service Operations ----------------- #
     def register_user(self, username: str, password: str) -> dict:
         req = u_pb2.RegisterUserRequest(username=username, password=password)
         res = self.user_stub.RegisterUser(req, timeout=5.0)
@@ -213,8 +211,6 @@ class GatewayGRPCManager:
             "user_id": res.user_id,
             "username": res.username,
         }
-
-    # ----------------- Review Service Operations ----------------- #
 
     def create_review(
         self,

@@ -3,7 +3,6 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-# ----------------- User & Auth Schemas ----------------- #
 class UserRegisterRequest(BaseModel):
     username: str = Field(
         ...,
@@ -63,7 +62,6 @@ class UserProfileResponse(BaseModel):
     username: str
 
 
-# ----------------- Review Schemas ----------------- #
 class ReviewCreateRequest(BaseModel):
     tmdb_id: int = Field(
         ...,
@@ -85,7 +83,6 @@ class ReviewCreateRequest(BaseModel):
         description="Sinaliza se a crítica contém spoilers",
         json_schema_extra={"example": False},
     )
-    # user_id opcional no payload porque pode vir direto do JWT autenticado!
     user_id: Optional[str] = Field(
         default=None,
         description="Identificador opcional (preenchido automaticamente via JWT)",
@@ -178,7 +175,6 @@ class ReviewListItem(BaseModel):
     poster_url: str = ""
 
 
-# ----------------- Movie Schemas ----------------- #
 class MovieSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

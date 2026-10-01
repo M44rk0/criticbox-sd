@@ -83,7 +83,6 @@ export default function ReviewCard({
     );
   }
 
-  // Detail Page layout (without poster)
   return (
     <div className={`review-card ${episodeStillUrl ? 'review-card-has-still' : ''}`}>
       {episodeStillUrl && (

@@ -80,9 +80,7 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertIn("docs_url", data)
         self.assertIn("gateway", data)
 
-    # ----------------- Auth & JWT ----------------- #
     def test_auth_register_and_login_success(self):
-        # 1. Registro
         reg_payload = {"username": "marcodev", "password": "password123"}
         reg_res = self.client.post("/auth/register", json=reg_payload)
         self.assertEqual(reg_res.status_code, 201)
@@ -91,7 +89,6 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertEqual(reg_data["username"], "marcodev")
         self.assertEqual(reg_data["token_type"], "bearer")
 
-        # 2. Login
         login_payload = {"username": "marcodev", "password": "password123"}
         login_res = self.client.post("/auth/login", json=login_payload)
         self.assertEqual(login_res.status_code, 200)
@@ -99,7 +96,6 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertIn("access_token", login_data)
         self.assertEqual(login_data["username"], "marcodev")
 
-        # 3. Perfil protegido /auth/me
         token = login_data["access_token"]
         me_res = self.client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
         self.assertEqual(me_res.status_code, 200)
@@ -129,7 +125,6 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         res = self.client.get("/auth/me", headers={"Authorization": "Bearer token_falso_invalido"})
         self.assertEqual(res.status_code, 401)
 
-    # ----------------- Reviews (JWT Protected) ----------------- #
     def test_create_review_unauthorized_without_jwt_401(self):
         payload = {
             "tmdb_id": 550,
@@ -248,7 +243,6 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertIn("alice", users)
         self.assertIn("bob", users)
 
-    # ----------------- Movies Catalog (via gRPC MovieService) ----------------- #
     def test_search_movies_success_200(self):
         response = self.client.get("/movies?query=Fight Club")
         self.assertEqual(response.status_code, 200)
@@ -411,7 +405,6 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         data = res.json()
         self.assertEqual(data.get("movie_title"), "Interstellar")
 
-        # Verificar se a listagem retorna o movie_title diretamente do banco
         list_res = self.client.get("/reviews")
         self.assertEqual(list_res.status_code, 200)
         items = list_res.json()
@@ -439,7 +432,6 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertEqual(res.stats[99999].total_count, 0)
         self.assertEqual(res.stats[99999].average_rating, 0.0)
 
-    # ----------------- Schema & Gateway UI Tests ----------------- #
     def test_schema_user_register_validations(self):
         res = self.client.post("/auth/register", json={"username": "   ", "password": "validpassword"})
         self.assertEqual(res.status_code, 400)
@@ -462,17 +454,14 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         token = reg.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
-        # Rating too low (< 0.5)
         res_low = self.client.post("/reviews", headers=headers, json={"tmdb_id": 550, "rating": 0.2, "comment": "Low"})
         self.assertEqual(res_low.status_code, 400)
 
-        # Rating too high (> 5.0)
         res_high = self.client.post(
             "/reviews", headers=headers, json={"tmdb_id": 550, "rating": 5.5, "comment": "High"}
         )
         self.assertEqual(res_high.status_code, 400)
 
-        # Comment too long (> 1000 characters)
         long_comment = "x" * 1001
         res_long = self.client.post(
             "/reviews", headers=headers, json={"tmdb_id": 550, "rating": 4.0, "comment": long_comment}
@@ -480,24 +469,19 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertEqual(res_long.status_code, 400)
 
     def test_gateway_root_and_ui_endpoints(self):
-        # JSON status
         res_json = self.client.get("/", headers={"accept": "application/json"})
         self.assertEqual(res_json.status_code, 200)
         self.assertEqual(res_json.json()["status"], "online")
 
-        # HTML accept
         res_html = self.client.get("/", headers={"accept": "text/html"})
         self.assertEqual(res_html.status_code, 200)
 
-        # /app endpoint
         res_app = self.client.get("/app")
         self.assertIn(res_app.status_code, (200, 404))
 
-        # SPA fallback route
         res_spa = self.client.get("/explorar", headers={"accept": "text/html"})
         self.assertIn(res_spa.status_code, (200, 404))
 
-        # Missing static file should return 404
         res_missing = self.client.get("/static/missing_asset.png", headers={"accept": "*/*"})
         self.assertEqual(res_missing.status_code, 404)
 

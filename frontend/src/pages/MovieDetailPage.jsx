@@ -43,16 +43,13 @@ export default function MovieDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Aba ativa do dossiê: 'cast' | 'crew' | 'market'
   const [activeInfoTab, setActiveInfoTab] = useState('cast');
   const [showAllCast, setShowAllCast] = useState(false);
 
-  // Séries: Temporada ativa e episódios
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [seasonEpisodesMap, setSeasonEpisodesMap] = useState({});
   const [loadingSeason, setLoadingSeason] = useState(false);
 
-  // Carrossel de Recomendações
   const recsCarouselRef = useRef(null);
 
   const loadData = async () => {
@@ -118,7 +115,6 @@ export default function MovieDetailPage() {
     loadSeasonEpisodes(seasonNum);
   };
 
-  // Carrega episódios de temporadas que possuem críticas mas ainda não foram cacheadas
   useEffect(() => {
     if (movie?.media_type === 'tv' && reviews.length > 0) {
       const reviewedSeasons = [...new Set(reviews.map((r) => r.season_number).filter(Boolean))];
@@ -130,7 +126,6 @@ export default function MovieDetailPage() {
     }
   }, [movie?.media_type, reviews, seasonEpisodesMap]);
 
-  // Helper para buscar nome e still do episódio avaliado
   const getEpisodeDetails = (seasonNum, epNum) => {
     if (!seasonNum || !epNum) return null;
     const sEps = seasonEpisodesMap[seasonNum] || seasonEpisodesMap[String(seasonNum)];
@@ -197,7 +192,6 @@ export default function MovieDetailPage() {
   };
   const trailerKey = getYouTubeKey(movie.trailer_url);
 
-  // Helper para selos oficiais da Classificação Indicativa do Brasil (DJCTQ/ClassInd)
   const getClassIndBadge = (cert) => {
     if (!cert) return null;
     const c = String(cert).toUpperCase().trim();
@@ -210,7 +204,6 @@ export default function MovieDetailPage() {
     return <span className="movie-genre-badge">{c}</span>;
   };
 
-  // Helper para status de séries/filmes traduzidos
   const translateStatus = (s) => {
     if (!s) return '';
     const map = {
@@ -225,7 +218,6 @@ export default function MovieDetailPage() {
     return map[s] || s;
   };
 
-  // Provedores de Streaming (Watch Providers BR)
   const wp = movie.watch_providers || {};
   const flatrateList = wp.flatrate || [];
   const rentList = wp.rent || [];

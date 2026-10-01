@@ -32,7 +32,6 @@ class TestStorageLayer(unittest.TestCase):
     def tearDown(self):
         clear_db()
 
-    # ----------------- User Repository ----------------- #
     def test_create_user_success(self):
         res = create_user("alice", "securepass123")
         self.assertTrue(res["success"])
@@ -76,7 +75,6 @@ class TestStorageLayer(unittest.TestCase):
         self.assertFalse(_verify_password("pass", "malformed_hash_without_colon"))
         self.assertFalse(_verify_password("pass", "nothex:nothex"))
 
-    # ----------------- Review Repository ----------------- #
     def test_add_and_get_reviews_movie(self):
         res = add_review(
             tmdb_id=100,
@@ -91,12 +89,10 @@ class TestStorageLayer(unittest.TestCase):
         self.assertTrue(res["success"])
         self.assertEqual(res["tmdb_id"], 100)
 
-        # Get by movie
         movie_revs = get_reviews_by_movie(100)
         self.assertEqual(len(movie_revs), 1)
         self.assertEqual(movie_revs[0]["movie_title"], "Filme Teste")
 
-        # Get by user
         user_revs = get_reviews_by_user("user_a")
         self.assertEqual(len(user_revs), 1)
         self.assertEqual(user_revs[0]["rating"], 4.5)
@@ -108,7 +104,6 @@ class TestStorageLayer(unittest.TestCase):
         self.assertIn("já avaliou este filme", res["message"])
 
     def test_add_review_series_season_and_episode_duplicates(self):
-        # Season review
         res1 = add_review(
             tmdb_id=200,
             user_id="user_tv",
@@ -119,7 +114,6 @@ class TestStorageLayer(unittest.TestCase):
         )
         self.assertTrue(res1["success"])
 
-        # Duplicate season review blocked
         res2 = add_review(
             tmdb_id=200,
             user_id="user_tv",
@@ -131,7 +125,6 @@ class TestStorageLayer(unittest.TestCase):
         self.assertFalse(res2["success"])
         self.assertIn("Temporada 1", res2["message"])
 
-        # Episode review
         res3 = add_review(
             tmdb_id=200,
             user_id="user_tv",
@@ -142,7 +135,6 @@ class TestStorageLayer(unittest.TestCase):
         )
         self.assertTrue(res3["success"])
 
-        # Duplicate episode review blocked
         res4 = add_review(
             tmdb_id=200,
             user_id="user_tv",
@@ -154,7 +146,6 @@ class TestStorageLayer(unittest.TestCase):
         self.assertFalse(res4["success"])
         self.assertIn("Episódio 2", res4["message"])
 
-        # Overall series review duplicate
         res5 = add_review(tmdb_id=201, user_id="user_tv2", rating=4.0, media_type="tv")
         self.assertTrue(res5["success"])
         res6 = add_review(tmdb_id=201, user_id="user_tv2", rating=3.5, media_type="tv")
@@ -162,12 +153,10 @@ class TestStorageLayer(unittest.TestCase):
         self.assertIn("série completa", res6["message"])
 
     def test_movie_stats_single_and_batch(self):
-        # Empty stats
         empty_stats = get_movie_stats(999)
         self.assertEqual(empty_stats["average_rating"], 0.0)
         self.assertEqual(empty_stats["total_count"], 0)
 
-        # Multiple reviews
         add_review(tmdb_id=300, user_id="u1", rating=4.0)
         add_review(tmdb_id=300, user_id="u2", rating=5.0)
         add_review(tmdb_id=301, user_id="u3", rating=3.0)
@@ -176,7 +165,6 @@ class TestStorageLayer(unittest.TestCase):
         self.assertEqual(stats_300["average_rating"], 4.5)
         self.assertEqual(stats_300["total_count"], 2)
 
-        # Batch
         batch = get_batch_movie_stats([300, 301, 302])
         self.assertEqual(batch[300]["total_count"], 2)
         self.assertEqual(batch[300]["average_rating"], 4.5)
@@ -185,7 +173,6 @@ class TestStorageLayer(unittest.TestCase):
         self.assertEqual(batch[302]["total_count"], 0)
         self.assertEqual(batch[302]["average_rating"], 0.0)
 
-        # Empty list batch
         self.assertEqual(get_batch_movie_stats([]), {})
 
     def test_update_review_poster(self):
@@ -196,7 +183,6 @@ class TestStorageLayer(unittest.TestCase):
         revs = get_all_reviews(limit=10)
         self.assertEqual(revs[0]["poster_url"], "https://example.com/new_poster.jpg")
 
-        # Calling with empty arguments is safe no-op
         update_review_poster("", "https://example.com/other.jpg")
         update_review_poster(rev_id, "")
 
@@ -204,11 +190,9 @@ class TestStorageLayer(unittest.TestCase):
         with get_connection() as conn:
             conn.execute("SELECT 1")
 
-    # ----------------- Connection & Engine Tests ----------------- #
     def test_is_mysql_detection(self):
         from criticbox_sd.server.storage.connection import is_mysql
 
-        # With DATABASE_PATH set, is_mysql must return False
         self.assertFalse(is_mysql())
 
         old_dp = os.environ.get("DATABASE_PATH")
@@ -298,16 +282,13 @@ class TestStorageLayer(unittest.TestCase):
 
         dummy_conns = []
         try:
-            # Fill the pool to max capacity
             while not _SQLITE_POOL.full():
                 dummy_conns.append(object())
                 _SQLITE_POOL.put_nowait(dummy_conns[-1])
 
-            # Now acquire a connection; on exit it should encounter queue.Full and close it safely
             with get_connection() as client:
                 self.assertIsNotNone(client)
         finally:
-            # Drain dummy connections
             while not _SQLITE_POOL.empty():
                 try:
                     _SQLITE_POOL.get_nowait()

@@ -122,7 +122,6 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
     def GetMovieDetails(self, request, context):
         media_type = getattr(request, "media_type", "") or ""
         logger.info("GetMovieDetails -> ID: %d (media_type: %s)", request.tmdb_id, media_type)
-        # Otimização 2: Busca paralela de detalhes do TMDB e stats do ReviewService
         with futures.ThreadPoolExecutor(max_workers=2) as executor:
             fut_details = executor.submit(tmdb_service.get_movie_details, request.tmdb_id, media_type=media_type)
             fut_stats = executor.submit(_fetch_movie_stats_via_grpc, request.tmdb_id)

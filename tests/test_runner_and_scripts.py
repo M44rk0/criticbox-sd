@@ -19,9 +19,7 @@ class TestRunnerAndScripts(unittest.TestCase):
     def tearDown(self):
         storage.clear_db()
 
-    # ----------------- backfill_posters.py Tests ----------------- #
     def test_backfill_posters_updates_empty_posters(self):
-        # Insert a review with empty poster
         res = storage.add_review(tmdb_id=550, user_id="user_script", rating=4.0, poster_url="")
         self.assertTrue(res["success"])
 
@@ -40,13 +38,11 @@ class TestRunnerAndScripts(unittest.TestCase):
         storage.add_review(tmdb_id=999, user_id="user_err_script", rating=4.0, poster_url="")
 
         with patch("criticbox_sd.server.tmdb.get_movie_details", side_effect=Exception("API failure")):
-            # Should not raise exception
             backfill()
 
         revs = storage.get_all_reviews(limit=1)
         self.assertEqual(revs[0]["poster_url"], "")
 
-    # ----------------- run_all.py Tests ----------------- #
     def test_run_all_start_services(self):
         with patch("grpc.server") as mock_grpc:
             mock_srv = MagicMock()
@@ -64,8 +60,6 @@ class TestRunnerAndScripts(unittest.TestCase):
             mock_srv.reset_mock()
             mov_srv = start_movie_service()
             self.assertEqual(mov_srv, mock_srv)
-            self.assertTrue(mock_srv.start.called)
-
             self.assertTrue(mock_srv.start.called)
 
     def test_run_all_warm_cache(self):

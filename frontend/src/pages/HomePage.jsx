@@ -86,7 +86,6 @@ export default function HomePage() {
     }
   }, [currentReviewsPage]);
 
-  // Otimização 4 & 5: Carregamento paralelo com Promise.allSettled e eliminação de N+1 de posters
   useEffect(() => {
     setReviewsPage(1);
 
@@ -96,7 +95,6 @@ export default function HomePage() {
     let hasTVCache = false;
     let hasRecsCache = false;
 
-    // 1. Verificar caches rápidos do sessionStorage
     if (reviewRevision === 0) {
       try {
         const cached = sessionStorage.getItem(CACHE_KEY_TRENDING);
@@ -180,7 +178,6 @@ export default function HomePage() {
       hasRecsCache = true;
     }
 
-    // 2. Disparar requisições em paralelo com Promise.allSettled
     const fetchAllData = async () => {
       const promises = [];
       const keys = [];
@@ -296,8 +293,6 @@ export default function HomePage() {
           const list = data || [];
           setRecentReviews(list);
 
-          // Otimização 5: Extrai poster_url diretamente dos objetos de review vindos do backend
-          // Eliminando até 50 requests HTTP individuais de getMovieDetails!
           const fetchedPosters = {};
           const missingItems = [];
           list.forEach((r) => {
@@ -311,7 +306,6 @@ export default function HomePage() {
             }
           });
 
-          // Apenas para reviews legadas (se houver sem poster_url salvo no banco), busca sob demanda
           if (missingItems.length > 0) {
             const uniqueMissing = Array.from(
               new Map(missingItems.map((item) => [`${item.id}_${item.type}`, item])).values()

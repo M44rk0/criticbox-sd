@@ -44,7 +44,6 @@ class TestTMDBModule(unittest.TestCase):
         clear_cache()
         storage.clear_db()
 
-    # ----------------- Cache Tests ----------------- #
     def test_cache_set_and_get(self):
         _set_cache("test_key", {"data": 123})
         self.assertEqual(_get_from_cache("test_key"), {"data": 123})
@@ -60,7 +59,6 @@ class TestTMDBModule(unittest.TestCase):
         self.assertIsNone(_get_from_cache("key1"))
         self.assertIsNone(_get_from_cache("key2"))
 
-    # ----------------- Extractors Tests ----------------- #
     def test_fmt_movie(self):
         raw = {
             "id": 10,
@@ -90,7 +88,6 @@ class TestTMDBModule(unittest.TestCase):
         self.assertEqual(res["media_type"], "tv")
 
     def test_extract_certification_br_and_us(self):
-        # Movie BR release
         data_br = {
             "release_dates": {
                 "results": [
@@ -100,7 +97,6 @@ class TestTMDBModule(unittest.TestCase):
         }
         self.assertEqual(_extract_certification(data_br, is_movie=True), "16")
 
-        # Movie US release fallback
         data_us = {
             "release_dates": {
                 "results": [
@@ -110,7 +106,6 @@ class TestTMDBModule(unittest.TestCase):
         }
         self.assertEqual(_extract_certification(data_us, is_movie=True), "PG-13")
 
-        # TV content rating BR
         data_tv_br = {
             "content_ratings": {
                 "results": [
@@ -120,13 +115,12 @@ class TestTMDBModule(unittest.TestCase):
         }
         self.assertEqual(_extract_certification(data_tv_br, is_movie=False), "18")
 
-        # Empty fallback
         self.assertEqual(_extract_certification({}, is_movie=True), "")
 
     def test_extract_crew(self):
         crew_list = [
             {"job": "Screenplay", "name": "Writer 1"},
-            {"job": "Screenplay", "name": "Writer 1"},  # duplicate
+            {"job": "Screenplay", "name": "Writer 1"},
             {"job": "Writer", "name": "Writer 2"},
             {"job": "Original Music Composer", "name": "Hans Zimmer"},
             {"job": "Director of Photography", "name": "Roger Deakins"},
@@ -174,7 +168,7 @@ class TestTMDBModule(unittest.TestCase):
         recs_data = {
             "results": [
                 {"id": 1, "title": "Rec 1", "poster_path": "/p1.jpg"},
-                {"id": 2, "title": "Rec 2", "poster_path": ""},  # No poster should be filtered
+                {"id": 2, "title": "Rec 2", "poster_path": ""},
                 {"id": 3, "title": "Rec 3", "poster_path": "/p3.jpg"},
             ]
         }
@@ -183,7 +177,6 @@ class TestTMDBModule(unittest.TestCase):
         self.assertEqual(recs[0]["tmdb_id"], 1)
         self.assertEqual(recs[1]["tmdb_id"], 3)
 
-    # ----------------- Recommender Engine Tests ----------------- #
     def test_recommender_anonymous_fallback_to_top_rated(self):
         with patch("tmdbsimple.Movies.top_rated") as mock_top:
             mock_top.return_value = {
@@ -209,7 +202,6 @@ class TestTMDBModule(unittest.TestCase):
             res = get_recommendations_for_user(user_id="cinephile_test", page=1)
             self.assertIn("results", res)
             ids = [r["id"] for r in res["results"]]
-            # Reviewed IDs must be excluded
             self.assertNotIn(550, ids)
             self.assertNotIn(680, ids)
 
@@ -220,7 +212,6 @@ class TestTMDBModule(unittest.TestCase):
             self.assertEqual(len(items), 1)
             self.assertEqual(items[0]["id"], 77)
 
-    # ----------------- Catalog Methods Tests ----------------- #
     def test_search_movies_empty_query(self):
         res = search_movies("   ")
         self.assertEqual(res["total_results"], 0)
@@ -241,24 +232,19 @@ class TestTMDBModule(unittest.TestCase):
             self.assertIn("1", res)
             self.assertEqual(len(res["1"]), 1)
 
-    # ----------------- Additional Cache & Eviction Tests ----------------- #
     def test_cache_eviction_expired_and_oldest_purge(self):
         now = time.time()
-        # Pre-fill cache up to MAX_CACHE_SIZE with some expired keys
         for i in range(10):
             _CACHE[f"expired_{i}"] = (now - 2000.0, f"expired_val_{i}")
         for i in range(MAX_CACHE_SIZE):
             _CACHE[f"active_{i}"] = (now + i, f"active_val_{i}")
 
-        # Adding a new key must trigger purge of expired keys
         _set_cache("overflow_key", "overflow_val")
         self.assertNotIn("expired_0", _CACHE)
         self.assertIn("overflow_key", _CACHE)
         self.assertLessEqual(len(_CACHE), MAX_CACHE_SIZE + 1)
 
-    # ----------------- Additional Extractor Tests ----------------- #
     def test_extract_certification_tv_us_fallback(self):
-        # TV content rating with only US
         tv_data = {
             "content_ratings": {
                 "results": [
@@ -270,32 +256,26 @@ class TestTMDBModule(unittest.TestCase):
         cert = _extract_certification(tv_data, is_movie=False)
         self.assertEqual(cert, "TV-MA")
 
-        # Movie certification with only US
         movie_data = {
             "release_dates": {"results": [{"iso_3166_1": "US", "release_dates": [{"certification": "PG-13"}]}]}
         }
         cert_movie = _extract_certification(movie_data, is_movie=True)
         self.assertEqual(cert_movie, "PG-13")
 
-        # Empty/missing results
         self.assertEqual(_extract_certification({}, is_movie=True), "")
         self.assertEqual(_extract_certification({}, is_movie=False), "")
 
-    # ----------------- Additional Recommender Tests ----------------- #
     def test_fetch_seed_recommendations_cache_hit_and_tv_and_error(self):
-        # Cache hit
         _set_cache("seed_recs:movie:550:1", [{"id": 550, "title": "Cached Seed"}])
         cached = _fetch_seed_recommendations(550, "movie", page=1)
         self.assertEqual(cached[0]["title"], "Cached Seed")
 
-        # TV media type
         with patch("tmdbsimple.TV.recommendations") as mock_tv_rec:
             mock_tv_rec.return_value = {"results": [{"id": 1396, "name": "Breaking Bad Rec", "poster_path": "/bb.jpg"}]}
             tv_recs = _fetch_seed_recommendations(1396, "tv", page=2)
             self.assertEqual(len(tv_recs), 1)
             self.assertEqual(tv_recs[0]["id"], 1396)
 
-        # Exception fallback
         with patch("tmdbsimple.Movies.recommendations", side_effect=RuntimeError("TMDb Down")):
             err_recs = _fetch_seed_recommendations(9999, "movie", page=1)
             self.assertEqual(err_recs, [])
@@ -305,7 +285,6 @@ class TestTMDBModule(unittest.TestCase):
             res = get_recommendations_for_user("user_any", page=1)
             self.assertEqual(res["results"], [])
 
-        # Cache hit
         _set_cache("user_recs:cached_user:1", {"page": 1, "total_results": 1, "results": [{"id": 10}]})
         hit = get_recommendations_for_user("cached_user", page=1)
         self.assertEqual(hit["results"][0]["id"], 10)
@@ -314,7 +293,6 @@ class TestTMDBModule(unittest.TestCase):
         storage.create_user("cine_user_affinity", "password123")
         storage.add_review(tmdb_id=101, user_id="cine_user_affinity", rating=5.0)
 
-        # Pre-seed cached detail with genre IDs to test genre affinity bonus
         _set_cache("details:movie:101", {"genre_ids": [28, 878]})
 
         with patch("criticbox_sd.server.tmdb.recommender._fetch_seed_recommendations") as mock_seed:
@@ -322,25 +300,19 @@ class TestTMDBModule(unittest.TestCase):
                 {"id": 201, "title": "SciFi Action", "poster_path": "/sf.jpg", "genre_ids": [28, 878]},
                 {"id": 202, "title": "Romance", "poster_path": "/ro.jpg", "genre_ids": [10749]},
             ]
-            # Mock top_rated failure to test exception handling in fallback
             with patch("tmdbsimple.Movies.top_rated", side_effect=Exception("Top rated failure")):
                 res = get_recommendations_for_user("cine_user_affinity", page=1)
                 self.assertIn("results", res)
                 self.assertGreaterEqual(len(res["results"]), 1)
-                # First result should be the one matching seed genre affinity
                 self.assertEqual(res["results"][0]["id"], 201)
 
-    # ----------------- Additional Catalog Tests ----------------- #
     def test_catalog_search_movies_cache_and_api_key_and_error(self):
-        # Empty API key
         with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
             self.assertEqual(search_movies("Matrix")["results"], [])
 
-        # Cache hit
         _set_cache("search:matrix:1", {"page": 1, "results": [{"id": 603, "title": "The Matrix"}]})
         self.assertEqual(search_movies("matrix", page=1)["results"][0]["title"], "The Matrix")
 
-        # TMDb exception
         import requests
 
         with patch("tmdbsimple.Search.multi", side_effect=requests.RequestException("Network Error")):
@@ -359,7 +331,6 @@ class TestTMDBModule(unittest.TestCase):
             self.assertEqual(get_trending_movies(time_window="day", page=1)["results"], [])
 
     def test_catalog_now_playing_and_trending_tv_cache_and_errors(self):
-        # Now playing
         with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
             self.assertEqual(get_now_playing_movies()["results"], [])
 
@@ -371,7 +342,6 @@ class TestTMDBModule(unittest.TestCase):
         with patch("tmdbsimple.Movies.now_playing", side_effect=requests.RequestException):
             self.assertEqual(get_now_playing_movies(page=2)["results"], [])
 
-        # Trending TV
         with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
             self.assertEqual(get_trending_tv()["results"], [])
 
@@ -388,7 +358,6 @@ class TestTMDBModule(unittest.TestCase):
         _set_cache("details::550", {"id": 550, "title": "Fight Club Cached"})
         self.assertEqual(get_movie_details(550)["title"], "Fight Club Cached")
 
-        # TV details fallback when movie raises KeyError
         with patch("tmdbsimple.Movies.info", side_effect=KeyError):
             with patch("tmdbsimple.TV.info") as mock_tv:
                 mock_tv.return_value = {
@@ -416,11 +385,9 @@ class TestTMDBModule(unittest.TestCase):
                 self.assertEqual(tv_res["title"], "Breaking Bad")
                 self.assertIn("Vince Gilligan", tv_res.get("directors", []))
                 self.assertEqual(tv_res.get("trailer_url"), "https://www.youtube.com/watch?v=xyz")
-                # Season 0 should be filtered out
                 self.assertEqual(len(tv_res.get("seasons", [])), 1)
 
     def test_catalog_get_season_and_all_episodes_branches(self):
-        # Season episodes
         with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
             s_res = get_season_episodes(1396, 1)
             self.assertEqual(s_res["episodes"], [])
@@ -432,20 +399,17 @@ class TestTMDBModule(unittest.TestCase):
             err_season = get_season_episodes(9999, 1)
             self.assertEqual(err_season["episodes"], [])
 
-        # All series episodes
         with patch("criticbox_sd.server.tmdb.catalog.API_KEY", ""):
             self.assertEqual(get_all_series_episodes(1396), {})
 
         _set_cache("all_episodes:1396", {"1": [{"episode_number": 1}]})
         self.assertEqual(len(get_all_series_episodes(1396)["1"]), 1)
 
-        # seasons_hint with dictionary and invalid season numbers
         with patch("criticbox_sd.server.tmdb.catalog.get_season_episodes") as mock_season:
             mock_season.return_value = {"season_number": 2, "episodes": [{"episode_number": 1}]}
             hinted = get_all_series_episodes(2000, seasons_hint=[{"season_number": 2}, 0, "invalid"])
             self.assertIn("2", hinted)
 
-        # Exception in get_all_series_episodes
         with patch("criticbox_sd.server.tmdb.catalog._get_tv_details", side_effect=Exception):
             self.assertEqual(get_all_series_episodes(99999), {})
 
@@ -457,7 +421,6 @@ class TestTMDBModule(unittest.TestCase):
             self.assertEqual(get_movie_title(27205, media_type="movie"), "Inception")
 
     def test_catalog_full_mock_parsers(self):
-        # Multi search parser
         with patch("tmdbsimple.Search.multi") as mock_multi:
             mock_multi.return_value = {
                 "page": 1,
@@ -466,13 +429,12 @@ class TestTMDBModule(unittest.TestCase):
                 "results": [
                     {"id": 1, "title": "Film A", "media_type": "movie", "poster_path": "/a.jpg"},
                     {"id": 2, "name": "Show B", "media_type": "tv", "poster_path": "/b.jpg"},
-                    {"id": 3, "name": "Person C", "media_type": "person"},  # Should be filtered
+                    {"id": 3, "name": "Person C", "media_type": "person"},
                 ],
             }
             res = search_movies("query test", page=1)
             self.assertEqual(len(res["results"]), 2)
 
-        # Movie details parser
         with patch("tmdbsimple.Movies.info") as mock_info:
             mock_info.return_value = {
                 "id": 999,
@@ -502,7 +464,6 @@ class TestTMDBModule(unittest.TestCase):
             self.assertIn("Top Writer", details["writers"])
             self.assertIn("Maestro", details["music_composers"])
 
-        # Season episodes parser
         with patch("tmdbsimple.TV_Seasons.info") as mock_sinfo:
             mock_sinfo.return_value = {
                 "season_number": 1,

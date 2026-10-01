@@ -37,7 +37,6 @@ app.add_middleware(
 
 register_exception_handlers(app)
 
-# ----------------- UI & Health Endpoints ----------------- #
 HOME_HTML_PATH = os.path.join(BASE_DIR, "criticbox_home.html")
 FRONTEND_DIST_DIR = os.path.join(BASE_DIR, "frontend", "dist")
 FRONTEND_ASSETS_DIR = os.path.join(FRONTEND_DIST_DIR, "assets")
@@ -60,6 +59,7 @@ def root(request: Request):
         "gateway": "Criticbox SD API Gateway v2.0",
         "docs_url": "/docs",
         "services": {
+            "user_service": "gRPC :50053",
             "movie_service": "gRPC :50051",
             "review_service": "gRPC :50052",
         },
@@ -74,13 +74,11 @@ def app_frontend():
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Frontend não encontrado.")
 
 
-# ----------------- Inclusão dos Routers Modulares ----------------- #
 app.include_router(auth_router)
 app.include_router(movies_router)
 app.include_router(reviews_router)
 
 
-# ----------------- SPA Fallback ----------------- #
 @app.get("/{full_path:path}", include_in_schema=False)
 def spa_fallback(request: Request, full_path: str):
     accept = request.headers.get("accept", "")
