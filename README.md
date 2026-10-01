@@ -1,46 +1,55 @@
-# 🎬 Criticbox SD — Arquitetura Distribuída (Entrega 2)
+# 🎬 Criticbox SD — Arquitetura Distribuída
 
-Sistema distribuído de catálogo e avaliação de filmes desenvolvido para a disciplina de **Sistemas Distribuídos (SD)**. A solução implementa um ecossistema com **Frontend Web moderno (React + Vite)**, um **API Gateway centralizador (FastAPI)** com autenticação **JWT**, e **2 Microsserviços internos comunicando-se via gRPC (Protocol Buffers)** com persistência em **Banco de Dados Real (SQLite / MySQL)**.
+Sistema distribuído de catálogo e avaliação de filmes e séries desenvolvido para a disciplina de **Sistemas Distribuídos (SD)**. A solução implementa um ecossistema desacoplado seguindo o padrão **Monorepo**, composto por **Frontend Web moderno (React + Vite)**, um **API Gateway centralizador (FastAPI)** com autenticação **JWT**, e **3 Microsserviços internos comunicando-se via gRPC (Protocol Buffers)** com persistência em banco relacional via **SQLAlchemy 2.0 ORM (SQLite / MySQL)**.
 
 ---
 
 ## 🏛️ Visão Geral da Arquitetura Distribuída
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                       Frontend (React / Vite)                   │
 │   Interface visual brutalista, autenticação JWT, busca & notas  │
 └────────────────────────────────┬────────────────────────────────┘
-                                 │ HTTP / JSON (Bearer Token)
+                                 │ HTTP / REST (Bearer Token)
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │               API Gateway Centralizador (FastAPI :8000)         │
-│  - Borda única de entrada                                       │
-│  - Middleware de Autenticação JWT (401 se ausente/inválido)     │
-│  - Validação de Payloads JSON (400 Bad Request detalhado)       │
+│  - Borda única de entrada REST                                  │
+│  - Emissão e validação de tokens JWT (Bearer)                   │
+│  - Validação estrita de entrada com Schemas Pydantic            │
 │  - Tradução de Protocolos: HTTP/JSON ◄► gRPC/Protobuf binário   │
-└──────────────────┬─────────────────────────────┬────────────────┘
-                   │ gRPC / Protobuf             │ gRPC / Protobuf
-                   │ (Porta 50051)               │ (Porta 50052)
-                   ▼                             ▼
-┌──────────────────────────────┐ ┌────────────────────────────────┐
-│  Microsserviço de Catálogo   │ │  Microsserviço de Avaliações   │
-│     (MovieService :50051)    │ │    (ReviewService :50052)      │
-│ - Busca de Filmes            │ │ - Registro e Login de Usuários │
-│ - Filmes em Alta (Trending)  │ │ - Criação de Críticas (Notas)  │
-│ - Detalhes do Filme          │ │ - Cálculo de Médias do Filme   │
-│ - Integração com API TMDb    │ │ - Listagem Geral de Reviews    │
-└──────────────┬───────────────┘ └───────────────┬────────────────┘
-               │                                 │
-               └──── Chamada RPC Inter-serviço ──┘
-                     (Estatísticas de Reviews)
-                                 │
+│  - Pool de canais gRPC persistentes (GatewayGRPCManager)        │
+└────────┬───────────────────────┼───────────────────────┬────────┘
+         │ gRPC / Protobuf       │ gRPC / Protobuf       │ gRPC / Protobuf
+         │ (Porta 50053)         │ (Porta 50051)         │ (Porta 50052)
+         ▼                       ▼                       ▼
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   USER SERVICE  │     │  MOVIE SERVICE  │     │ REVIEW SERVICE  │
+│     (:50053)    │     │     (:50051)    │     │     (:50052)    │
+│ - Cadastro      │     │ - Busca filmes  │     │ - Criar reviews │
+│ - Login & Auth  │     │ - Trending/Em   │     │ - Listar reviews│
+│ - Hash bcrypt   │     │   cartaz        │     │ - Bloqueio de   │
+│ - UUID imutável │     │ - Séries e guias│     │   spoilers      │
+│                 │     │ - Recomendações │     │ - Médias e batch│
+│                 │     │ - Cache em RAM  │     │   stats         │
+└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
+         │                       │       │               │
+         │                       │       └── gRPC inter ─┘
+         │                       │           serviço     │
+         │                       ▼                       │
+         │              ┌─────────────────┐              │
+         │              │ API Externa     │              │
+         │              │ The Movie DB    │              │
+         │              └─────────────────┘              │
+         │                                               │
+         └───────────────────────┬───────────────────────┘
+                                 │ SQLAlchemy 2.0 ORM
                                  ▼
-               ┌───────────────────────────────────┐
-               │    Banco de Dados Real (SQLite)   │
-               │   Tabelas: users e reviews        │
-               │   (Sem mocks ou dados em memória) │
-               └───────────────────────────────────┘
+                       ┌───────────────────┐
+                       │   Banco de Dados  │
+                       │ (SQLite / MySQL)  │
+                       └───────────────────┘
 ```
 
 ---
@@ -90,20 +99,23 @@ criticbox-sd/
 │   │   └── tmdb/               # Integração TMDb, cache TTL e recomendações
 │   ├── proto/                  # Contratos IDL Protocol Buffers
 │   ├── generated/              # Stubs Python gerados pelo protoc
-│   ├── tests/                  # Suíte de testes automatizados com pytest (124 testes)
+│   ├── tests/                  # Suíte de testes automatizados com pytest (122 testes)
 │   ├── scripts/                # Utilitários (compilação de protobufs)
 │   ├── pyproject.toml          # Dependências do Poetry e scripts de inicialização
+│   ├── poetry.lock             # Lockfile isolado de dependências Python
+│   ├── README.md               # Documentação interna do backend
 │   └── run_all.py              # Orquestrador unificado para inicialização concorrente
 │
 ├── frontend/                   # Aplicação Web SPA (React + Vite)
 │   ├── src/                    # Componentes, páginas e design system
 │   ├── package.json            # Dependências npm
-│   └── vite.config.js          # Configuração do Vite e proxies
+│   ├── README.md               # Documentação interna do frontend
+│   └── vite.config.js          # Configuração do Vite e proxies locais
 │
 ├── ARCHITECTURE.md             # Documento de arquitetura detalhada
+├── DATA_DICTIONARY.md          # Dicionário de dados relacional completo
 ├── DESIGN.md                   # Diretrizes visuais e tokens de design
-└── README.md
-```
+└── README.md                   # Apresentação geral do projeto
 ```
 
 ---
@@ -155,7 +167,7 @@ poetry run start
 Saída no console:
 ```text
 ======================================================================
-INICIANDO ECOSSISTEMA DISTRIBUÍDO CRITICBOX (ENTREGA 2)
+INICIANDO ECOSSISTEMA DISTRIBUÍDO CRITICBOX
 ======================================================================
 ✓ [gRPC] UserService ativo na porta 50053
 ✓ [gRPC] ReviewService ativo na porta 50052
@@ -213,18 +225,19 @@ Se desejar acompanhar os logs de cada microsserviço em terminais isolados (todo
 
 ## 🧪 Testes Automatizados
 
-O projeto conta com uma suíte abrangente de testes unitários e de integração que validam:
-- Autenticação e ciclo de vida do token JWT
-- Rejeição imediata na borda (`401 Unauthorized`) para requisições sem token válido
-- Validação estrita de payload (`400 Bad Request`) para notas fora do intervalo, campos obrigatórios em branco ou tipos inválidos
-- Delegação de requisições gRPC através do Gateway
-- Persistência e integridade das avaliações no banco real SQLite
-- Comunicação inter-serviços via Protocol Buffers
+O projeto conta com uma suíte de **122 testes automatizados** com **97% de cobertura** testando:
+- Autenticação, emissão e validação estrita do token JWT
+- Rejeição na borda (`401 Unauthorized`) para requisições não autenticadas
+- Validação de entrada Pydantic (`400 Bad Request`) e prevenção de conflitos (`409 Conflict`)
+- Servicers gRPC (`UserService`, `MovieService`, `ReviewService`)
+- Persistência e integridade das tabelas relacionais com SQLAlchemy 2.0 ORM
+- Integração TMDb com cache thread-safe em RAM e motor de recomendação por afinidade
 
-Para rodar todos os testes:
+Para rodar todos os testes com relatório de cobertura:
 
 ```bash
-poetry run python -m unittest discover tests
+cd backend
+poetry run pytest --cov=gateway --cov=services
 ```
 
 ---
@@ -236,14 +249,28 @@ poetry run python -m unittest discover tests
 - `POST /auth/login` — Autentica as credenciais do usuário via gRPC e retorna token JWT (`200 OK`).
 
 ### Perfil e Avaliações (Protegidos por JWT)
-- `GET /auth/me` — Retorna dados do usuário autenticado (`Authorization: Bearer <token>`).
-- `POST /reviews` — Registra uma nova crítica no banco real através do `ReviewService` gRPC. Exige header `Authorization: Bearer <token>`. Retorna `201 Created`.
+- `GET /auth/me` — Retorna dados do perfil do usuário autenticado (`Authorization: Bearer <token>`).
+- `POST /reviews` — Registra uma nova crítica no banco real através do `ReviewService` gRPC (`201 Created`).
 
 ### Catálogo e Consultas (Públicos)
-- `GET /movies?query={termo}&page={n}` — Busca filmes no TMDb via `MovieService` gRPC (`200 OK`).
-- `GET /movies/trending` — Retorna filmes em alta na semana via `MovieService` gRPC (`200 OK`).
-- `GET /movies/{tmdb_id}` — Detalhes completos do filme via `MovieService` gRPC (`200 OK`).
-- `GET /reviews` — Lista todas as críticas salvas no banco real via `ReviewService` gRPC (`200 OK`).
-- `GET /reviews/movie/{tmdb_id}` — Lista críticas de um filme específico (`200 OK`).
+- `GET /movies?query={termo}&page={n}` — Busca filmes no catálogo via `MovieService` gRPC (`200 OK`).
+- `GET /movies/trending` — Filmes em alta na semana (`200 OK`).
+- `GET /movies/trending-tv` — Séries em alta na semana (`200 OK`).
+- `GET /movies/now-playing` — Filmes em cartaz nos cinemas (`200 OK`).
+- `GET /movies/recommendations?user_id={id}` — Recomendações personalizadas baseadas nas notas do usuário (`200 OK`).
+- `GET /movies/{tmdb_id}` — Detalhes completos de filme ou série com elenco e provedores de streaming (`200 OK`).
+- `GET /movies/{tmdb_id}/season/{season_number}` — Episódios de uma temporada específica (`200 OK`).
+- `GET /movies/{tmdb_id}/episodes` — Guia completo de episódios de todas as temporadas (`200 OK`).
+- `GET /reviews?limit={n}` — Lista as críticas mais recentes salvas no banco real (`200 OK`).
+- `GET /reviews/movie/{tmdb_id}` — Lista todas as críticas de um título específico (`200 OK`).
+- `GET /reviews/user/{user_id}` — Lista todas as críticas publicadas por determinado usuário (`200 OK`).
 
 Documentação Swagger interativa disponível em: **`http://localhost:8000/docs`**.
+
+---
+
+## 📚 Documentação Complementar
+
+- [ARCHITECTURE.md](file:///c:/Users/mrksm/OneDrive/Área%20de%20Trabalho/Projetos/Criticbox%20SD/criticbox-sd/ARCHITECTURE.md): Detalhamento aprofundado dos microsserviços, gRPC, HTTP/2, pooling e tratamento de exceções.
+- [DATA_DICTIONARY.md](file:///c:/Users/mrksm/OneDrive/Área%20de%20Trabalho/Projetos/Criticbox%20SD/criticbox-sd/DATA_DICTIONARY.md): Dicionário de dados das tabelas relacionais `users` e `reviews` com campos, tipos, restrições e índices.
+- [DESIGN.md](file:///c:/Users/mrksm/OneDrive/Área%20de%20Trabalho/Projetos/Criticbox%20SD/criticbox-sd/DESIGN.md): Diretrizes de design system, tipografia e tokens da interface brutalista.
