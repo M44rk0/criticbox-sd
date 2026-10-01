@@ -49,14 +49,14 @@ Sistema distribuído de catálogo e avaliação de filmes desenvolvido para a di
 
 | Requisito | Implementação no Criticbox |
 |---|---|
-| **Frontend** | Interface completa em **React** (Vite) no diretório `frontend/` e protótipo standalone `criticbox_home.html`, com tema Dark Brutalista, seletor de estrelas (0.5 a 5.0), busca dinâmica com debounce e modal de autenticação. Comunica-se **exclusivamente com o API Gateway**. |
-| **API Gateway** | Desenvolvido em **FastAPI**, escutando em `http://localhost:8000`. Recebe HTTP/JSON, valida schemas, autentica JWT e orquestra chamadas gRPC para os microsserviços internos. |
-| **Backend com 2 Microsserviços** | 1) **MovieService** (porta 50051) e 2) **ReviewService** (porta 50052). Ambos expõem serviços gRPC definidos via Protocol Buffers (`movie.proto` e `review.proto`). |
-| **Comunicação Inter-serviços** | O `MovieService` consulta o `ReviewService` via gRPC (`GetMovieStats`) para agregar a média Criticbox às listagens de filmes em tempo real. |
-| **Banco de Dados Real** | Persistência real em **SQLite** (`criticbox.db`) com tabelas relacionais `users` e `reviews` (suporte a MySQL configurável via `.env`). Zero mocks ou dados estáticos. |
-| **Validação no Gateway** | Schemas Pydantic rigorosos. Retorno semântico explícito de `400 Bad Request` com lista detalhada de campos faltantes/inválidos, `201 Created` para inserções e `200 OK` para consultas. |
-| **Segurança (JWT)** | Middleware/dependência de segurança que valida `Authorization: Bearer <token>`. Requisições sem token válido são imediatamente barradas na borda com `401 Unauthorized`. |
-| **Tradução de Protocolo** | O Gateway desserializa JSON, valida, serializa em mensagens binárias Protobuf, invoca o stub gRPC e converte a resposta binária em JSON para o cliente. |
+| **Frontend** | Interface completa em **React** (Vite) no diretório `frontend/`, com tema Dark Brutalista, seletor de estrelas (0.5 a 5.0), busca dinâmica com debounce, modais de autenticação e detalhes completos com trailers e temporadas. Comunica-se **exclusivamente com o API Gateway**. |
+| **API Gateway** | Desenvolvido em **FastAPI** (`backend/gateway`), escutando em `http://localhost:8000`. Recebe HTTP/JSON, valida schemas Pydantic, autentica JWT e orquestra chamadas gRPC para os microsserviços internos. |
+| **Backend com 3 Microsserviços** | 1) **UserService** (porta 50053), 2) **MovieService** (porta 50051) e 3) **ReviewService** (porta 50052). Todos expõem serviços gRPC definidos via Protocol Buffers. |
+| **Comunicação Inter-serviços** | O `MovieService` consulta o `ReviewService` via gRPC (`GetMovieStats`) para agregar a média e o total de avaliações da comunidade às listagens em tempo real. |
+| **Banco de Dados Real & ORM** | Persistência unificada com **SQLAlchemy 2.0** (`backend/services/storage`) com suporte híbrido: **SQLite** local com modo WAL e **Cloud SQL / MySQL** em nuvem. |
+| **Validação no Gateway** | Schemas Pydantic modulares em `backend/gateway/schemas/`. Retorno padronizado de erros de validação (`400 Bad Request`), conflitos (`409 Conflict`), `201 Created` e `200 OK`. |
+| **Segurança (JWT & Bcrypt)** | Hashing criptográfico de senhas com `bcrypt` no `UserService` e emissão/validação de tokens JWT Bearer no Gateway. |
+| **Tradução de Protocolo** | O Gateway desserializa JSON, valida na borda, invoca os stubs gRPC via HTTP/2 binário e converte as respostas de volta para JSON para o cliente. |
 
 ---
 
@@ -65,54 +65,45 @@ Sistema distribuído de catálogo e avaliação de filmes desenvolvido para a di
 - **Linguagem Backend:** Python 3.10+
 - **Frontend:** React 19, Vite, CSS Vanilla Moderno
 - **API Gateway:** FastAPI, Uvicorn, Pydantic v2
-- **Segurança:** PyJWT, PBKDF2-HMAC-SHA256 (hashing seguro de senhas)
+- **Segurança:** PyJWT, Bcrypt (hashing criptográfico de senhas)
 - **RPC & Serialização:** gRPC, Protocol Buffers (`proto3`)
-- **Banco de Dados:** SQLite (local) / MySQL (Cloud SQL)
+- **Banco de Dados:** SQLAlchemy 2.0 (SQLite local com WAL / Cloud SQL MySQL)
 - **API Externa de Catálogo:** TMDb API (`tmdbsimple`)
-- **Gerenciador de Dependências:** Poetry
+- **Gerenciador de Dependências:** Poetry (backend) e npm (frontend)
 
 ---
 
-## 📁 Estrutura de Arquivos
+## 📁 Estrutura de Arquivos (Monorepo)
 
 ```text
 criticbox-sd/
-├── criticbox_sd/
-│   ├── api/
-│   │   ├── auth.py              # Utilitários de JWT e dependência de autenticação (401)
-│   │   ├── grpc_clients.py      # Gerenciador de stubs gRPC e tradução HTTP <-> Protobuf
-│   │   ├── main.py              # API Gateway FastAPI (rotas públicas e protegidas)
-│   │   └── schemas.py           # DTOs e validações semânticas Pydantic (400)
-│   ├── generated/               # Stubs Python gerados pelo protoc
-│   │   ├── movie_pb2.py
-│   │   ├── movie_pb2_grpc.py
-│   │   ├── review_pb2.py
-│   │   └── review_pb2_grpc.py
-│   ├── proto/                   # Contratos de interface IDL (Protocol Buffers)
-│   │   ├── movie.proto          # Serviço de filmes e catálogo
-│   │   └── review.proto         # Serviço de reviews e autenticação de usuários
-│   ├── scripts/
-│   │   └── compile_proto.py     # Compilador dos arquivos .proto
-│   ├── server/
-│   │   ├── database.py          # Camada de persistência real SQLite/MySQL
-│   │   ├── movie_service.py     # Microsserviço gRPC de Catálogo (porta 50051)
-│   │   ├── review_service.py    # Microsserviço gRPC de Reviews e Usuários (porta 50052)
-│   │   └── tmdb_service.py      # Integração externa TMDb
-│   └── run_all.py               # Orquestrador unificado para inicialização local
-├── frontend/                    # Aplicação Web SPA (React + Vite)
-│   ├── src/
-│   │   ├── App.jsx              # Interface completa (Autenticação, Busca, Reviews)
-│   │   ├── index.css            # Sistema de design dark brutalista
-│   │   └── main.jsx
-│   ├── package.json
-│   └── vite.config.js           # Proxy reverso para o API Gateway
-├── tests/
-│   ├── test_api.py              # Testes automatizados do Gateway, JWT e gRPC
-│   └── test_reviews.py          # Testes unitários de persistência e serviços
-├── criticbox_home.html          # Protótipo visual brutalista integrado
-├── .env.example                 # Exemplo de configuração
-├── pyproject.toml               # Dependências Poetry e scripts
+├── backend/                    # Projeto Python isolado (gRPC + Gateway)
+│   ├── gateway/                # API Gateway FastAPI (rotas REST, JWT, validações)
+│   │   ├── routers/            # Rotas /auth, /movies, /reviews
+│   │   ├── schemas/            # Schemas Pydantic modulares por domínio
+│   │   └── exception_handlers.py # Tradução gRPC RpcError -> HTTP status
+│   ├── services/               # Microsserviços internos gRPC
+│   │   ├── user_service.py     # Microsserviço de Identidade (:50053)
+│   │   ├── movie_service.py    # Microsserviço de Catálogo e Mídia (:50051)
+│   │   ├── review_service.py   # Microsserviço de Avaliações (:50052)
+│   │   ├── storage/            # Camada ORM SQLAlchemy 2.0 e Repositories
+│   │   └── tmdb/               # Integração TMDb, cache TTL e recomendações
+│   ├── proto/                  # Contratos IDL Protocol Buffers
+│   ├── generated/              # Stubs Python gerados pelo protoc
+│   ├── tests/                  # Suíte de testes automatizados com pytest (124 testes)
+│   ├── scripts/                # Utilitários (compile_proto, backfill_posters)
+│   ├── pyproject.toml          # Dependências do Poetry e scripts de inicialização
+│   └── run_all.py              # Orquestrador unificado para inicialização concorrente
+│
+├── frontend/                   # Aplicação Web SPA (React + Vite)
+│   ├── src/                    # Componentes, páginas e design system
+│   ├── package.json            # Dependências npm
+│   └── vite.config.js          # Configuração do Vite e proxies
+│
+├── ARCHITECTURE.md             # Documento de arquitetura detalhada
+├── DESIGN.md                   # Diretrizes visuais e tokens de design
 └── README.md
+```
 ```
 
 ---
@@ -127,8 +118,10 @@ criticbox-sd/
 ### 2. Instalação das Dependências
 
 ```bash
-# Na raiz do projeto (backend Python):
+# No diretório do backend (Python):
+cd backend
 poetry install
+cd ..
 
 # No diretório do frontend (React):
 cd frontend
@@ -138,9 +131,11 @@ cd ..
 
 ### 3. Configuração do `.env`
 
-Copie o `.env.example` para `.env` se ainda não tiver feito:
+Copie o `.env.example` para `.env` dentro de `backend/`:
 ```bash
+cd backend
 cp .env.example .env
+cd ..
 ```
 *(Opcional: insira sua chave TMDb em `TMDB_API_KEY`, ou utilize a chave de demonstração já pré-configurada).*
 
@@ -150,9 +145,10 @@ cp .env.example .env
 
 #### Opção A: Executar Tudo com Comando Único (Recomendado)
 
-O script `run_all.py` inicia simultaneamente os dois microsserviços gRPC e o API Gateway:
+O script `run_all.py` inicia simultaneamente os 3 microsserviços gRPC e o API Gateway:
 
 ```bash
+cd backend
 poetry run start
 ```
 
@@ -161,6 +157,7 @@ Saída no console:
 ======================================================================
 INICIANDO ECOSSISTEMA DISTRIBUÍDO CRITICBOX (ENTREGA 2)
 ======================================================================
+✓ [gRPC] UserService ativo na porta 50053
 ✓ [gRPC] ReviewService ativo na porta 50052
 ✓ [gRPC] MovieService ativo na porta 50051
 ✓ [REST] Iniciando API Gateway em http://0.0.0.0:8000
@@ -180,24 +177,33 @@ Acesse a aplicação no navegador em: **`http://localhost:5173`** (ou acesse dir
 
 #### Opção B: Executar os Serviços Separadamente
 
-Se desejar acompanhar os logs de cada microsserviço em terminais isolados:
+Se desejar acompanhar os logs de cada microsserviço em terminais isolados (todos a partir da pasta `backend/`):
 
-1. **Terminal 1 — Microsserviço de Reviews e Usuários (gRPC 50052):**
+1. **Terminal 1 — Microsserviço de Identidade e Usuários (gRPC 50053):**
    ```bash
+   cd backend
+   poetry run user-service
+   ```
+
+2. **Terminal 2 — Microsserviço de Avaliações (gRPC 50052):**
+   ```bash
+   cd backend
    poetry run review-service
    ```
 
-2. **Terminal 2 — Microsserviço de Filmes e Catálogo (gRPC 50051):**
+3. **Terminal 3 — Microsserviço de Filmes e Catálogo (gRPC 50051):**
    ```bash
+   cd backend
    poetry run movie-service
    ```
 
-3. **Terminal 3 — API Gateway FastAPI (HTTP 8000):**
+4. **Terminal 4 — API Gateway FastAPI (HTTP 8000):**
    ```bash
+   cd backend
    poetry run api
    ```
 
-4. **Terminal 4 — Frontend React:**
+5. **Terminal 5 — Frontend React:**
    ```bash
    cd frontend
    npm run dev

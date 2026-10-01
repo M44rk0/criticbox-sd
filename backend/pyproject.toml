@@ -1,0 +1,84 @@
+[project]
+name = "criticbox-backend"
+version = "0.1.0"
+description = "Criticbox SD Backend - Microservices and API Gateway"
+authors = [
+    {name = "Marco Antonio",email = "marcokjjkk@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "grpcio (>=1.60.0)",
+    "grpcio-tools (>=1.60.0)",
+    "protobuf (>=4.25.0)",
+    "tmdbsimple (>=2.9.0)",
+    "python-dotenv (>=1.0.0)",
+    "fastapi (>=0.141.1,<0.142.0)",
+    "uvicorn (>=0.53.0,<0.54.0)",
+    "pymysql (>=1.2.3,<2.0.0)",
+    "cryptography (>=50.0.1,<51.0.0)",
+    "pyjwt (>=2.15.1,<3.0.0)",
+    "sqlalchemy (>=2.0.0)"
+]
+
+[tool.poetry]
+packages = [
+    {include = "gateway"},
+    {include = "services"},
+    {include = "generated"},
+    {include = "scripts"},
+]
+
+[tool.poetry.scripts]
+api = "gateway.main:start"
+user-service = "services.user_service:serve"
+movie-service = "services.movie_service:serve"
+review-service = "services.review_service:serve"
+start = "run_all:main"
+compile-proto = "scripts.compile_proto:compile_proto"
+
+
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+exclude = [
+    "generated",
+    ".git",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E402", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.16.4,<0.17.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "pytest (>=9.1.1,<10.0.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)"
+]
+
+[tool.coverage.run]
+omit = [
+    "generated/*",
+    "scripts/compile_proto.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+
+
