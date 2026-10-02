@@ -44,7 +44,7 @@ export default function ProductionDossier({
     if (movie.directors && movie.directors.length > 0) {
       cards.push(
         <div key="directors" className="dossier-card">
-          <span className="dossier-label">// {movie.media_type === 'tv' ? 'CRIAÇÃO / DIREÇÃO' : 'DIREÇÃO'}</span>
+          <span className="dossier-label">{movie.media_type === 'tv' ? 'CRIAÇÃO / DIREÇÃO' : 'DIREÇÃO'}</span>
           <span className="dossier-value">{movie.directors.join(', ')}</span>
         </div>
       );
@@ -52,7 +52,7 @@ export default function ProductionDossier({
     if (movie.writers && movie.writers.length > 0) {
       cards.push(
         <div key="writers" className="dossier-card">
-          <span className="dossier-label">// ROTEIRO & ARGUMENTO</span>
+          <span className="dossier-label">ROTEIRO & ARGUMENTO</span>
           <span className="dossier-value">{movie.writers.join(', ')}</span>
         </div>
       );
@@ -60,7 +60,7 @@ export default function ProductionDossier({
     if (movie.music_composers && movie.music_composers.length > 0) {
       cards.push(
         <div key="music" className="dossier-card">
-          <span className="dossier-label">// TRILHA SONORA ORIGINAL</span>
+          <span className="dossier-label">TRILHA SONORA ORIGINAL</span>
           <span className="dossier-value">{movie.music_composers.join(', ')}</span>
         </div>
       );
@@ -68,7 +68,7 @@ export default function ProductionDossier({
     if (movie.cinematographers && movie.cinematographers.length > 0) {
       cards.push(
         <div key="cinematographers" className="dossier-card">
-          <span className="dossier-label">// DIREÇÃO DE FOTOGRAFIA</span>
+          <span className="dossier-label">DIREÇÃO DE FOTOGRAFIA</span>
           <span className="dossier-value">{movie.cinematographers.join(', ')}</span>
         </div>
       );
@@ -76,7 +76,7 @@ export default function ProductionDossier({
     if (movie.producers && movie.producers.length > 0) {
       cards.push(
         <div key="producers" className="dossier-card">
-          <span className="dossier-label">// PRODUÇÃO EXECUTIVA</span>
+          <span className="dossier-label">PRODUÇÃO EXECUTIVA</span>
           <span className="dossier-value">{movie.producers.slice(0, 4).join(', ')}</span>
         </div>
       );
@@ -84,7 +84,7 @@ export default function ProductionDossier({
     if (runtimeStr) {
       cards.push(
         <div key="runtime" className="dossier-card">
-          <span className="dossier-label">// DURAÇÃO</span>
+          <span className="dossier-label">DURAÇÃO</span>
           <span className="dossier-value mono">{runtimeStr}</span>
         </div>
       );
@@ -92,7 +92,7 @@ export default function ProductionDossier({
     if (movie.original_language) {
       cards.push(
         <div key="lang" className="dossier-card">
-          <span className="dossier-label">// IDIOMA ORIGINAL</span>
+          <span className="dossier-label">IDIOMA ORIGINAL</span>
           <span className="dossier-value mono">{movie.original_language.toUpperCase()}</span>
         </div>
       );
@@ -100,7 +100,7 @@ export default function ProductionDossier({
     if (movie.certification) {
       cards.push(
         <div key="cert" className="dossier-card">
-          <span className="dossier-label">// CLASSIFICAÇÃO INDICATIVA</span>
+          <span className="dossier-label">CLASSIFICAÇÃO INDICATIVA</span>
           <span className="dossier-value mono">{movie.certification} ANOS (DJCTQ/ClassInd)</span>
         </div>
       );
@@ -108,7 +108,7 @@ export default function ProductionDossier({
     if (movie.release_date) {
       cards.push(
         <div key="release" className="dossier-card">
-          <span className="dossier-label">// DATA DE LANÇAMENTO</span>
+          <span className="dossier-label">DATA DE LANÇAMENTO</span>
           <span className="dossier-value mono">{formatReleaseDate(movie.release_date)}</span>
         </div>
       );
@@ -127,26 +127,26 @@ export default function ProductionDossier({
         {movie.media_type === 'movie' ? (
           <>
             <div className="dossier-card">
-              <span className="dossier-label">// ORÇAMENTO ESTIMADO</span>
+              <span className="dossier-label">ORÇAMENTO ESTIMADO</span>
               <span className="dossier-value mono">{formatCurrency(movie.budget) || 'NÃO DIVULGADO'}</span>
             </div>
             <div className="dossier-card">
-              <span className="dossier-label">// BILHETERIA MUNDIAL</span>
+              <span className="dossier-label">BILHETERIA MUNDIAL</span>
               <span className="dossier-value mono">{formatCurrency(movie.revenue) || 'NÃO DIVULGADO'}</span>
             </div>
             <div className="dossier-card">
-              <span className="dossier-label">// STATUS DE PRODUÇÃO</span>
+              <span className="dossier-label">STATUS DE PRODUÇÃO</span>
               <span className="dossier-value mono">{translateStatus(movie.status) || 'LANÇADO'}</span>
             </div>
           </>
         ) : (
           <>
             <div className="dossier-card">
-              <span className="dossier-label">// STATUS DE EXIBIÇÃO</span>
+              <span className="dossier-label">STATUS DE EXIBIÇÃO</span>
               <span className="dossier-value mono">{translateStatus(movie.status) || 'EM EXIBIÇÃO'}</span>
             </div>
             <div className="dossier-card">
-              <span className="dossier-label">// VOLUMETRIA</span>
+              <span className="dossier-label">VOLUMETRIA</span>
               <span className="dossier-value mono">
                 {movie.number_of_seasons} TEMPORADA{movie.number_of_seasons > 1 ? 'S' : ''} (
                 {movie.number_of_episodes || 0} EPS)
@@ -154,7 +154,7 @@ export default function ProductionDossier({
             </div>
             {movie.networks && movie.networks.length > 0 && (
               <div className="dossier-card">
-                <span className="dossier-label">// EMISSORA ORIGINAL</span>
+                <span className="dossier-label">EMISSORA ORIGINAL</span>
                 <span className="dossier-value">{movie.networks.map((n) => n.name).join(', ')}</span>
               </div>
             )}
@@ -166,7 +166,7 @@ export default function ProductionDossier({
       {hasAnyProviders && (
         <div className="market-streaming-block">
           <div className="market-streaming-header">
-            <span className="dossier-label">// ONDE ASSISTIR NO BRASIL (STREAMING & VOD)</span>
+            <span className="dossier-label">ONDE ASSISTIR NO BRASIL (STREAMING & VOD)</span>
           </div>
           <div className="market-streaming-grid">
             {allProviders.map((p, idx) => (

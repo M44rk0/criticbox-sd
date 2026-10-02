@@ -28,7 +28,7 @@ export default function Footer() {
             </a>
           </li>
         </ul>
-        <span className="footer-tech">CRITICBOX // CATÁLOGO DISTRIBUÍDO DE CINEMA & SÉRIES</span>
+        <span className="footer-tech">CRITICBOX — SUA CAIXA DE CRÍTICAS & CINEMA</span>
       </div>
     </footer>
   );

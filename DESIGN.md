@@ -1,6 +1,6 @@
 ---
 name: Criticbox
-description: A brutalist cinema terminal and architectural review archive for cinephiles.
+description: An architectural cinema archive and brutalist review box for cinephiles.
 colors:
   primary: "#ff9900"
   primary-hover: "#ffaa22"
@@ -93,17 +93,18 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Industrial Cinema Terminal"**
+**Creative North Star: "The Architectural Cinema Box (A Caixa de Críticas)"**
 
-Criticbox is built as an uncompromising, high-density projection room and architectural archive for cinema criticism. It completely rejects the sterile, rounded, pastel-drenched tropes of contemporary consumer web design in favor of mechanical precision, razor-sharp geometric edges, deep noir blacks, and high-voltage cadmium amber accents. The interface feels less like a social network and more like an industrial terminal salvaged from a classic 35mm projection booth or a classified cinematic registry.
+Criticbox is, at its core, a physical and modular **"box of reviews"**—an architectural cinema vault and tactile criticism archive for cinephiles. Every movie, review, and production dossier operates like a dense catalog card inside a dark projection box. The system completely rejects the sterile, rounded, pastel-drenched tropes of contemporary consumer web apps, while strictly avoiding the caricature of a "hacker CLI", "developer console", or sci-fi terminal.
 
-The spatial philosophy is unapologetically planar and structural. Content is organized inside stark frames with hairline grid rules, heavy monochromatic contrasting borders, and rigid monospaced data markers. Surfaces do not hide behind translucent blur gradients or soft floating drops; they declare their presence with solid, physical lines and hard offset shadow planes. The density is calibrated for cinephiles who demand information richness, clear hierarchy, and immediate access to community judgments without decorative friction.
+The spatial philosophy is planar, structural, and editorial. The "box" concept manifests through razor-sharp rectangular containment, hairline grid dividers, heavy monochromatic contrasting frames, and clean tabular data markers. Surfaces do not hide behind translucent blur gradients or soft floating drops; they declare their presence as solid, physical catalog drawers and projection planes with hard offset shadow displacement. Importantly, Criticbox avoids developer clichés—no decorative code slashes (`//`), backslashes, command prompts (`>`), or pseudo-matrix artifacts. The density and dignity are calibrated for cinephiles who demand information richness, typographic authority, and an uncompromising archive of film discourse.
 
 **Key Characteristics:**
-- **Absolute Zero-Radius Discipline:** Every single element across the system—posters, buttons, badges, chips, inputs, and avatars—is rigidly rectangular (0px radius).
+- **Absolute Zero-Radius Discipline:** Every single element across the system—posters, buttons, badges, chips, inputs, and avatars—is rigidly rectangular (0px radius), reinforcing the modular "box" form language.
 - **Noir Void Contrast:** Deep pitch blacks (`#06070a`, `#0a0c11`) punctuated by stark white borders (`#ffffff`) and incandescent Cadmium Projector Amber (`#ff9900`).
 - **Tactile Offset Shadows:** No blurred ambient light. Interactive elevation is rendered strictly through hard offset pixel steps (`2px 2px` to `10px 10px` solid shift).
-- **Four-Tier Typographic Engine:** Outfit for heavyweight cinema titles, Space Grotesk for navigation and controls, JetBrains Mono for index scores and rankings, and Plus Jakarta Sans for reading long-form critical prose.
+- **Editorial Typography Engine:** Outfit for heavyweight cinema titles, Space Grotesk for navigation and controls, JetBrains Mono strictly for scores and numerical metadata, and Plus Jakarta Sans for reading long-form critical prose.
+- **Anti-Terminal Cleanliness:** No decorative code slashes (`//`), backslashes, or pseudo-CLI markers. The aesthetic is an editorial cinema archive box, not a programmer terminal.
 
 ---
 
@@ -112,14 +113,14 @@ The spatial philosophy is unapologetically planar and structural. Content is org
 The Criticbox palette operates on extreme dynamic range: total cinematic darkness punctuated by surgical monochrome dividers and a single, incandescent projection lamp accent.
 
 ### Primary
-- **Cadmium Projector Amber** (`#ff9900`): The signature beacon. Used sparingly and decisively for active navigation links, primary action triggers, score callouts, ranking indicators, and the iconic terminal square logo glyph.
+- **Cadmium Projector Amber** (`#ff9900`): The signature beacon. Used sparingly and decisively for active navigation links, primary action triggers, score callouts, ranking indicators, and the iconic square logo glyph (■).
 - **Amber Glow / Hover** (`#ffaa22`): Interactive state for primary actions and focused highlights.
 - **Amber Translucent Fill** (`rgba(255, 153, 0, 0.08)`): Used for active tab badges and chip backgrounds to denote active state without visual noise.
 - **Amber Translucent Border** (`rgba(255, 153, 0, 0.25)`): Hairline frame for active chips and selected items.
 
 ### Neutral
 - **Noir Void (Background Body)** (`#06070a`): The canvas base. Deep absorbing black evoking the darkness of a cinema auditorium.
-- **Terminal Charcoal (Card Base)** (`#0a0c11`): The surface for resting movie cards, lists, and secondary panels.
+- **Archive Charcoal (Card Base)** (`#0a0c11`): The surface for resting movie cards, lists, and secondary panels.
 - **Elevated Steel (Card Hover / Elevated Surface)** (`#11141d`): Hover state for interactive tiles and active dialog containers.
 - **Stark White (Text & Structural Borders)** (`#ffffff`): Pure high-contrast white. Applied to display titles, active button frames, and the bottom rule of the main navigation bar.
 - **Muted Slate (Secondary Text)** (`#9ca3af`): Body summaries, synopses, and default link text.
@@ -140,23 +141,27 @@ The typographic system utilizes four specialized typefaces, each assigned to a s
 
 **Display Font:** Outfit (Weights 800, 900)  
 **Control & UI Font:** Space Grotesk (Weights 600, 700, 800)  
-**Technical & Monospace Font:** JetBrains Mono (Weights 500, 700)  
+**Score & Metric Font:** JetBrains Mono (Weights 500, 700)  
 **Prose & Body Font:** Plus Jakarta Sans (Weights 400, 500, 600)  
 
-**Character:** A collision of monumental 1970s film poster titling (Outfit), mid-century European modernist signage (Space Grotesk), raw mainframe terminal telemetry (JetBrains Mono), and editorial clarity (Plus Jakarta Sans).
+**Character:** A collision of monumental 1970s film poster titling (Outfit), mid-century European modernist signage (Space Grotesk), precision tabular rating indexes (JetBrains Mono), and editorial clarity (Plus Jakarta Sans).
 
 ### Hierarchy
 - **Display** (Outfit, 900, `clamp(2.4rem, 5vw, 3.5rem)`, Line-height: 1.05, Tracking: `-0.03em`, Uppercase): Hero title banners, cinema marquee headlines.
 - **Headline** (Outfit, 800, `1.45rem`, Line-height: 1.15, Tracking: `-0.01em`, Uppercase): Section headings (e.g., "EM CARTAZ", "EM ALTA", "ÚLTIMAS CRÍTICAS").
 - **Title** (Space Grotesk, 700, `1.05rem`–`1.15rem`, Line-height: 1.25, Tracking: `0.02em`): Film titles in cards, modal header titles, reviewer usernames.
 - **Body** (Plus Jakarta Sans, 400–500, `0.88rem`–`0.92rem`, Line-height: 1.65): Critical reviews, synopsis paragraphs, user comments (max reading measure: 65–75ch).
-- **Label / Control** (Space Grotesk, 700, `0.75rem`–`0.82rem`, Line-height: 1, Tracking: `0.04em`, Uppercase): Buttons, navigation links, eyebrow badges, filter chips.
-- **Metric / Monospace** (JetBrains Mono, 700, `0.65rem`–`1.0rem`): Numerical scores, year dates, runtime timestamps, rank numbers (`#01`).
+- **Label / Control** (Space Grotesk, 700, `0.75rem`–`0.82rem`, Line-height: 1, Tracking: `0.04em`, Uppercase): Buttons, navigation links, eyebrow badges, filter chips. Clean and direct without decorative slashes or CLI prefixes.
+- **Metric / Data Numbers** (JetBrains Mono, 700, `0.65rem`–`1.0rem`): Numerical scores (`9.0`), release years (`2024`), runtime durations (`128 MIN`), and ranking badges (`#01`). Strictly confined to numeric values; never applied to section labels, headers, or body text.
 
 ### Named Rules
 **The Case Doctrine Rule.** All headings, buttons, chips, and section headers are strictly uppercase. Body copy, reviews, and synopses remain sentence case for reading comfort.
 
-**The Numeric Mono Rule.** Every numerical rating, rank badge, timestamp, and runtime must be set in `JetBrains Mono` with tabular numbers to preserve alignment and mechanical feeling.
+**The Numeric Mono Rule.** Every numerical rating, rank badge, timestamp, and runtime must be set in `JetBrains Mono` with tabular numbers to preserve alignment and typographic precision.
+
+**The Anti-Terminal / Editorial Purity Rule.** Prohibit decorative code slashes (`//` or `\`), terminal prompts (`>`, `$`, `_`), and pseudo-CLI syntax in section headers, navigation, badges, and labels. Headings and badges must be clean, direct, and authoritative (e.g., "DIREÇÃO", "EM ALTA", "ROTEIRO & ARGUMENTO", "CRITICBOX CONTA", not "// DIREÇÃO", "#01 // EM ALTA", or "CRITICBOX // CONTA"). Criticbox is an architectural film review publication, not a developer console.
+
+**The Strict Mono Boundary Rule.** JetBrains Mono is strictly confined to numerical scores, timestamps, dates, and tabular metrics. It must never bleed into section labels, buttons, or descriptive text.
 
 ---
 
@@ -267,13 +272,17 @@ The form language is defined by total rectangular purity.
 
 ### Do:
 - **Do** enforce `border-radius: 0 !important` on every newly authored component, dialog, avatar, badge, or container.
-- **Do** use `JetBrains Mono` for any data-driven value: scores, ratings, episode codes (e.g. `T01E04`), years, runtimes, and ranks.
+- **Do** use `JetBrains Mono` strictly for numeric and data values: scores, ratings, episode codes (e.g. `T01E04`), years, runtimes, and ranks.
 - **Do** keep display headings in `Outfit` (all-caps) and interactive UI controls in `Space Grotesk` (all-caps).
+- **Do** maintain a dignified, editorial cinema journal voice—clean typography, crisp labels, and physical print layout weight.
 - **Do** use hard-edged, solid offset drop shadows (`2px 2px 0 0 ...`) without blur on button or card hover states.
 - **Do** keep background surfaces rooted in dark noir tones (`#06070a`, `#0a0c11`, `#11141d`).
 - **Do** frame high-prominence headers, hero posters, and modals with solid high-contrast borders (`2px solid #ffffff`).
 
 ### Don't:
+- **Don't** add decorative slashes (`//` or `\`), pseudo-code syntax, command-line prompts (`>`, `$`), or terminal artifacts to labels, badges, section titles, or footers.
+- **Don't** treat Criticbox like a developer CLI or hacker console; it is an architectural cinema archive and review publication.
+- **Don't** use `JetBrains Mono` for general UI labels, titles, or body copy; reserve it strictly for numerical values and tabular metrics.
 - **Don't** use pill buttons, rounded card corners, circular avatars, or any `border-radius > 0px`.
 - **Don't** apply blurry, multi-stop ambient drop shadows (`box-shadow: 0 10px 30px rgba(...)`).
 - **Don't** introduce colorful decorative gradients (purple-to-blue, sunset gradients, or SaaS glass bubbles).

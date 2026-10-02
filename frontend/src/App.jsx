@@ -1,7 +1,7 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ReviewModalProvider } from './context/ReviewModalContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -12,11 +12,27 @@ import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import MovieDetailPage from './pages/MovieDetailPage';
 
+function AuthRouteWatcher() {
+  const location = useLocation();
+  const { openAuth } = useAuth();
+
+  useEffect(() => {
+    if (location.pathname === '/login') {
+      openAuth('login');
+    } else if (location.pathname === '/register') {
+      openAuth('register');
+    }
+  }, [location.pathname, openAuth]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <ToastProvider>
       <AuthProvider>
         <ReviewModalProvider>
+          <AuthRouteWatcher />
           {/* Hidden SVG for half-star gradient */}
           <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
             <defs>
@@ -34,6 +50,9 @@ export default function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/movie/:id" element={<MovieDetailPage />} />
             <Route path="/movies/:id" element={<MovieDetailPage />} />
+            <Route path="/login" element={<HomePage />} />
+            <Route path="/register" element={<HomePage />} />
+            <Route path="/auth" element={<HomePage />} />
           </Routes>
 
           <Footer />

@@ -373,7 +373,7 @@ export default function HomePage() {
                 src={heroMovie.poster_url || 'https://image.tmdb.org/t/p/w500/x0nvYzQpyJc5pdT9lMnkMuYAg0O.jpg'}
                 alt={heroMovie.title}
               />
-              <span className="hero-poster-rank">#01 // EM ALTA</span>
+              <span className="hero-poster-rank">#01 · EM ALTA</span>
             </div>
             <div className="hero-info">
               <div className="hero-kicker">

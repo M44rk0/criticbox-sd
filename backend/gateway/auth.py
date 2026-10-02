@@ -10,7 +10,7 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "criticbox_sd_super_secret_jwt_key_2026")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
+ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24") or 24)
 
 security = HTTPBearer(auto_error=False)
 
