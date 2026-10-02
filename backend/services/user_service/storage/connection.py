@@ -12,35 +12,35 @@ from sqlalchemy import Engine, create_engine, delete, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from services.storage.models import Base, Review, User
+from services.user_service.storage.models import User, UserBase
 
 load_dotenv()
 
 
 def is_mysql() -> bool:
-    if os.getenv("DATABASE_PATH"):
+    if os.getenv("USER_DATABASE_PATH") or os.getenv("DATABASE_PATH"):
         return False
-    return bool(os.getenv("DB_HOST")) or os.getenv("DB_TYPE", "").lower() == "mysql"
+    return bool(os.getenv("USER_DB_HOST") or os.getenv("DB_HOST")) or os.getenv("DB_TYPE", "").lower() == "mysql"
 
 
 def get_sqlite_path() -> str:
-    custom_path = os.getenv("DATABASE_PATH")
+    custom_path = os.getenv("USER_DATABASE_PATH") or os.getenv("DATABASE_PATH")
     if custom_path:
         return custom_path
 
-    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     data_dir = os.path.join(backend_dir, "data")
     os.makedirs(data_dir, exist_ok=True)
-    return os.path.join(data_dir, "criticbox.db")
+    return os.path.join(data_dir, "users.db")
 
 
 def get_database_url() -> str:
     if is_mysql():
-        host = os.getenv("DB_HOST", "localhost")
-        port = os.getenv("DB_PORT", "3306")
-        user = os.getenv("DB_USER", "root")
-        password = os.getenv("DB_PASSWORD", "")
-        database = os.getenv("DB_NAME", "criticbox")
+        host = os.getenv("USER_DB_HOST") or os.getenv("DB_HOST", "localhost")
+        port = os.getenv("USER_DB_PORT") or os.getenv("DB_PORT", "3306")
+        user = os.getenv("USER_DB_USER") or os.getenv("DB_USER", "root")
+        password = os.getenv("USER_DB_PASSWORD") or os.getenv("DB_PASSWORD", "")
+        database = os.getenv("USER_DB_NAME") or os.getenv("DB_NAME_USER") or "criticbox_users"
         return f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}?charset=utf8mb4"
 
     sqlite_path = get_sqlite_path().replace("\\", "/")
@@ -98,12 +98,11 @@ def get_session() -> Generator[Session, None, None]:
 
 def init_db():
     engine = get_engine()
-    Base.metadata.create_all(bind=engine)
+    UserBase.metadata.create_all(bind=engine)
 
 
 def clear_db():
     with get_session() as session:
-        session.execute(delete(Review))
         session.execute(delete(User))
 
 
@@ -138,11 +137,11 @@ def _create_sqlite_conn() -> sqlite3.Connection:
 def get_connection():
     if is_mysql():
         conn = pymysql.connect(
-            host=os.getenv("DB_HOST", "localhost"),
-            port=int(os.getenv("DB_PORT", "3306")),
-            user=os.getenv("DB_USER", "root"),
-            password=os.getenv("DB_PASSWORD", ""),
-            database=os.getenv("DB_NAME", "criticbox"),
+            host=os.getenv("USER_DB_HOST") or os.getenv("DB_HOST", "localhost"),
+            port=int(os.getenv("USER_DB_PORT") or os.getenv("DB_PORT", "3306")),
+            user=os.getenv("USER_DB_USER") or os.getenv("DB_USER", "root"),
+            password=os.getenv("USER_DB_PASSWORD") or os.getenv("DB_PASSWORD", ""),
+            database=os.getenv("USER_DB_NAME") or os.getenv("DB_NAME_USER") or "criticbox_users",
             cursorclass=pymysql.cursors.DictCursor,
             autocommit=True,
         )
@@ -157,16 +156,19 @@ def get_connection():
         except queue.Empty:
             conn = _create_sqlite_conn()
 
+        cm = conn if hasattr(conn, "__enter__") else contextlib.nullcontext(conn)
         try:
-            with conn:
+            with cm:
                 yield DBClient(conn, is_mysql_conn=False)
             try:
                 _SQLITE_POOL.put_nowait(conn)
             except queue.Full:
-                conn.close()
+                if hasattr(conn, "close"):
+                    conn.close()
         except Exception:
             try:
-                conn.close()
+                if hasattr(conn, "close"):
+                    conn.close()
             except Exception:
                 pass
             raise

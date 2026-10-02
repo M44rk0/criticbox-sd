@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select
 
-from services.storage.connection import get_session
-from services.storage.models import User
+from services.user_service.storage.connection import get_session
+from services.user_service.storage.models import User
 
 
 def _hash_password(password: str) -> str:

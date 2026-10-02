@@ -52,7 +52,7 @@ def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> d
 
     if user_id and str(user_id).strip():
         try:
-            from services import storage as database
+            from services.review_service import storage as database
 
             user_reviews = database.get_reviews_by_user(str(user_id).strip())
             reviewed_ids = {r["tmdb_id"] for r in user_reviews}

@@ -1,6 +1,11 @@
-# Dicionário de Dados — Criticbox SD
+# Dicionário de Dados — Criticbox SD (Database per Service)
 
-Este documento descreve detalhadamente o esquema de banco de dados relacional utilizado no projeto **Criticbox SD**, mapeado através do **SQLAlchemy 2.0** com suporte híbrido a **SQLite** (ambiente local e testes) e **MySQL / Cloud SQL** (ambiente de produção).
+Este documento descreve detalhadamente o esquema de bancos de dados relacionais utilizado no projeto **Criticbox SD**, estruturado segundo o padrão **Database per Service (Banco por Microsserviço)** através do **SQLAlchemy 2.0** com suporte híbrido a **SQLite** (ambiente local e testes) e **MySQL / Cloud SQL** (ambiente de produção GCP).
+
+Cada microsserviço é proprietário exclusivo de sua base de dados, garantindo isolamento total de domínio e dados:
+- **UserService**: Banco exclusivo `users.db` (local) ou `criticbox_users` (MySQL), contendo a tabela `users`.
+- **ReviewService**: Banco exclusivo `reviews.db` (local) ou `criticbox_reviews` (MySQL), contendo a tabela `reviews`.
+- **MovieService**: Microsserviço *stateless* (sem persistência relacional própria, consome TMDb e métricas de reviews via gRPC).
 
 ---
 

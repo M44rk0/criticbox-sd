@@ -4,8 +4,8 @@ from typing import Any
 
 from sqlalchemy import and_, func, or_, select, update
 
-from services.storage.connection import get_session
-from services.storage.models import Review
+from services.review_service.storage.connection import get_session
+from services.review_service.storage.models import Review
 
 
 def _format_review_row(r: Any) -> dict:

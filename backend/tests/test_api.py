@@ -21,10 +21,11 @@ from gateway.main import app
 from generated import movie_pb2_grpc as m_pb2_grpc
 from generated import review_pb2_grpc as r_pb2_grpc
 from generated import user_pb2_grpc as u_pb2_grpc
-from services import storage as database
 from services.movie_service import MovieServiceServicer
 from services.review_service import ReviewServiceServicer
+from services.review_service import storage as database
 from services.user_service import UserServiceServicer
+from services.user_service import storage as user_database
 
 
 class TestCriticboxDistributedAPI(unittest.TestCase):
@@ -64,11 +65,14 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
             cls.review_server.stop(0)
 
     def setUp(self):
+        user_database.init_db()
         database.init_db()
+        user_database.clear_db()
         database.clear_db()
         self.client = TestClient(app)
 
     def tearDown(self):
+        user_database.clear_db()
         database.clear_db()
 
     # ----------------- Root & Health ----------------- #

@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from services import storage
+from services.review_service import storage as review_storage
 from services.tmdb import (
     _CACHE,
     _extract_certification,
@@ -32,17 +32,21 @@ from services.tmdb import (
 )
 from services.tmdb.cache import MAX_CACHE_SIZE
 from services.tmdb.recommender import _fetch_seed_recommendations
+from services.user_service import storage as user_storage
 
 
 class TestTMDBModule(unittest.TestCase):
     def setUp(self):
         clear_cache()
-        storage.init_db()
-        storage.clear_db()
+        user_storage.init_db()
+        review_storage.init_db()
+        user_storage.clear_db()
+        review_storage.clear_db()
 
     def tearDown(self):
         clear_cache()
-        storage.clear_db()
+        user_storage.clear_db()
+        review_storage.clear_db()
 
     def test_cache_set_and_get(self):
         _set_cache("test_key", {"data": 123})
@@ -190,9 +194,9 @@ class TestTMDBModule(unittest.TestCase):
             self.assertGreaterEqual(len(res["results"]), 1)
 
     def test_recommender_with_user_reviews(self):
-        storage.create_user("cinephile_test", "password123")
-        storage.add_review(tmdb_id=550, user_id="cinephile_test", rating=5.0)
-        storage.add_review(tmdb_id=680, user_id="cinephile_test", rating=4.5)
+        user_storage.create_user("cinephile_test", "password123")
+        review_storage.add_review(tmdb_id=550, user_id="cinephile_test", rating=5.0)
+        review_storage.add_review(tmdb_id=680, user_id="cinephile_test", rating=4.5)
 
         with patch("services.tmdb.recommender._fetch_seed_recommendations") as mock_seed:
             mock_seed.return_value = [
@@ -290,8 +294,8 @@ class TestTMDBModule(unittest.TestCase):
         self.assertEqual(hit["results"][0]["id"], 10)
 
     def test_recommender_genre_affinity_and_fallback_exception(self):
-        storage.create_user("cine_user_affinity", "password123")
-        storage.add_review(tmdb_id=101, user_id="cine_user_affinity", rating=5.0)
+        user_storage.create_user("cine_user_affinity", "password123")
+        review_storage.add_review(tmdb_id=101, user_id="cine_user_affinity", rating=5.0)
 
         _set_cache("details:movie:101", {"genre_ids": [28, 878]})
 

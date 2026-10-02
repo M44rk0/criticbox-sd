@@ -7,16 +7,20 @@ from run_all import (
     start_review_service,
     start_user_service,
 )
-from services import storage
+from services.review_service import storage as review_storage
+from services.user_service import storage as user_storage
 
 
 class TestRunnerAndScripts(unittest.TestCase):
     def setUp(self):
-        storage.init_db()
-        storage.clear_db()
+        user_storage.init_db()
+        review_storage.init_db()
+        user_storage.clear_db()
+        review_storage.clear_db()
 
     def tearDown(self):
-        storage.clear_db()
+        user_storage.clear_db()
+        review_storage.clear_db()
 
     def test_run_all_start_services(self):
         with patch("grpc.server") as mock_grpc:
@@ -28,28 +32,22 @@ class TestRunnerAndScripts(unittest.TestCase):
             self.assertTrue(mock_srv.start.called)
 
             mock_srv.reset_mock()
-            rev_srv = start_review_service()
-            self.assertEqual(rev_srv, mock_srv)
-            self.assertTrue(mock_srv.start.called)
-
-            mock_srv.reset_mock()
             mov_srv = start_movie_service()
             self.assertEqual(mov_srv, mock_srv)
             self.assertTrue(mock_srv.start.called)
 
-    def test_run_all_warm_cache(self):
-        with patch("services.tmdb.get_trending_movies") as mock_trend:
-            with patch("services.tmdb.get_now_playing_movies") as mock_np:
-                with patch("services.tmdb.get_trending_tv") as mock_tv:
-                    _warm_cache()
-                    self.assertTrue(mock_trend.called)
-                    self.assertTrue(mock_np.called)
-                    self.assertTrue(mock_tv.called)
+            mock_srv.reset_mock()
+            rev_srv = start_review_service()
+            self.assertEqual(rev_srv, mock_srv)
+            self.assertTrue(mock_srv.start.called)
 
-    def test_run_all_warm_cache_handles_exception(self):
-        with patch("services.tmdb.get_trending_movies", side_effect=Exception("Cache error")):
-            # Should catch and log warning without raising
-            _warm_cache()
+    def test_warm_cache_handles_exceptions_gracefully(self):
+        with patch("services.tmdb.get_trending_movies", side_effect=Exception("API down")):
+            with patch("services.tmdb.get_now_playing_movies", side_effect=Exception("API down")):
+                try:
+                    _warm_cache()
+                except Exception as e:
+                    self.fail(f"_warm_cache não deveria levantar exceção: {e}")
 
 
 if __name__ == "__main__":

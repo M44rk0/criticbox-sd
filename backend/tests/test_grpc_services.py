@@ -12,23 +12,27 @@ if BASE_DIR not in sys.path:
 from generated import movie_pb2 as m_pb2
 from generated import review_pb2 as r_pb2
 from generated import user_pb2 as u_pb2
-from services import storage
 from services.movie_service import (
     MovieServiceServicer,
     _fetch_batch_movie_stats_via_grpc,
     _fetch_movie_stats_via_grpc,
 )
 from services.review_service import ReviewServiceServicer
+from services.review_service import storage as review_storage
 from services.user_service import UserServiceServicer
+from services.user_service import storage as user_storage
 
 
 class TestGRPCServices(unittest.TestCase):
     def setUp(self):
-        storage.init_db()
-        storage.clear_db()
+        user_storage.init_db()
+        review_storage.init_db()
+        user_storage.clear_db()
+        review_storage.clear_db()
 
     def tearDown(self):
-        storage.clear_db()
+        user_storage.clear_db()
+        review_storage.clear_db()
 
     # ----------------- ReviewServiceServicer Direct Tests ----------------- #
     def test_review_servicer_create_review_invalid_rating(self):
@@ -50,8 +54,8 @@ class TestGRPCServices(unittest.TestCase):
         self.assertIn("em branco", res.message)
 
     def test_review_servicer_get_movie_stats(self):
-        storage.add_review(tmdb_id=701, user_id="u1", rating=4.0)
-        storage.add_review(tmdb_id=701, user_id="u2", rating=5.0)
+        review_storage.add_review(tmdb_id=701, user_id="u1", rating=4.0)
+        review_storage.add_review(tmdb_id=701, user_id="u2", rating=5.0)
 
         servicer = ReviewServiceServicer()
         req = r_pb2.MovieStatsRequest(tmdb_id=701)
@@ -61,8 +65,8 @@ class TestGRPCServices(unittest.TestCase):
         self.assertEqual(res.total_count, 2)
 
     def test_review_servicer_get_reviews_by_movie(self):
-        storage.add_review(tmdb_id=702, user_id="u1", rating=4.0, comment="Rev 1")
-        storage.add_review(tmdb_id=702, user_id="u2", rating=3.0, comment="Rev 2")
+        review_storage.add_review(tmdb_id=702, user_id="u1", rating=4.0, comment="Rev 1")
+        review_storage.add_review(tmdb_id=702, user_id="u2", rating=3.0, comment="Rev 2")
 
         servicer = ReviewServiceServicer()
         req = r_pb2.MovieReviewsRequest(tmdb_id=702)
@@ -235,7 +239,7 @@ class TestGRPCServices(unittest.TestCase):
                 self.assertTrue(res.success)
 
     def test_review_servicer_poster_backfill_and_exceptions(self):
-        storage.add_review(tmdb_id=550, user_id="u_backfill", rating=4.0, poster_url="")
+        review_storage.add_review(tmdb_id=550, user_id="u_backfill", rating=4.0, poster_url="")
 
         servicer = ReviewServiceServicer()
 
@@ -247,8 +251,9 @@ class TestGRPCServices(unittest.TestCase):
             self.assertEqual(res.reviews[0].poster_url, "https://image.tmdb.org/t/p/w500/backfilled.jpg")
 
         # Clear poster again
-        storage.clear_db()
-        storage.add_review(tmdb_id=550, user_id="u_backfill", rating=4.0, poster_url="")
+        user_storage.clear_db()
+        review_storage.clear_db()
+        review_storage.add_review(tmdb_id=550, user_id="u_backfill", rating=4.0, poster_url="")
 
         # 2. GetReviewsByMovie backfill with exception
         with patch("services.tmdb.get_movie_details", side_effect=Exception("Poster fetch failed")):
@@ -301,8 +306,8 @@ class TestGRPCServices(unittest.TestCase):
 
     def test_review_servicer_batch_stats(self):
         servicer = ReviewServiceServicer()
-        storage.add_review(tmdb_id=111, user_id="rpc_user", rating=4.0)
-        storage.add_review(tmdb_id=222, user_id="rpc_user", rating=5.0)
+        review_storage.add_review(tmdb_id=111, user_id="rpc_user", rating=4.0)
+        review_storage.add_review(tmdb_id=222, user_id="rpc_user", rating=5.0)
         batch_req = r_pb2.BatchMovieStatsRequest(tmdb_ids=[111, 222])
         batch_res = servicer.GetBatchMovieStats(batch_req, None)
         self.assertIn(111, batch_res.stats)

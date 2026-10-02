@@ -8,9 +8,9 @@ if BASE_DIR not in sys.path:
 
 
 from generated import review_pb2 as r_pb2
-from services import storage as database
 from services import tmdb as tmdb_service
 from services.review_service import ReviewServiceServicer
+from services.review_service import storage as database
 
 
 class TestGetAllReviews(unittest.TestCase):

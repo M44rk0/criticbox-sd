@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from concurrent import futures
+from datetime import datetime, timezone
 
 import grpc
 from dotenv import load_dotenv
@@ -10,12 +11,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from datetime import datetime, timezone
-
 from generated import review_pb2 as r_pb2
 from generated import review_pb2_grpc as r_pb2_grpc
-from services import storage as database
 from services import tmdb as tmdb_service
+from services.review_service import storage as database
 
 load_dotenv()
 
@@ -28,10 +27,9 @@ PORT = int(os.getenv("REVIEW_SERVICE_PORT", "50052"))
 class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
     def __init__(self):
         database.init_db()
-        logger.info("Banco de dados inicializado no ReviewService.")
+        logger.info("Banco de dados isolado inicializado no ReviewService.")
 
     def CreateReview(self, request, context):
-
         media_type = getattr(request, "media_type", "movie") or "movie"
         season_num = request.season_number if request.season_number > 0 else None
         episode_num = request.episode_number if request.episode_number > 0 else None

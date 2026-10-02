@@ -54,16 +54,13 @@ Em vez de uma aplicação monolítica onde rotas HTTP acessam o banco diretament
          |                                v                                |
          |                      +--------------------+                     |
          |                      |  API Externa TMDb  |                     |
-         |                      |  (Metadados Web)   |                     |
+         |                      |     (Stateless)    |                     |
          |                      +--------------------+                     |
-         |                                                                 |
-         +--------------------------------+--------------------------------+
-                                          |
-                                          v
-                               +--------------------+
-                               |   Banco de Dados   |
-                               | (SQLite / MySQL)   |
-                               +--------------------+
+         v                                                                 v
++--------------------+                                            +--------------------+
+| Banco de Usuários  |                                            | Banco de Avaliações|
+| (users.db/MySQL)   |                                            |(reviews.db/MySQL)  |
++--------------------+                                            +--------------------+
 ```
 
 ---
@@ -164,21 +161,31 @@ Implementado em `backend/services/review_service.py`, este microsserviço é foc
 
 ---
 
-## 6. Camada de Persistência e Otimizações de Desempenho
+## 6. Camada de Persistência: Padrão Database per Service (Bancos Isolados)
 
-### 6.1. ORM com SQLAlchemy 2.0 e Suporte Híbrido (SQLite e Cloud SQL / MySQL)
-A camada de persistência foi unificada utilizando o **SQLAlchemy 2.0**, desacoplada através do **Padrão Repository** (`models.py`, `connection.py`, `user_repository.py` e `review_repository.py`):
-- **Modelos Declarativos Tipados (`models.py`)**:
-  - `User`: Entidade de usuário com chave primária em UUID (`id`), login único indexado (`username`), `password_hash` e timestamp.
-  - `Review`: Entidade de avaliações mapeando `id` (UUID), `tmdb_id`, `user_id` (UUID do autor), `username` (nome de exibição), nota (`rating`), comentários, spoilers, data e campos de série/filme (`media_type`, `season_number`, `episode_number`, `movie_title`, `poster_url`).
-- **Auto-criação de Esquemas (`Base.metadata.create_all`)**:
-  - Ao subir a aplicação ou executar testes, o SQLAlchemy inspeciona as entidades e cria automaticamente as tabelas e índices necessários no banco de destino.
-  - Elimina a necessidade de scripts manuais de criação de tabelas ao fazer deploy no Google Cloud (Cloud SQL).
-- **Flexibilidade de Ambientes**:
-  - **SQLite (Desenvolvimento Local & Testes)**: Conexão via `sqlite:///{path}` configurada com modo **WAL (Write-Ahead Logging)**, `PRAGMA synchronous = NORMAL` e timeout para leituras e escritas concorrentes sem travamentos.
-  - **Cloud SQL / MySQL (Produção GCP)**: Se variáveis como `DB_HOST`, `DB_USER`, `DB_PASSWORD` ou `DB_NAME` forem preenchidas no `.env`, a conexão é estabelecida de forma transparente via `mysql+pymysql://...` com pool de conexões reciclado e `pool_pre_ping`.
-- **Sessões Transacionais (`get_session`)**:
-  - Gerenciador de contexto thread-safe que executa as operações atômicas, com `commit()` automático ao concluir o bloco e `rollback()` preventivo em caso de qualquer exceção.
+### 6.1. Isolamento Físico e Lógico por Microsserviço
+O Criticbox adota estritamente o padrão arquitetural **Database per Service (Banco por Microsserviço)**. Nenhum microsserviço acessa direta ou indiretamente as tabelas de outro serviço:
+
+1. **UserService (`users.db` / `criticbox_users`)**:
+   - Persistência exclusiva em `backend/services/user_service/storage/`.
+   - Gerencia a entidade declarativa `User` (subclasse de `UserBase`).
+   - Armazena `id` (UUID), `username` único indexado, `password_hash` (PBKDF2/SHA256) e data de criação.
+   - Sua inicialização (`init_db`) cria estritamente a tabela `users`, sem qualquer conhecimento sobre avaliações.
+
+2. **ReviewService (`reviews.db` / `criticbox_reviews`)**:
+   - Persistência exclusiva em `backend/services/review_service/storage/`.
+   - Gerencia a entidade declarativa `Review` (subclasse de `ReviewBase`).
+   - Mapeia `id`, `tmdb_id`, `user_id`, `username`, `rating`, `comment`, spoilers, temporadas e metadados.
+   - Sua inicialização (`init_db`) cria estritamente a tabela `reviews`, sem qualquer conhecimento sobre credenciais de usuários.
+
+3. **MovieService (Stateless com Cache em Memória)**:
+   - Atua de forma stateless em relação ao armazenamento relacional.
+   - Agrega dados dinamicamente do TMDb e consome métricas de reviews exclusivamente através de chamadas **gRPC inter-serviço** (`GetMovieStats` e `GetBatchMovieStats`) ao `ReviewService`.
+
+### 6.2. Suporte Híbrido (SQLite e Cloud SQL / MySQL)
+- **SQLite (Desenvolvimento Local & Testes)**: Arquivos `.db` dedicados em `data/` (`data/users.db` e `data/reviews.db`), configurados com modo **WAL (Write-Ahead Logging)**, `PRAGMA synchronous = NORMAL` e timeout para leituras e escritas concorrentes.
+- **Cloud SQL / MySQL (Produção GCP)**: Se variáveis de conexão MySQL forem fornecidas, cada serviço conecta em sua respectiva base (`USER_DB_NAME` e `REVIEW_DB_NAME`) com pool de conexões reciclado e `pool_pre_ping`.
+- **Sessões Transacionais (`get_session`)**: Context manager thread-safe que executa operações atômicas com `commit()` e `rollback()` preventivo.
 
 ### 6.2. Estratégia de Desnormalização e Otimização de Consultas
 Para garantir alta performance e tempo de resposta previsível na listagem de avaliações, o Criticbox adota uma estratégia de desnormalização controlada no momento da escrita:
@@ -233,21 +240,27 @@ criticbox-sd/
 │   │       ├── movies.py       # Schemas de catálogo, elenco e episódios
 │   │       ├── reviews.py      # Schemas de criação e listagem de reviews
 │   │       └── common.py       # Schemas de erros e respostas genéricas
-│   ├── services/               # Microsserviços Internos gRPC
-│   │   ├── user_service.py     # Servicer gRPC UserService (:50053)
-│   │   ├── movie_service.py    # Servicer gRPC MovieService (:50051)
-│   │   ├── review_service.py   # Servicer gRPC ReviewService (:50052)
-│   │   ├── storage/            # Camada de Persistência (SQLAlchemy 2.0)
-│   │   │   ├── connection.py   # Engine e Session Factory
-│   │   │   ├── models.py       # Modelos ORM (User, Review)
-│   │   │   ├── user_repository.py
-│   │   │   └── review_repository.py
+│   ├── services/               # Microsserviços Internos gRPC (Pacotes Autônomos)
+│   │   ├── user_service/       # Microsserviço de Identidade & Autenticação (:50053)
+│   │   │   ├── servicer.py     # Implementação gRPC (UserService)
+│   │   │   └── storage/        # Banco de Dados Exclusivo (users.db / criticbox_users)
+│   │   │       ├── connection.py
+│   │   │       ├── models.py   # UserBase & Entidade User
+│   │   │       └── repository.py
+│   │   ├── review_service/     # Microsserviço de Avaliações (:50052)
+│   │   │   ├── servicer.py     # Implementação gRPC (ReviewService)
+│   │   │   └── storage/        # Banco de Dados Exclusivo (reviews.db / criticbox_reviews)
+│   │   │       ├── connection.py
+│   │   │       ├── models.py   # ReviewBase & Entidade Review
+│   │   │       └── repository.py
+│   │   ├── movie_service/      # Microsserviço de Catálogo & TMDb (:50051 / Stateless)
+│   │   │   └── servicer.py     # Implementação gRPC (MovieService)
 │   │   └── tmdb/               # Módulo TMDb & Recomendações
-│   │       ├── client.py       # Cliente HTTP TMDb
-│   │       ├── catalog.py      # Operações de catálogo e temporadas
-│   │       ├── cache.py        # Cache thread-safe com TTL
-│   │       ├── extractors.py   # Normalização de payloads externos
-│   │       └── recommender.py  # Motor de recomendação baseado em afinidade
+│   │   │   ├── client.py       # Cliente HTTP TMDb
+│   │   │   ├── catalog.py      # Operações de catálogo e temporadas
+│   │   │   ├── cache.py        # Cache thread-safe com TTL
+│   │   │   ├── extractors.py   # Normalização de payloads externos
+│   │   │   └── recommender.py  # Motor de recomendação baseado em afinidade
 │   ├── proto/                  # Contratos de interface Protocol Buffers
 │   │   ├── user.proto
 │   │   ├── movie.proto

@@ -12,7 +12,7 @@ if BASE_DIR not in sys.path:
 
 from generated import user_pb2 as u_pb2
 from generated import user_pb2_grpc as u_pb2_grpc
-from services import storage as database
+from services.user_service import storage as database
 
 load_dotenv()
 
@@ -25,7 +25,7 @@ PORT = int(os.getenv("USER_SERVICE_PORT", "50053"))
 class UserServiceServicer(u_pb2_grpc.UserServiceServicer):
     def __init__(self):
         database.init_db()
-        logger.info("Banco de dados inicializado no UserService.")
+        logger.info("Banco de dados isolado inicializado no UserService.")
 
     def RegisterUser(self, request, context):
         logger.info("RegisterUser -> Solicitado para username='%s'", request.username)
