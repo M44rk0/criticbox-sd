@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 from concurrent import futures
@@ -10,14 +9,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from common.telemetry import configure_service_logger, traced_rpc
 from generated import user_pb2 as u_pb2
 from generated import user_pb2_grpc as u_pb2_grpc
 from services.user_service import storage as database
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [UserService] %(message)s")
-logger = logging.getLogger("UserService")
+logger = configure_service_logger("UserService")
 
 PORT = int(os.getenv("USER_SERVICE_PORT", "50053"))
 
@@ -27,9 +26,15 @@ class UserServiceServicer(u_pb2_grpc.UserServiceServicer):
         database.init_db()
         logger.info("Banco de dados isolado inicializado no UserService.")
 
+    @traced_rpc()
     def RegisterUser(self, request, context):
         logger.info("RegisterUser -> Solicitado para username='%s'", request.username)
         res = database.create_user(request.username, request.password)
+        logger.info(
+            "RegisterUser -> Resultado para username='%s': %s",
+            request.username,
+            "Sucesso" if res["success"] else f"Falha ({res['message']})",
+        )
         return u_pb2.RegisterUserResponse(
             success=res["success"],
             message=res["message"],
@@ -37,9 +42,15 @@ class UserServiceServicer(u_pb2_grpc.UserServiceServicer):
             username=res["username"],
         )
 
+    @traced_rpc()
     def AuthenticateUser(self, request, context):
         logger.info("AuthenticateUser -> Solicitado para username='%s'", request.username)
         res = database.authenticate_user(request.username, request.password)
+        logger.info(
+            "AuthenticateUser -> Resultado para username='%s': %s",
+            request.username,
+            "Sucesso" if res["success"] else f"Falha ({res['message']})",
+        )
         return u_pb2.AuthenticateUserResponse(
             success=res["success"],
             message=res["message"],

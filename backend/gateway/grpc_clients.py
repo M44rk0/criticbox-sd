@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 
@@ -11,6 +10,7 @@ if BASE_DIR not in sys.path:
 
 from google.protobuf.json_format import MessageToDict
 
+from common.telemetry import TraceClientInterceptor, configure_service_logger
 from generated import movie_pb2 as m_pb2
 from generated import movie_pb2_grpc as m_pb2_grpc
 from generated import review_pb2 as r_pb2
@@ -20,7 +20,7 @@ from generated import user_pb2_grpc as u_pb2_grpc
 
 load_dotenv()
 
-logger = logging.getLogger("criticbox-gateway-grpc")
+logger = configure_service_logger("GatewayGRPC")
 
 USER_HOST = os.getenv("USER_SERVICE_HOST", "localhost")
 USER_PORT = os.getenv("USER_SERVICE_PORT", "50053")
@@ -96,13 +96,14 @@ class GatewayGRPCManager:
             review_target,
         )
 
-        self.user_channel = grpc.insecure_channel(user_target)
+        trace_interceptor = TraceClientInterceptor()
+        self.user_channel = grpc.intercept_channel(grpc.insecure_channel(user_target), trace_interceptor)
         self.user_stub = u_pb2_grpc.UserServiceStub(self.user_channel)
 
-        self.movie_channel = grpc.insecure_channel(movie_target)
+        self.movie_channel = grpc.intercept_channel(grpc.insecure_channel(movie_target), trace_interceptor)
         self.movie_stub = m_pb2_grpc.MovieServiceStub(self.movie_channel)
 
-        self.review_channel = grpc.insecure_channel(review_target)
+        self.review_channel = grpc.intercept_channel(grpc.insecure_channel(review_target), trace_interceptor)
         self.review_stub = r_pb2_grpc.ReviewServiceStub(self.review_channel)
 
     def close_channels(self):

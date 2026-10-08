@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 from concurrent import futures
@@ -11,6 +10,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from common.telemetry import configure_service_logger, traced_rpc
 from generated import review_pb2 as r_pb2
 from generated import review_pb2_grpc as r_pb2_grpc
 from services import tmdb as tmdb_service
@@ -18,8 +18,7 @@ from services.review_service import storage as database
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [ReviewService] %(message)s")
-logger = logging.getLogger("ReviewService")
+logger = configure_service_logger("ReviewService")
 
 PORT = int(os.getenv("REVIEW_SERVICE_PORT", "50052"))
 
@@ -29,6 +28,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         database.init_db()
         logger.info("Banco de dados isolado inicializado no ReviewService.")
 
+    @traced_rpc()
     def CreateReview(self, request, context):
         media_type = getattr(request, "media_type", "movie") or "movie"
         season_num = request.season_number if request.season_number > 0 else None
@@ -110,17 +110,26 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             poster_url=res.get("poster_url") or poster_url,
         )
 
+    @traced_rpc()
     def GetMovieStats(self, request, context):
         stats = database.get_movie_stats(request.tmdb_id)
+        logger.info(
+            "GetMovieStats -> tmdb_id=%d -> %.1f (%d avaliações)",
+            request.tmdb_id,
+            stats["average_rating"],
+            stats["total_count"],
+        )
         return r_pb2.MovieStatsResponse(
             tmdb_id=request.tmdb_id,
             average_rating=stats["average_rating"],
             total_count=stats["total_count"],
         )
 
+    @traced_rpc()
     def GetBatchMovieStats(self, request, context):
         tmdb_ids = list(request.tmdb_ids)
         stats_map = database.get_batch_movie_stats(tmdb_ids)
+        logger.info("GetBatchMovieStats -> %d títulos consultados em lote", len(tmdb_ids))
         res_map = {}
         for tid, s in stats_map.items():
             res_map[tid] = r_pb2.MovieStatsResponse(
@@ -130,6 +139,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             )
         return r_pb2.BatchMovieStatsResponse(stats=res_map)
 
+    @traced_rpc()
     def GetAllReviews(self, request, context):
         limit = request.limit if request.limit > 0 else 50
         logger.info("GetAllReviews -> Buscando até %d reviews no banco", limit)
@@ -167,6 +177,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             )
         return r_pb2.GetAllReviewsResponse(reviews=items, total_count=len(items))
 
+    @traced_rpc()
     def GetReviewsByMovie(self, request, context):
         logger.info("GetReviewsByMovie -> Buscando reviews para o filme tmdb_id=%d", request.tmdb_id)
         raw_reviews = database.get_reviews_by_movie(request.tmdb_id)
@@ -209,6 +220,7 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             )
         return r_pb2.GetAllReviewsResponse(reviews=items, total_count=len(items))
 
+    @traced_rpc()
     def GetReviewsByUser(self, request, context):
         req_username = getattr(request, "username", "") or ""
         logger.info(

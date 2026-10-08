@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 from concurrent import futures
@@ -10,6 +9,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from common.telemetry import TraceClientInterceptor, configure_service_logger, traced_rpc
 from generated import movie_pb2 as m_pb2
 from generated import movie_pb2_grpc as m_pb2_grpc
 from generated import review_pb2 as r_pb2
@@ -18,8 +18,7 @@ from services import tmdb as tmdb_service
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [MovieService] %(message)s")
-logger = logging.getLogger("MovieService")
+logger = configure_service_logger("MovieService")
 
 PORT = int(os.getenv("MOVIE_SERVICE_PORT", "50051"))
 REVIEW_HOST = os.getenv("REVIEW_SERVICE_HOST", "localhost")
@@ -33,8 +32,8 @@ def _get_review_stub() -> r_pb2_grpc.ReviewServiceStub:
     global _review_channel, _review_stub
     if _review_channel is None or _review_stub is None:
         target = f"{REVIEW_HOST}:{REVIEW_PORT}"
-        logger.info("Criando canal persistente com ReviewService em %s", target)
-        _review_channel = grpc.insecure_channel(target)
+        logger.info("Criando canal persistente com ReviewService em %s (com rastreabilidade)", target)
+        _review_channel = grpc.intercept_channel(grpc.insecure_channel(target), TraceClientInterceptor())
         _review_stub = r_pb2_grpc.ReviewServiceStub(_review_channel)
     return _review_stub
 
@@ -98,6 +97,7 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
             total_pages=data.get("total_pages", 1),
         )
 
+    @traced_rpc()
     def SearchMovies(self, request, context):
         page = max(request.page, 1)
         query = request.query.strip()
@@ -106,6 +106,7 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         logger.info("SearchMovies -> Encontrados %d títulos.", len(data.get("results", [])))
         return self._build_catalog_response(data)
 
+    @traced_rpc()
     def GetTrendingMovies(self, request, context):
         time_window = request.time_window or "week"
         page = max(request.page, 1)
@@ -113,12 +114,14 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         data = tmdb_service.get_trending_movies(time_window=time_window, page=page)
         return self._build_catalog_response(data)
 
+    @traced_rpc()
     def GetNowPlayingMovies(self, request, context):
         page = max(request.page, 1)
         logger.info("GetNowPlayingMovies -> Buscando filmes em cartaz (Página %d)", page)
         data = tmdb_service.get_now_playing_movies(page=page)
         return self._build_catalog_response(data)
 
+    @traced_rpc()
     def GetMovieDetails(self, request, context):
         media_type = getattr(request, "media_type", "") or ""
         logger.info("GetMovieDetails -> ID: %d (media_type: %s)", request.tmdb_id, media_type)
@@ -261,6 +264,7 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
             last_air_date=details.get("last_air_date") or "",
         )
 
+    @traced_rpc()
     def GetTrendingTV(self, request, context):
         time_window = request.time_window or "week"
         page = max(request.page, 1)
@@ -268,6 +272,7 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         data = tmdb_service.get_trending_tv(time_window=time_window, page=page)
         return self._build_catalog_response(data)
 
+    @traced_rpc()
     def GetRecommendations(self, request, context):
         user_id = request.user_id or ""
         page = max(request.page, 1)
@@ -275,6 +280,7 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         data = tmdb_service.get_recommendations_for_user(user_id=user_id, page=page)
         return self._build_catalog_response(data)
 
+    @traced_rpc()
     def GetSeasonEpisodes(self, request, context):
         logger.info("GetSeasonEpisodes -> tmdb_id=%d, season=%d", request.tmdb_id, request.season_number)
         data = tmdb_service.get_season_episodes(request.tmdb_id, request.season_number)
@@ -292,6 +298,7 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         ]
         return m_pb2.SeasonEpisodesResponse(episodes=eps)
 
+    @traced_rpc()
     def GetAllEpisodes(self, request, context):
         logger.info("GetAllEpisodes -> tmdb_id=%d", request.tmdb_id)
         all_data = tmdb_service.get_all_series_episodes(request.tmdb_id)

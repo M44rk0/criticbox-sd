@@ -23,6 +23,7 @@ dependencies = [
 
 [tool.poetry]
 packages = [
+    {include = "common"},
     {include = "gateway"},
     {include = "services"},
     {include = "generated"},

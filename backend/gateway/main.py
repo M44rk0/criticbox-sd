@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 
@@ -15,11 +14,13 @@ if BASE_DIR not in sys.path:
 
 load_dotenv()
 
+import time
+
+from common.telemetry import configure_service_logger, generate_request_id, set_request_id
 from gateway.exception_handlers import register_exception_handlers
 from gateway.routers import auth_router, movies_router, reviews_router
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [API Gateway] %(message)s")
-logger = logging.getLogger("criticbox-gateway")
+logger = configure_service_logger("Gateway")
 
 app = FastAPI(
     title="Criticbox SD - API Gateway Distribuído",
@@ -36,6 +37,29 @@ app.add_middleware(
 )
 
 register_exception_handlers(app)
+
+
+@app.middleware("http")
+async def trace_middleware(request: Request, call_next):
+    # Ignora ruído de logs em assets estáticos se houver
+    if request.url.path.startswith("/assets") or request.url.path in ("/favicon.ico", "/criticbox_home.html"):
+        return await call_next(request)
+
+    req_id = request.headers.get("x-request-id") or generate_request_id()
+    set_request_id(req_id)
+    t0 = time.perf_counter()
+    logger.info("--> %s %s", request.method, request.url.path)
+    try:
+        response = await call_next(request)
+        elapsed = (time.perf_counter() - t0) * 1000
+        logger.info("<-- %d %s %s (%.1fms)", response.status_code, request.method, request.url.path, elapsed)
+        response.headers["X-Request-ID"] = req_id
+        return response
+    except Exception as e:
+        elapsed = (time.perf_counter() - t0) * 1000
+        logger.error("<-- 500 %s %s (%.1fms): %s", request.method, request.url.path, elapsed, e)
+        raise
+
 
 HOME_HTML_PATH = os.path.join(BASE_DIR, "criticbox_home.html")
 FRONTEND_DIST_DIR = os.path.join(BASE_DIR, "frontend", "dist")

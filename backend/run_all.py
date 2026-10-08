@@ -1,4 +1,3 @@
-import logging
 import os
 import signal
 import sys
@@ -16,6 +15,7 @@ if BASE_DIR not in sys.path:
 
 load_dotenv()
 
+from common.telemetry import configure_service_logger
 from gateway.main import app as gateway_app
 from generated import movie_pb2_grpc as m_pb2_grpc
 from generated import review_pb2_grpc as r_pb2_grpc
@@ -24,11 +24,7 @@ from services.movie_service import MovieServiceServicer
 from services.review_service import ReviewServiceServicer
 from services.user_service import UserServiceServicer
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
-)
-logger = logging.getLogger("CriticboxRunner")
+logger = configure_service_logger("CriticboxRunner")
 
 USER_PORT = int(os.getenv("USER_SERVICE_PORT", "50053"))
 MOVIE_PORT = int(os.getenv("MOVIE_SERVICE_PORT", "50051"))
