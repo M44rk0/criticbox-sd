@@ -67,6 +67,11 @@ class ReviewServiceStub:
                 request_serializer=review__pb2.UserReviewsRequest.SerializeToString,
                 response_deserializer=review__pb2.GetAllReviewsResponse.FromString,
                 _registered_method=True)
+        self.DeleteReview = channel.unary_unary(
+                '/review.ReviewService/DeleteReview',
+                request_serializer=review__pb2.DeleteReviewRequest.SerializeToString,
+                response_deserializer=review__pb2.DeleteReviewResponse.FromString,
+                _registered_method=True)
 
 
 class ReviewServiceServicer:
@@ -108,6 +113,12 @@ class ReviewServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def DeleteReview(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ReviewServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -140,6 +151,11 @@ def add_ReviewServiceServicer_to_server(servicer, server):
                     servicer.GetReviewsByUser,
                     request_deserializer=review__pb2.UserReviewsRequest.FromString,
                     response_serializer=review__pb2.GetAllReviewsResponse.SerializeToString,
+            ),
+            'DeleteReview': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteReview,
+                    request_deserializer=review__pb2.DeleteReviewRequest.FromString,
+                    response_serializer=review__pb2.DeleteReviewResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -304,6 +320,33 @@ class ReviewService:
             '/review.ReviewService/GetReviewsByUser',
             review__pb2.UserReviewsRequest.SerializeToString,
             review__pb2.GetAllReviewsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteReview(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/review.ReviewService/DeleteReview',
+            review__pb2.DeleteReviewRequest.SerializeToString,
+            review__pb2.DeleteReviewResponse.FromString,
             options,
             channel_credentials,
             insecure,

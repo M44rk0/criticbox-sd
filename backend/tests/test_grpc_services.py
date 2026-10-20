@@ -75,6 +75,22 @@ class TestGRPCServices(unittest.TestCase):
         self.assertEqual(len(res.reviews), 2)
         self.assertEqual(res.reviews[0].tmdb_id, 702)
 
+    def test_review_servicer_delete_review(self):
+        res = review_storage.add_review(tmdb_id=703, user_id="u_del", rating=4.0, comment="To delete")
+        rev_id = res["review_id"]
+
+        servicer = ReviewServiceServicer()
+        # Outro usuário tentando deletar
+        req_unauth = r_pb2.DeleteReviewRequest(review_id=rev_id, user_id="intruder", username="intruder")
+        res_unauth = servicer.DeleteReview(req_unauth, None)
+        self.assertFalse(res_unauth.success)
+
+        # Autor deletando
+        req_auth = r_pb2.DeleteReviewRequest(review_id=rev_id, user_id="u_del", username="u_del")
+        res_auth = servicer.DeleteReview(req_auth, None)
+        self.assertTrue(res_auth.success)
+        self.assertIn("sucesso", res_auth.message)
+
     # ----------------- MovieServiceServicer Direct Tests ----------------- #
     def test_movie_servicer_trending_tv(self):
         servicer = MovieServiceServicer()
@@ -164,7 +180,7 @@ class TestGRPCServices(unittest.TestCase):
 
     # ----------------- Interservice gRPC Fallback Tests ----------------- #
     def test_fetch_movie_stats_grpc_fallback_on_rpc_error(self):
-        with patch("services.movie_service._get_review_stub") as mock_get_stub:
+        with patch("services.movie_service.servicer._get_review_stub") as mock_get_stub:
             mock_stub = MagicMock()
             mock_stub.GetMovieStats.side_effect = grpc.RpcError("Connection failed")
             mock_get_stub.return_value = mock_stub

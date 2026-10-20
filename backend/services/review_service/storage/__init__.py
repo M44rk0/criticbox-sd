@@ -19,6 +19,7 @@ from services.review_service.storage.repository import (
     get_movie_stats,
     get_reviews_by_movie,
     get_reviews_by_user,
+    delete_review,
     update_review_poster,
 )
 
@@ -37,6 +38,7 @@ __all__ = [
     "DBClient",
     "_format_review_row",
     "add_review",
+    "delete_review",
     "update_review_poster",
     "get_movie_stats",
     "get_batch_movie_stats",

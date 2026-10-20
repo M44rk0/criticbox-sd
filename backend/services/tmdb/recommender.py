@@ -33,7 +33,11 @@ def _fetch_seed_recommendations(seed_id: int, media_type: str, page: int = 1) ->
         return []
 
 
-def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> dict:
+def get_recommendations_for_user(
+    user_id: str | None = None,
+    page: int = 1,
+    user_reviews: list | None = None,
+) -> dict:
     """Retorna títulos recomendados com base nas reviews positivas do usuário.
     Usa paralelismo para buscar recomendações de múltiplas seeds ao mesmo tempo.
     Ranqueia por afinidade de gênero para dar preferência ao gosto real do usuário.
@@ -50,11 +54,19 @@ def get_recommendations_for_user(user_id: str | None = None, page: int = 1) -> d
     reviewed_ids = set()
     genre_scores: dict[int, float] = {}
 
-    if user_id and str(user_id).strip():
+    if user_reviews is None and user_id and str(user_id).strip():
         try:
+            # Fallback seguro para execuções isoladas de testes unitários locais
             from services.review_service import storage as database
 
             user_reviews = database.get_reviews_by_user(str(user_id).strip())
+        except Exception:
+            user_reviews = []
+    elif user_reviews is None:
+        user_reviews = []
+
+    if user_reviews:
+        try:
             reviewed_ids = {r["tmdb_id"] for r in user_reviews}
 
             positive_reviews = [r for r in user_reviews if r.get("rating", 0) >= 3.0]

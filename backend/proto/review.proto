@@ -9,6 +9,7 @@ service ReviewService {
   rpc GetAllReviews (GetAllReviewsRequest) returns (GetAllReviewsResponse);
   rpc GetReviewsByMovie (MovieReviewsRequest) returns (GetAllReviewsResponse);
   rpc GetReviewsByUser (UserReviewsRequest) returns (GetAllReviewsResponse);
+  rpc DeleteReview (DeleteReviewRequest) returns (DeleteReviewResponse);
 }
 
 
@@ -94,5 +95,16 @@ message ReviewItem {
 message GetAllReviewsResponse {
   repeated ReviewItem reviews = 1;
   int32 total_count = 2;
+}
+
+message DeleteReviewRequest {
+  string review_id = 1;
+  string user_id = 2;
+  string username = 3;
+}
+
+message DeleteReviewResponse {
+  bool success = 1;
+  string message = 2;
 }
 

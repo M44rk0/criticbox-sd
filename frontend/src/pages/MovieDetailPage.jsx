@@ -612,6 +612,7 @@ export default function MovieDetailPage() {
                   review={r}
                   episodeName={epDetails?.name}
                   episodeStillUrl={epDetails?.still_url}
+                  onDelete={loadData}
                 />
               );
             })}
@@ -632,6 +633,7 @@ export default function MovieDetailPage() {
                   review={r}
                   episodeName={epDetails?.name}
                   episodeStillUrl={epDetails?.still_url}
+                  onDelete={loadData}
                 />
               );
             })}

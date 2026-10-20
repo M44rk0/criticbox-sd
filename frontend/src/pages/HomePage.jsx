@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, Film, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useReviewModal } from '../context/ReviewModalContext';
 import {
@@ -11,9 +11,8 @@ import {
   getMovieDetails,
 } from '../api/movies';
 import { getRecentReviews } from '../api/reviews';
-import ReviewComment from '../components/ReviewComment';
+import ReviewCard from '../components/ReviewCard';
 import MovieCarouselSection from '../components/MovieCarouselSection';
-import { formatReviewDate } from '../utils/date';
 import { isAnime } from '../utils/media';
 import {
   CACHE_KEY_TRENDING,
@@ -22,6 +21,7 @@ import {
   CACHE_KEY_REVIEWS,
   CACHE_KEY_NOW_PLAYING,
   CACHE_TTL_MS,
+  readSessionCache,
 } from '../utils/constants';
 
 export default function HomePage() {
@@ -96,77 +96,51 @@ export default function HomePage() {
     let hasRecsCache = false;
 
     if (reviewRevision === 0) {
-      try {
-        const cached = sessionStorage.getItem(CACHE_KEY_TRENDING);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.movies?.length > 0) {
-            setTrendingMovies(parsed.movies);
-            if (parsed.heroMovie) setHeroMovie(parsed.heroMovie);
-            if (parsed.posters) setPosters((prev) => ({ ...parsed.posters, ...prev }));
-            setIsLoadingTrending(false);
-            hasTrendingCache = true;
-          }
-        }
-      } catch (e) {}
+      const trendingCached = readSessionCache(CACHE_KEY_TRENDING);
+      if (trendingCached?.movies?.length > 0) {
+        setTrendingMovies(trendingCached.movies);
+        if (trendingCached.heroMovie) setHeroMovie(trendingCached.heroMovie);
+        if (trendingCached.posters) setPosters((prev) => ({ ...trendingCached.posters, ...prev }));
+        setIsLoadingTrending(false);
+        hasTrendingCache = true;
+      }
 
-      try {
-        const cached = sessionStorage.getItem(CACHE_KEY_REVIEWS);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.reviews) {
-            setRecentReviews(parsed.reviews);
-            const cachedPosters = { ...(parsed.posters || {}) };
-            parsed.reviews.forEach((r) => {
-              if (r.poster_url) {
-                cachedPosters[`${r.tmdb_id}_${r.media_type || 'movie'}`] = r.poster_url;
-                cachedPosters[r.tmdb_id] = r.poster_url;
-              }
-            });
-            setPosters((prev) => ({ ...cachedPosters, ...prev }));
-            setIsLoadingReviews(false);
-            hasReviewsCache = true;
+      const reviewsCached = readSessionCache(CACHE_KEY_REVIEWS);
+      if (reviewsCached?.reviews) {
+        setRecentReviews(reviewsCached.reviews);
+        const cachedPosters = { ...(reviewsCached.posters || {}) };
+        reviewsCached.reviews.forEach((r) => {
+          if (r.poster_url) {
+            cachedPosters[`${r.tmdb_id}_${r.media_type || 'movie'}`] = r.poster_url;
+            cachedPosters[r.tmdb_id] = r.poster_url;
           }
-        }
-      } catch (e) {}
+        });
+        setPosters((prev) => ({ ...cachedPosters, ...prev }));
+        setIsLoadingReviews(false);
+        hasReviewsCache = true;
+      }
 
-      try {
-        const cached = sessionStorage.getItem(CACHE_KEY_NOW_PLAYING);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.movies?.length > 0) {
-            setNowPlayingMovies(parsed.movies);
-            setIsLoadingNowPlaying(false);
-            hasNowPlayingCache = true;
-          }
-        }
-      } catch (e) {}
+      const nowPlayingCached = readSessionCache(CACHE_KEY_NOW_PLAYING);
+      if (nowPlayingCached?.movies?.length > 0) {
+        setNowPlayingMovies(nowPlayingCached.movies);
+        setIsLoadingNowPlaying(false);
+        hasNowPlayingCache = true;
+      }
 
-      try {
-        const cached = sessionStorage.getItem(CACHE_KEY_TRENDING_TV);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.movies?.length > 0) {
-            setTrendingTV(parsed.movies);
-            setIsLoadingTrendingTV(false);
-            hasTVCache = true;
-          }
-        }
-      } catch (e) {}
+      const tvCached = readSessionCache(CACHE_KEY_TRENDING_TV);
+      if (tvCached?.movies?.length > 0) {
+        setTrendingTV(tvCached.movies);
+        setIsLoadingTrendingTV(false);
+        hasTVCache = true;
+      }
 
       if (isLoggedIn && username) {
-        const cacheKeyRecs = `${CACHE_KEY_RECOMMENDED}_${username}`;
-        try {
-          const cached = sessionStorage.getItem(cacheKeyRecs);
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.movies?.length > 0) {
-              setRecommendedMovies(parsed.movies);
-              setIsLoadingRecommended(false);
-              hasRecsCache = true;
-            }
-          }
-        } catch (e) {}
+        const recsCached = readSessionCache(`${CACHE_KEY_RECOMMENDED}_${username}`);
+        if (recsCached?.movies?.length > 0) {
+          setRecommendedMovies(recsCached.movies);
+          setIsLoadingRecommended(false);
+          hasRecsCache = true;
+        }
       } else {
         setRecommendedMovies([]);
         setIsLoadingRecommended(false);
@@ -500,65 +474,22 @@ export default function HomePage() {
         ) : (
           <>
             <div className="reviews-grid">
-              {displayedReviews.map((r) => (
-                <div key={r.review_id} className="review-card review-card-with-poster">
-                  <div
-                    className="review-card-poster"
-                    onClick={() => navigate(`/movie/${r.tmdb_id}?type=${r.media_type || 'movie'}`)}
-                    title={`Ver detalhes de ${r.movie_title || 'Título'}`}
-                  >
-                    {(() => {
-                      const pUrl = r.poster_url || posters[`${r.tmdb_id}_${r.media_type || 'movie'}`] || posters[r.tmdb_id];
-                      return pUrl ? (
-                        <img src={pUrl} alt={r.movie_title || 'Poster'} loading="lazy" />
-                      ) : (
-                        <div className="review-card-poster-placeholder">
-                          <Film size={26} color="var(--gray-500)" />
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <div className="review-card-body">
-                    <div className="review-card-header">
-                      <span
-                        className="review-card-movie"
-                        style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                        onClick={() => navigate(`/movie/${r.tmdb_id}?type=${r.media_type || 'movie'}`)}
-                      >
-                        {r.movie_title || `Título #${r.tmdb_id}`}
-                        {r.season_number && r.episode_number ? (
-                          <span className="review-scope-chip">
-                            T{r.season_number < 10 ? `0${r.season_number}` : r.season_number}E
-                            {r.episode_number < 10 ? `0${r.episode_number}` : r.episode_number}
-                          </span>
-                        ) : r.season_number ? (
-                          <span className="review-scope-chip">T{r.season_number}</span>
-                        ) : null}
-                      </span>
-                      <span className="review-card-score-badge">{r.rating.toFixed(1)}</span>
-                    </div>
-                    <div className="review-card-stars">
-                      {[1, 2, 3, 4, 5].map((i) => {
-                        const isFilled = i <= Math.round(r.rating || 0);
-                        return (
-                          <Star
-                            key={i}
-                            size={12}
-                            fill={isFilled ? 'var(--accent)' : 'none'}
-                            color={isFilled ? 'var(--accent)' : 'var(--gray-700)'}
-                          />
-                        );
-                      })}
-                    </div>
-                    <ReviewComment comment={r.comment} containsSpoilers={r.contains_spoilers} />
-                    <div className="review-card-user">
-                      <span className="review-card-avatar">{(r.username || r.user_id || 'U')[0].toUpperCase()}</span>
-                      <span className="review-card-username">@{r.username || r.user_id}</span>
-                      <span className="review-card-date">{formatReviewDate(r.created_at)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              {displayedReviews.map((r) => {
+                const pUrl =
+                  r.poster_url ||
+                  posters[`${r.tmdb_id}_${r.media_type || 'movie'}`] ||
+                  posters[r.tmdb_id];
+
+                return (
+                  <ReviewCard
+                    key={r.review_id}
+                    review={r}
+                    posterUrl={pUrl}
+                    showPoster={true}
+                    canDelete={false}
+                  />
+                );
+              })}
             </div>
 
             {totalReviewsPages > 1 && (

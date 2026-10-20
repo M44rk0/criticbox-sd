@@ -78,26 +78,6 @@ class ReviewCreateRequest(BaseModel):
         return text
 
 
-class ReviewResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    review_id: str
-    tmdb_id: int
-    movie_title: str = ""
-    user_id: str
-    username: str = ""
-    rating: float
-    comment: str = ""
-    contains_spoilers: bool = False
-    created_at: str
-    media_type: str = "movie"
-    season_number: Optional[int] = None
-    episode_number: Optional[int] = None
-    poster_url: str = ""
-    success: bool = True
-    message: str = "Review registrada com sucesso!"
-
-
 class ReviewListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -114,3 +94,14 @@ class ReviewListItem(BaseModel):
     season_number: Optional[int] = None
     episode_number: Optional[int] = None
     poster_url: str = ""
+
+
+class ReviewResponse(ReviewListItem):
+    success: bool = True
+    message: str = "Review registrada com sucesso!"
+
+
+class ReviewDeleteResponse(BaseModel):
+    success: bool = True
+    message: str = "Avaliação removida com sucesso."
+

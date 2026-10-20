@@ -11,6 +11,7 @@ import EpisodeReviewModal from './components/EpisodeReviewModal';
 import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import MovieDetailPage from './pages/MovieDetailPage';
+import MyBoxPage from './pages/MyBoxPage';
 
 function AuthRouteWatcher() {
   const location = useLocation();
@@ -47,6 +48,9 @@ export default function App() {
 
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/minha-caixa" element={<MyBoxPage />} />
+            <Route path="/minhacaixa" element={<MyBoxPage />} />
+            <Route path="/my-box" element={<MyBoxPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/movie/:id" element={<MovieDetailPage />} />
             <Route path="/movies/:id" element={<MovieDetailPage />} />

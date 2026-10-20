@@ -247,6 +247,70 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertIn("alice", users)
         self.assertIn("bob", users)
 
+    def test_get_my_reviews_200(self):
+        reg = self.client.post("/auth/register", json={"username": "me_user", "password": "password123"})
+        token = reg.json()["access_token"]
+        uid = reg.json()["user_id"]
+
+        database.add_review(
+            550,
+            uid,
+            4.5,
+            "Minha review",
+            False,
+            movie_title="Clube da Luta",
+            poster_url="https://img.com/550.jpg",
+            username="me_user",
+        )
+        database.add_review(
+            680,
+            "other",
+            3.0,
+            "Outra",
+            False,
+            movie_title="Pulp Fiction",
+            poster_url="https://img.com/680.jpg",
+            username="other",
+        )
+
+        res = self.client.get("/reviews/me", headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(res.status_code, 200)
+        reviews = res.json()
+        self.assertEqual(len(reviews), 1)
+        self.assertEqual(reviews[0]["tmdb_id"], 550)
+
+    def test_delete_review_endpoints(self):
+        reg = self.client.post("/auth/register", json={"username": "author_user", "password": "password123"})
+        token = reg.json()["access_token"]
+        uid = reg.json()["user_id"]
+
+        reg_intruder = self.client.post("/auth/register", json={"username": "intruder_user", "password": "password123"})
+        intruder_token = reg_intruder.json()["access_token"]
+
+        add_res = database.add_review(550, uid, 5.0, "Ótimo!", False, username="author_user")
+        rev_id = add_res["review_id"]
+
+        # Sem token -> 401
+        res_no_auth = self.client.delete(f"/reviews/{rev_id}")
+        self.assertEqual(res_no_auth.status_code, 401)
+
+        # Token de outro usuário -> 403
+        res_intruder = self.client.delete(f"/reviews/{rev_id}", headers={"Authorization": f"Bearer {intruder_token}"})
+        self.assertEqual(res_intruder.status_code, 403)
+
+        # ID inexistente -> 404
+        res_404 = self.client.delete("/reviews/nonexistent-id", headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(res_404.status_code, 404)
+
+        # Autor deletando -> 200
+        res_ok = self.client.delete(f"/reviews/{rev_id}", headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(res_ok.status_code, 200)
+        self.assertTrue(res_ok.json()["success"])
+
+        # Verificar que sumiu de /reviews/me
+        my_revs = self.client.get("/reviews/me", headers={"Authorization": f"Bearer {token}"}).json()
+        self.assertEqual(len(my_revs), 0)
+
     def test_search_movies_success_200(self):
         response = self.client.get("/movies?query=Fight Club")
         self.assertEqual(response.status_code, 200)

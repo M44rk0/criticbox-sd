@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, LogIn, UserPlus, User, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, username, openAuth, logout } = useAuth();
   const [navSearch, setNavSearch] = useState('');
 
@@ -23,8 +24,16 @@ export default function Navbar() {
         </span>
         <ul className="nav-links">
           <li>
-            <Link to="/" className="nav-link">
+            <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>
               INÍCIO
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/minha-caixa"
+              className={`nav-link ${location.pathname === '/minha-caixa' ? 'active' : ''}`}
+            >
+              MINHA CAIXA
             </Link>
           </li>
         </ul>
@@ -55,20 +64,7 @@ export default function Navbar() {
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontFamily: "'Space Grotesk', sans-serif",
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                color: 'var(--accent)',
-                border: '1px solid var(--accent-border)',
-                padding: '5px 12px',
-                background: 'var(--accent-dim)',
-              }}
-            >
+            <span className="nav-user-pill">
               <User size={13} />
               @{username}
             </span>

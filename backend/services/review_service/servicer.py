@@ -23,6 +23,42 @@ logger = configure_service_logger("ReviewService")
 PORT = int(os.getenv("REVIEW_SERVICE_PORT", "50052"))
 
 
+def _build_review_item_pb(r: dict, default_title: str = "") -> r_pb2.ReviewItem:
+    media_type = r.get("media_type") or "movie"
+    title = r.get("movie_title") or default_title
+    if not title:
+        try:
+            title = tmdb_service.get_movie_title(r["tmdb_id"], media_type=media_type)
+        except Exception:
+            title = f"Título #{r['tmdb_id']}"
+
+    poster = r.get("poster_url") or ""
+    if not poster:
+        try:
+            details = tmdb_service.get_movie_details(r["tmdb_id"], media_type=media_type)
+            if details and details.get("poster_url"):
+                poster = details["poster_url"]
+                database.update_review_poster(r["review_id"], poster)
+        except Exception:
+            pass
+
+    return r_pb2.ReviewItem(
+        review_id=r["review_id"],
+        tmdb_id=r["tmdb_id"],
+        movie_title=title,
+        user_id=r["user_id"],
+        username=r.get("username", "") or r["user_id"],
+        rating=r["rating"],
+        comment=r.get("comment", "") or "",
+        contains_spoilers=bool(r.get("contains_spoilers")),
+        created_at=r.get("created_at", "") or "",
+        media_type=media_type,
+        season_number=r.get("season_number", 0),
+        episode_number=r.get("episode_number", 0),
+        poster_url=poster,
+    )
+
+
 class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
     def __init__(self):
         database.init_db()
@@ -144,80 +180,19 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         limit = request.limit if request.limit > 0 else 50
         logger.info("GetAllReviews -> Buscando até %d reviews no banco", limit)
         raw_reviews = database.get_all_reviews(limit=limit)
-        items = []
-        for r in raw_reviews:
-            title = r.get("movie_title")
-            if not title:
-                title = tmdb_service.get_movie_title(r["tmdb_id"], media_type=r.get("media_type") or "movie")
-            poster = r.get("poster_url") or ""
-            if not poster:
-                try:
-                    details = tmdb_service.get_movie_details(r["tmdb_id"], media_type=r.get("media_type") or "movie")
-                    if details and details.get("poster_url"):
-                        poster = details["poster_url"]
-                        database.update_review_poster(r["review_id"], poster)
-                except Exception:
-                    pass
-            items.append(
-                r_pb2.ReviewItem(
-                    review_id=r["review_id"],
-                    tmdb_id=r["tmdb_id"],
-                    movie_title=title,
-                    user_id=r["user_id"],
-                    username=r.get("username", "") or r["user_id"],
-                    rating=r["rating"],
-                    comment=r["comment"],
-                    contains_spoilers=r["contains_spoilers"],
-                    created_at=r["created_at"],
-                    media_type=r.get("media_type") or "movie",
-                    season_number=r.get("season_number", 0),
-                    episode_number=r.get("episode_number", 0),
-                    poster_url=poster,
-                )
-            )
+        items = [_build_review_item_pb(r) for r in raw_reviews]
         return r_pb2.GetAllReviewsResponse(reviews=items, total_count=len(items))
 
     @traced_rpc()
     def GetReviewsByMovie(self, request, context):
         logger.info("GetReviewsByMovie -> Buscando reviews para o filme tmdb_id=%d", request.tmdb_id)
         raw_reviews = database.get_reviews_by_movie(request.tmdb_id)
-        movie_title = ""
-        for r in raw_reviews:
-            if r.get("movie_title"):
-                movie_title = r["movie_title"]
-                break
+        movie_title = next((r["movie_title"] for r in raw_reviews if r.get("movie_title")), "")
         if not movie_title:
             media_type = getattr(request, "media_type", "movie") or "movie"
             movie_title = tmdb_service.get_movie_title(request.tmdb_id, media_type=media_type)
 
-        items = []
-        for r in raw_reviews:
-            poster = r.get("poster_url") or ""
-            if not poster:
-                try:
-                    details = tmdb_service.get_movie_details(r["tmdb_id"], media_type=r.get("media_type") or "movie")
-                    if details and details.get("poster_url"):
-                        poster = details["poster_url"]
-                        database.update_review_poster(r["review_id"], poster)
-                except Exception:
-                    pass
-            items.append(
-                r_pb2.ReviewItem(
-                    review_id=r["review_id"],
-                    tmdb_id=r["tmdb_id"],
-                    movie_title=r.get("movie_title") or movie_title,
-                    user_id=r["user_id"],
-                    username=r.get("username", "") or r["user_id"],
-                    rating=r["rating"],
-                    comment=r["comment"],
-                    contains_spoilers=r["contains_spoilers"],
-                    created_at=r["created_at"],
-                    media_type=r.get("media_type") or "movie",
-                    season_number=r.get("season_number", 0),
-                    episode_number=r.get("episode_number", 0),
-                    poster_url=poster,
-                )
-            )
+        items = [_build_review_item_pb(r, default_title=movie_title) for r in raw_reviews]
         return r_pb2.GetAllReviewsResponse(reviews=items, total_count=len(items))
 
     @traced_rpc()
@@ -229,38 +204,27 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             request.user_id,
         )
         raw_reviews = database.get_reviews_by_user(user_id=request.user_id, username=req_username)
-        items = []
-        for r in raw_reviews:
-            title = r.get("movie_title")
-            if not title:
-                title = tmdb_service.get_movie_title(r["tmdb_id"], media_type=r.get("media_type") or "movie")
-            poster = r.get("poster_url") or ""
-            if not poster:
-                try:
-                    details = tmdb_service.get_movie_details(r["tmdb_id"], media_type=r.get("media_type") or "movie")
-                    if details and details.get("poster_url"):
-                        poster = details["poster_url"]
-                        database.update_review_poster(r["review_id"], poster)
-                except Exception:
-                    pass
-            items.append(
-                r_pb2.ReviewItem(
-                    review_id=r["review_id"],
-                    tmdb_id=r["tmdb_id"],
-                    movie_title=title,
-                    user_id=r["user_id"],
-                    username=r.get("username", "") or r["user_id"],
-                    rating=r["rating"],
-                    comment=r["comment"],
-                    contains_spoilers=r["contains_spoilers"],
-                    created_at=r["created_at"],
-                    media_type=r.get("media_type") or "movie",
-                    season_number=r.get("season_number", 0),
-                    episode_number=r.get("episode_number", 0),
-                    poster_url=poster,
-                )
-            )
+        items = [_build_review_item_pb(r) for r in raw_reviews]
         return r_pb2.GetAllReviewsResponse(reviews=items, total_count=len(items))
+
+    @traced_rpc()
+    def DeleteReview(self, request, context):
+        req_username = getattr(request, "username", "") or ""
+        logger.info(
+            "DeleteReview -> review_id=%s | user_id=%s | username=@%s",
+            request.review_id,
+            request.user_id,
+            req_username,
+        )
+        res = database.delete_review(
+            review_id=request.review_id,
+            user_id=request.user_id,
+            username=req_username,
+        )
+        return r_pb2.DeleteReviewResponse(
+            success=res["success"],
+            message=res["message"],
+        )
 
 
 def serve():

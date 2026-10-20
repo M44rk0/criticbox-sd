@@ -4,7 +4,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from services.user_service.storage.connection import get_session
 from services.user_service.storage.models import User
@@ -35,7 +35,7 @@ def create_user(username: str, password: str) -> dict:
         return {"success": False, "message": "A senha deve ter no mínimo 6 caracteres.", "user_id": "", "username": ""}
 
     with get_session() as session:
-        existing = session.scalar(select(User).where(User.username == username))
+        existing = session.scalar(select(User).where(func.lower(User.username) == username.lower()))
         if existing:
             return {
                 "success": False,
@@ -67,7 +67,7 @@ def create_user(username: str, password: str) -> dict:
 def authenticate_user(username: str, password: str) -> dict:
     username = username.strip()
     with get_session() as session:
-        user = session.scalar(select(User).where(User.username == username))
+        user = session.scalar(select(User).where(func.lower(User.username) == username.lower()))
         if not user:
             return {"success": False, "message": "Usuário não encontrado.", "user_id": "", "username": ""}
         if not _verify_password(password, user.password_hash):

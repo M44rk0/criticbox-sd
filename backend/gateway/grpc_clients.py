@@ -274,6 +274,18 @@ class GatewayGRPCManager:
         res = self.review_stub.GetReviewsByUser(req, timeout=10.0)
         return [_pb_to_review_dict(r) for r in res.reviews]
 
+    def delete_review(self, review_id: str, user_id: str, username: str = "") -> dict:
+        req = r_pb2.DeleteReviewRequest(
+            review_id=review_id,
+            user_id=user_id,
+            username=username or user_id,
+        )
+        res = self.review_stub.DeleteReview(req, timeout=10.0)
+        return {
+            "success": res.success,
+            "message": res.message,
+        }
+
     def get_season_episodes(self, tmdb_id: int, season_number: int) -> dict:
         req = m_pb2.SeasonEpisodesRequest(tmdb_id=tmdb_id, season_number=season_number)
         res = self.movie_stub.GetSeasonEpisodes(req, timeout=5.0)

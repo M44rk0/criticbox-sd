@@ -9,51 +9,29 @@ from services.review_service.storage.models import Review
 
 
 def _format_review_row(r: Any) -> dict:
-    if isinstance(r, Review):
-        return {
-            "review_id": r.id,
-            "tmdb_id": r.tmdb_id,
-            "movie_title": r.movie_title or "",
-            "user_id": r.user_id,
-            "username": r.username or r.user_id,
-            "rating": float(r.rating),
-            "comment": r.comment or "",
-            "contains_spoilers": bool(r.contains_spoilers),
-            "created_at": str(r.created_at),
-            "media_type": r.media_type or "movie",
-            "season_number": int(r.season_number or 0),
-            "episode_number": int(r.episode_number or 0),
-            "poster_url": r.poster_url or "",
-            "success": True,
-            "message": "",
-        }
-
-    keys = r.keys() if hasattr(r, "keys") else []
-    media_type = r["media_type"] if "media_type" in keys and r["media_type"] else "movie"
-    season_number = r["season_number"] if "season_number" in keys and r["season_number"] is not None else 0
-    episode_number = r["episode_number"] if "episode_number" in keys and r["episode_number"] is not None else 0
-    movie_title = r["movie_title"] if "movie_title" in keys and r["movie_title"] else ""
-    poster_url = r["poster_url"] if "poster_url" in keys and r["poster_url"] else ""
-    user_id = r["user_id"] if "user_id" in keys and r["user_id"] else ""
-    username = r["username"] if "username" in keys and r["username"] else user_id
+    get_v = (lambda k, d=None: r.get(k, d)) if isinstance(r, dict) else (lambda k, d=None: getattr(r, k, d))
+    rev_id = get_v("id") or get_v("review_id", "")
+    user_id = get_v("user_id", "") or ""
+    username = get_v("username", "") or user_id
 
     return {
-        "review_id": r["id"],
-        "tmdb_id": r["tmdb_id"],
-        "movie_title": movie_title,
+        "review_id": rev_id,
+        "tmdb_id": int(get_v("tmdb_id", 0) or 0),
+        "movie_title": get_v("movie_title", "") or "",
         "user_id": user_id,
         "username": username,
-        "rating": float(r["rating"]),
-        "comment": r["comment"] or "",
-        "contains_spoilers": bool(r["contains_spoilers"]),
-        "created_at": str(r["created_at"]),
-        "media_type": media_type,
-        "season_number": int(season_number),
-        "episode_number": int(episode_number),
-        "poster_url": poster_url,
+        "rating": float(get_v("rating", 0.0) or 0.0),
+        "comment": get_v("comment", "") or "",
+        "contains_spoilers": bool(get_v("contains_spoilers", False)),
+        "created_at": str(get_v("created_at", "") or ""),
+        "media_type": get_v("media_type", "movie") or "movie",
+        "season_number": int(get_v("season_number", 0) or 0),
+        "episode_number": int(get_v("episode_number", 0) or 0),
+        "poster_url": get_v("poster_url", "") or "",
         "success": True,
         "message": "",
     }
+
 
 
 def add_review(
@@ -73,7 +51,11 @@ def add_review(
     username = username or user_id
 
     with get_session() as session:
-        user_cond = or_(Review.user_id == user_id, and_(Review.username != "", Review.username == username))
+        user_cond = or_(
+            Review.user_id == user_id,
+            func.lower(Review.user_id) == user_id.lower(),
+            func.lower(Review.username) == username.lower(),
+        )
         if media_type == "movie":
             stmt = select(Review.id).where(
                 Review.tmdb_id == tmdb_id,
@@ -213,12 +195,54 @@ def get_reviews_by_movie(tmdb_id: int) -> list:
 
 
 def get_reviews_by_user(user_id: str = "", username: str = "") -> list:
-    target_id = user_id or username
-    target_username = username or user_id
+    conds = []
+    if user_id:
+        conds.append(Review.user_id == user_id)
+        conds.append(func.lower(Review.user_id) == user_id.lower())
+    if username:
+        conds.append(func.lower(Review.username) == username.lower())
+    if user_id and not username:
+        conds.append(func.lower(Review.username) == user_id.lower())
+
+    if not conds:
+        return []
+
     with get_session() as session:
         rows = session.scalars(
             select(Review)
-            .where(or_(Review.user_id == target_id, Review.username == target_username))
+            .where(or_(*conds))
             .order_by(Review.created_at.desc())
         ).all()
         return [_format_review_row(r) for r in rows]
+
+
+def delete_review(review_id: str, user_id: str = "", username: str = "") -> dict:
+    if not review_id:
+        return {"success": False, "message": "ID da avaliação não fornecido."}
+
+    with get_session() as session:
+        review = session.scalar(select(Review).where(Review.id == review_id))
+        if not review:
+            return {"success": False, "message": "Avaliação não encontrada."}
+
+        rev_user_id = (review.user_id or "").strip()
+        rev_username = (review.username or "").strip()
+
+        is_owner = False
+        if user_id and (rev_user_id == user_id or rev_user_id.lower() == user_id.lower()):
+            is_owner = True
+        elif username and (rev_username == username or rev_username.lower() == username.lower()):
+            is_owner = True
+        elif user_id and (rev_username == user_id or rev_username.lower() == user_id.lower()):
+            is_owner = True
+
+        if not is_owner:
+            return {
+                "success": False,
+                "message": "Você só tem permissão para remover suas próprias avaliações.",
+            }
+
+        session.delete(review)
+
+    return {"success": True, "message": "Avaliação removida com sucesso."}
+

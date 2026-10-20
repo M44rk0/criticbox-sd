@@ -85,6 +85,52 @@ class TestGetAllReviews(unittest.TestCase):
         self.assertEqual(resp.total_count, 1)
         self.assertEqual(resp.reviews[0].poster_url, "https://image.tmdb.org/t/p/w500/test.jpg")
 
+    def test_delete_review_database(self):
+        res = database.add_review(
+            tmdb_id=550,
+            user_id="del_user",
+            rating=4.0,
+            comment="Vou deletar",
+        )
+        self.assertTrue(res["success"])
+        rev_id = res["review_id"]
+
+        # Tentativa de deletar por outro usuário -> deve falhar
+        fail_res = database.delete_review(rev_id, user_id="other_user", username="other_user")
+        self.assertFalse(fail_res["success"])
+        self.assertIn("permissão", fail_res["message"])
+
+        # Deletar pelo dono -> sucesso
+        ok_res = database.delete_review(rev_id, user_id="del_user", username="del_user")
+        self.assertTrue(ok_res["success"])
+
+        # Tentar deletar novamente -> não encontrada
+        not_found_res = database.delete_review(rev_id, user_id="del_user", username="del_user")
+        self.assertFalse(not_found_res["success"])
+        self.assertIn("não encontrada", not_found_res["message"].lower())
+
+    def test_delete_review_servicer(self):
+        res = database.add_review(
+            tmdb_id=550,
+            user_id="srv_del_user",
+            rating=5.0,
+            comment="Servicer review",
+        )
+        self.assertTrue(res["success"])
+        rev_id = res["review_id"]
+
+        servicer = ReviewServiceServicer()
+
+        # Tentativa inválida
+        req_fail = r_pb2.DeleteReviewRequest(review_id=rev_id, user_id="stranger", username="stranger")
+        resp_fail = servicer.DeleteReview(req_fail, None)
+        self.assertFalse(resp_fail.success)
+
+        # Tentativa válida
+        req_ok = r_pb2.DeleteReviewRequest(review_id=rev_id, user_id="srv_del_user", username="srv_del_user")
+        resp_ok = servicer.DeleteReview(req_ok, None)
+        self.assertTrue(resp_ok.success)
+
     def test_database_connection_pool(self):
         import concurrent.futures
 
@@ -101,3 +147,4 @@ class TestGetAllReviews(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

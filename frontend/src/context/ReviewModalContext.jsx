@@ -112,6 +112,14 @@ export function ReviewModalProvider({ children }) {
     closeEpisodeReviewModal();
   };
 
+  const triggerReviewUpdate = () => {
+    try {
+      sessionStorage.removeItem(CACHE_KEY_REVIEWS);
+      sessionStorage.removeItem(CACHE_KEY_TRENDING);
+    } catch (e) {}
+    setReviewRevision((prev) => prev + 1);
+  };
+
   const value = {
     reviewModalMovie,
     episodeModalData,
@@ -122,6 +130,7 @@ export function ReviewModalProvider({ children }) {
     closeEpisodeReviewModal,
     onReviewSuccess,
     onEpisodeReviewSuccess,
+    triggerReviewUpdate,
   };
 
   return <ReviewModalContext.Provider value={value}>{children}</ReviewModalContext.Provider>;

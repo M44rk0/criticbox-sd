@@ -1,13 +1,43 @@
 import { API_BASE } from '../utils/constants';
 
 const _inflight = new Map();
+let _inMemoryToken = '';
+
+try {
+  _inMemoryToken = localStorage.getItem('criticbox_token') || '';
+} catch (e) {}
+
+export function setClientToken(token) {
+  _inMemoryToken = token || '';
+  try {
+    if (token) {
+      localStorage.setItem('criticbox_token', token);
+    } else {
+      localStorage.removeItem('criticbox_token');
+    }
+  } catch (e) {}
+}
+
+export function getClientToken() {
+  if (_inMemoryToken) return _inMemoryToken;
+  try {
+    _inMemoryToken = localStorage.getItem('criticbox_token') || '';
+    return _inMemoryToken;
+  } catch (e) {
+    return '';
+  }
+}
 
 async function _doFetch(url, options, headers) {
   const res = await fetch(url, { ...options, headers });
 
   if (res.status === 401) {
-    localStorage.removeItem('criticbox_token');
-    localStorage.removeItem('criticbox_user');
+    console.warn('[Criticbox:API] 401 Não autorizado em:', url);
+    setClientToken('');
+    try {
+      localStorage.removeItem('criticbox_user');
+      localStorage.removeItem('criticbox_user_id');
+    } catch (e) {}
     window.dispatchEvent(new CustomEvent('criticbox:unauthorized'));
   }
 
@@ -18,6 +48,7 @@ async function _doFetch(url, options, headers) {
   }
 
   if (!res.ok) {
+    console.error(`[Criticbox:API] Falha HTTP ${res.status} em ${url}:`, data);
     const errorMsg =
       data?.detail ||
       (data?.erros ? data.erros.map((e) => e.mensagem).join(', ') : null) ||
@@ -36,10 +67,12 @@ export async function apiFetch(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
   const headers = { ...options.headers };
 
-  const token = localStorage.getItem('criticbox_token');
+  const token = getClientToken();
   if (token && !headers['Authorization']) {
     headers['Authorization'] = `Bearer ${token}`;
   }
+
+  console.log(`[Criticbox:API] ${method} ${url}`, { hasToken: Boolean(token) });
 
   if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';

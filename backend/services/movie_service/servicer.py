@@ -63,6 +63,27 @@ def _fetch_batch_movie_stats_via_grpc(tmdb_ids: list[int]) -> dict[int, tuple[fl
         return {}
 
 
+def _fetch_user_reviews_via_grpc(user_id: str) -> list[dict]:
+    if not user_id or not str(user_id).strip():
+        return []
+    try:
+        stub = _get_review_stub()
+        req = r_pb2.UserReviewsRequest(user_id=str(user_id).strip(), username=str(user_id).strip())
+        res = stub.GetReviewsByUser(req, timeout=3.0)
+        return [
+            {
+                "tmdb_id": r.tmdb_id,
+                "rating": r.rating,
+                "created_at": r.created_at,
+                "media_type": r.media_type or "movie",
+            }
+            for r in res.reviews
+        ]
+    except Exception as e:
+        logger.warning("Falha na chamada gRPC GetReviewsByUser inter-serviço (ReviewService): %s", e)
+        return []
+
+
 def _to_movie_summary_pb(item: dict, stats_map: dict[int, tuple[float, int]] | None = None) -> m_pb2.MovieSummary:
     tmdb_id = item.get("id", 0)
     if stats_map is not None and tmdb_id in stats_map:
@@ -277,7 +298,8 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
         user_id = request.user_id or ""
         page = max(request.page, 1)
         logger.info("GetRecommendations -> Buscando recomendações para @%s (Página %d)", user_id, page)
-        data = tmdb_service.get_recommendations_for_user(user_id=user_id, page=page)
+        user_reviews = _fetch_user_reviews_via_grpc(user_id) if user_id else []
+        data = tmdb_service.get_recommendations_for_user(user_id=user_id, page=page, user_reviews=user_reviews)
         return self._build_catalog_response(data)
 
     @traced_rpc()

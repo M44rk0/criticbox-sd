@@ -18,6 +18,19 @@ from services.tmdb.extractors import (
 logger = logging.getLogger("criticbox-tmdb-catalog")
 
 
+def _format_and_cache_page(data: dict, results: list, cache_key: str) -> dict:
+    total_pages = data.get("total_pages", 1) or 1
+    total_results = len(results) if total_pages == 1 else data.get("total_results", len(results))
+    payload = {
+        "page": data.get("page", 1) or 1,
+        "total_pages": total_pages,
+        "total_results": total_results,
+        "results": results,
+    }
+    _set_cache(cache_key, payload)
+    return payload
+
+
 def search_movies(query: str, page: int = 1) -> dict:
     """Busca unificada para filmes, séries e animes no catálogo TMDb."""
     if not API_KEY or not query.strip():
@@ -39,16 +52,7 @@ def search_movies(query: str, page: int = 1) -> dict:
         ]
 
         results = [_fmt(m) for m in filtered]
-        payload = {
-            "page": data.get("page", 1),
-            "total_pages": data.get("total_pages", 1),
-            "total_results": len(results)
-            if data.get("total_pages", 1) == 1
-            else data.get("total_results", len(results)),
-            "results": results,
-        }
-        _set_cache(cache_key, payload)
-        return payload
+        return _format_and_cache_page(data, results, cache_key)
     except (requests.RequestException, KeyError, ValueError):
         pass
 
@@ -69,14 +73,7 @@ def get_trending_movies(time_window: str = "week", page: int = 1) -> dict:
         raw_results = data.get("results", [])
         filtered = [m for m in raw_results if m.get("poster_path") and str(m.get("poster_path")).strip()]
         results = [_fmt(m, default_media_type="movie") for m in filtered]
-        payload = {
-            "page": data.get("page", 1),
-            "total_pages": data.get("total_pages", 1),
-            "total_results": data.get("total_results", len(results)),
-            "results": results,
-        }
-        _set_cache(cache_key, payload)
-        return payload
+        return _format_and_cache_page(data, results, cache_key)
     except (requests.RequestException, KeyError, ValueError):
         pass
 
@@ -98,14 +95,7 @@ def get_now_playing_movies(page: int = 1) -> dict:
         raw_results = data.get("results", [])
         filtered = [m for m in raw_results if m.get("poster_path") and str(m.get("poster_path")).strip()]
         results = [_fmt(m, default_media_type="movie") for m in filtered]
-        payload = {
-            "page": data.get("page", 1),
-            "total_pages": data.get("total_pages", 1),
-            "total_results": data.get("total_results", len(results)),
-            "results": results,
-        }
-        _set_cache(cache_key, payload)
-        return payload
+        return _format_and_cache_page(data, results, cache_key)
     except (requests.RequestException, KeyError, ValueError):
         pass
 
@@ -127,14 +117,7 @@ def get_trending_tv(time_window: str = "week", page: int = 1) -> dict:
         raw_results = data.get("results", [])
         filtered = [m for m in raw_results if m.get("poster_path") and str(m.get("poster_path")).strip()]
         results = [_fmt(m, default_media_type="tv") for m in filtered]
-        payload = {
-            "page": data.get("page", 1),
-            "total_pages": data.get("total_pages", 1),
-            "total_results": data.get("total_results", len(results)),
-            "results": results,
-        }
-        _set_cache(cache_key, payload)
-        return payload
+        return _format_and_cache_page(data, results, cache_key)
     except (requests.RequestException, KeyError, ValueError):
         pass
 
