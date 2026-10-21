@@ -69,6 +69,20 @@ async def grpc_exception_handler(request: Request, exc: grpc.RpcError):
     )
 
 
+async def value_error_handler(request: Request, exc: ValueError):
+    msg = str(exc)
+    logger.warning("ValueError interceptado no Gateway [%s]: %s", request.url.path, msg)
+    if "out of range" in msg.lower():
+        clean_msg = "Valor numérico fora dos limites permitidos."
+    else:
+        clean_msg = msg
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"mensagem": "Dados inválidos", "erros": [{"campo": "valor", "mensagem": clean_msg}]},
+    )
+
+
 def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(grpc.RpcError, grpc_exception_handler)
+    app.add_exception_handler(ValueError, value_error_handler)

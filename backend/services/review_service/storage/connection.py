@@ -40,7 +40,7 @@ def get_database_url() -> str:
         port = os.getenv("REVIEW_DB_PORT") or os.getenv("DB_PORT", "3306")
         user = os.getenv("REVIEW_DB_USER") or os.getenv("DB_USER", "root")
         password = os.getenv("REVIEW_DB_PASSWORD") or os.getenv("DB_PASSWORD", "")
-        database = os.getenv("REVIEW_DB_NAME") or os.getenv("DB_NAME_REVIEW") or "criticbox_reviews"
+        database = os.getenv("REVIEW_DB_NAME") or os.getenv("DB_NAME_REVIEW") or os.getenv("DB_NAME") or "criticbox_reviews"
         return f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}?charset=utf8mb4"
 
     sqlite_path = get_sqlite_path().replace("\\", "/")

@@ -23,6 +23,7 @@ import ReviewCard from '../components/ReviewCard';
 import SeriesEpisodeGuide from '../components/detail/SeriesEpisodeGuide';
 import ProductionDossier from '../components/detail/ProductionDossier';
 import RecommendationsCarousel from '../components/detail/RecommendationsCarousel';
+import NotFoundPage from './NotFoundPage';
 import { formatReleaseDate, isUnreleased } from '../utils/date';
 import { SERIES_EPISODES_CACHE } from '../utils/constants';
 import { isAnime, getMediaTypeLabel } from '../utils/media';
@@ -145,17 +146,7 @@ export default function MovieDetailPage() {
   }
 
   if (error || !movie) {
-    return (
-      <div className="section" style={{ textAlign: 'center', padding: '80px 20px' }}>
-        <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.8rem', color: '#fff', marginBottom: '12px' }}>
-          {error || 'Título não encontrado'}
-        </h2>
-        <button className="nav-btn nav-btn-accent" onClick={() => navigate('/')}>
-          <ArrowLeft size={14} style={{ marginRight: '6px' }} />
-          VOLTAR AO INÍCIO
-        </button>
-      </div>
-    );
+    return <NotFoundPage />;
   }
 
   const unreleased = isUnreleased(movie.release_date);

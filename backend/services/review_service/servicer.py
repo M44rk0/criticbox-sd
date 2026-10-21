@@ -79,10 +79,12 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             episode_num,
             request.rating,
         )
-        if not (0.5 <= request.rating <= 5.0):
+        rounded_rating = round(float(request.rating), 1)
+        valid_ratings = {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0}
+        if rounded_rating not in valid_ratings or abs(float(request.rating) - rounded_rating) > 1e-4:
             return r_pb2.ReviewResponse(
                 success=False,
-                message="A nota deve estar entre 0.5 e 5.0 estrelas.",
+                message="A nota deve estar entre 0.5 e 5.0",
             )
         if not request.user_id.strip():
             return r_pb2.ReviewResponse(
@@ -103,16 +105,16 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         except Exception as e:
             logger.warning("Falha ao verificar estreia do título %d: %s", request.tmdb_id, e)
 
-        movie_title = getattr(request, "movie_title", "") or ""
-        if not movie_title:
+        if details:
+            movie_title = details.get("title") or tmdb_service.get_movie_title(request.tmdb_id, media_type=media_type) or ""
+            poster_url = details.get("poster_url") or ""
+            media_type = details.get("media_type") or media_type
+        else:
             try:
                 movie_title = tmdb_service.get_movie_title(request.tmdb_id, media_type=media_type)
             except Exception:
-                movie_title = ""
-
-        poster_url = getattr(request, "poster_url", "") or ""
-        if not poster_url and details:
-            poster_url = details.get("poster_url", "") or ""
+                movie_title = getattr(request, "movie_title", "") or ""
+            poster_url = getattr(request, "poster_url", "") or ""
 
         username = getattr(request, "username", "") or ""
         res = database.add_review(

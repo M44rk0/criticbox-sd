@@ -44,30 +44,34 @@ class ReviewCreateRequest(BaseModel):
         description="Número do episódio avaliado (para séries)",
         json_schema_extra={"example": 3},
     )
-    movie_title: Optional[str] = Field(
-        default="",
-        description="Título da obra avaliada",
-        json_schema_extra={"example": "Interestelar"},
-    )
-    poster_url: Optional[str] = Field(
-        default="",
-        description="URL do poster da obra avaliada",
-        json_schema_extra={"example": "https://image.tmdb.org/t/p/w500/..."},
-    )
+    model_config = ConfigDict(extra="ignore")
 
     @field_validator("tmdb_id")
     @classmethod
     def validate_tmdb_id(cls, v: int) -> int:
         if v <= 0:
             raise ValueError("O ID do filme deve ser um número inteiro positivo maior que zero.")
+        if v > 2_147_483_647:
+            raise ValueError("O ID do filme deve ser no máximo 2147483647.")
+        return v
+
+    @field_validator("season_number", "episode_number")
+    @classmethod
+    def validate_season_episode(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and (v <= 0 or v > 2_147_483_647):
+            raise ValueError("Deve ser um número inteiro positivo válido.")
         return v
 
     @field_validator("rating")
     @classmethod
     def validate_rating(cls, v: float) -> float:
-        if v < 0.5 or v > 5.0:
-            raise ValueError("A nota deve estar entre 0.5 e 5.0 estrelas.")
-        return round(float(v), 1)
+        rounded = round(float(v), 1)
+        valid_steps = {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0}
+        if rounded not in valid_steps or abs(float(v) - rounded) > 1e-4:
+            raise ValueError(
+                "A nota deve estar entre 0.5 e 5.0 e aumentar em intervalos de 0.5 estrelas (ex: 0.5, 1.0, 1.5, ..., 5.0)."
+            )
+        return rounded
 
     @field_validator("comment")
     @classmethod

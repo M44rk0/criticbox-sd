@@ -37,14 +37,12 @@ export default function EpisodeReviewModal() {
     try {
       const payload = {
         tmdb_id: movie.tmdb_id,
-        movie_title: movie.title || '',
         media_type: 'tv',
         rating: modalRating,
         comment: modalComment.trim(),
         contains_spoilers: modalSpoilers,
         season_number: parseInt(season, 10),
         episode_number: parseInt(episode.episode_number, 10),
-        poster_url: movie.poster_url || '',
       };
 
       await createReview(payload);

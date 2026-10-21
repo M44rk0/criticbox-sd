@@ -205,6 +205,23 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         self.assertIn("rating", erros)
         self.assertIn("0.5 e 5.0", erros["rating"])
 
+    def test_create_review_non_step_rating_400(self):
+        reg = self.client.post("/auth/register", json={"username": "user_step_err", "password": "password123"})
+        token = reg.json()["access_token"]
+
+        for invalid_rating in [0.6, 1.2, 2.3, 3.7, 4.9]:
+            payload = {
+                "tmdb_id": 550,
+                "rating": invalid_rating,
+                "comment": "Nota fracionada incorreta",
+            }
+            res = self.client.post("/reviews", json=payload, headers={"Authorization": f"Bearer {token}"})
+            self.assertEqual(res.status_code, 400)
+            data = res.json()
+            erros = {e["campo"]: e["mensagem"] for e in data.get("erros", [])}
+            self.assertIn("rating", erros)
+            self.assertIn("intervalos de 0.5", erros["rating"])
+
     def test_create_review_invalid_tmdb_id_400(self):
         reg = self.client.post("/auth/register", json={"username": "user_tmdb_err", "password": "password123"})
         token = reg.json()["access_token"]
@@ -402,6 +419,15 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         response = self.client.get("/movies/999999999?type=movie")
         self.assertEqual(response.status_code, 404)
 
+    def test_get_movie_details_out_of_range_id_400(self):
+        # Quando o ID fornecido ultrapassa a capacidade de um int32 do protobuf
+        response = self.client.get("/movies/5815123123131231321?type=movie")
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertEqual(data.get("mensagem"), "Dados inválidos")
+        campos_com_erro = [e["campo"] for e in data.get("erros", [])]
+        self.assertIn("tmdb_id", campos_com_erro)
+
     def test_create_review_series_episode_201(self):
         reg = self.client.post("/auth/register", json={"username": "tv_fan", "password": "password123"})
         token = reg.json()["access_token"]
@@ -471,14 +497,35 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
         res = self.client.post("/reviews", json=payload, headers={"Authorization": f"Bearer {token}"})
         self.assertEqual(res.status_code, 201)
         data = res.json()
-        self.assertEqual(data.get("movie_title"), "Interstellar")
+        self.assertIn(data.get("movie_title"), ["Interestelar", "Interstellar"])
 
         list_res = self.client.get("/reviews")
         self.assertEqual(list_res.status_code, 200)
         items = list_res.json()
         interstellar_review = next((r for r in items if r["tmdb_id"] == 157336), None)
         self.assertIsNotNone(interstellar_review)
-        self.assertEqual(interstellar_review["movie_title"], "Interstellar")
+        self.assertIn(interstellar_review["movie_title"], ["Interestelar", "Interstellar"])
+
+    def test_create_review_overwrites_fake_metadata_with_tmdb(self):
+        reg = self.client.post("/auth/register", json={"username": "antihacker", "password": "password123"})
+        token = reg.json()["access_token"]
+
+        payload = {
+            "tmdb_id": 550,
+            "movie_title": "Nome Falso Arbitrario",
+            "poster_url": "http://malicious.com/fake.jpg",
+            "media_type": "fake_type",
+            "rating": 4.5,
+            "comment": "Tentando forjar metadados",
+        }
+        res = self.client.post("/reviews", json=payload, headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(res.status_code, 201)
+        data = res.json()
+        # Deve ter sido sobrescrito pelo título real do TMDb
+        self.assertIn("Clube da Luta", data.get("movie_title", "") or "Fight Club")
+        self.assertNotEqual(data.get("movie_title"), "Nome Falso Arbitrario")
+        self.assertNotEqual(data.get("poster_url"), "http://malicious.com/fake.jpg")
+        self.assertEqual(data.get("media_type"), "movie")
 
     def test_get_batch_movie_stats_grpc(self):
         database.add_review(550, "u1", 4.0, "", False)
@@ -603,6 +650,24 @@ class TestExceptionHandlers(unittest.TestCase):
             exc = FakeRpcError(grpc_code, "Detail error")
             resp = asyncio.run(grpc_exception_handler(MagicMock(spec=Request), exc))
             self.assertEqual(resp.status_code, expected_http)
+
+    def test_value_error_handler_out_of_range(self):
+        import asyncio
+        import json
+        from unittest.mock import MagicMock
+
+        from fastapi import Request
+
+        from gateway.exception_handlers import value_error_handler
+
+        exc = ValueError("Value out of range: 5815123123131231321")
+        req = MagicMock(spec=Request)
+        req.url.path = "/movies/5815123123131231321"
+        resp = asyncio.run(value_error_handler(req, exc))
+        self.assertEqual(resp.status_code, 400)
+        body = json.loads(resp.body.decode())
+        self.assertEqual(body.get("mensagem"), "Dados inválidos")
+        self.assertEqual(body["erros"][0]["mensagem"], "Valor numérico fora dos limites permitidos.")
 
 
 if __name__ == "__main__":

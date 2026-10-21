@@ -165,8 +165,13 @@ class GatewayGRPCManager:
         }
 
     def get_movie_details(self, tmdb_id: int, media_type: str = "") -> dict | None:
-        req = m_pb2.MovieDetailsRequest(tmdb_id=tmdb_id, media_type=media_type)
-        res = self.movie_stub.GetMovieDetails(req, timeout=5.0)
+        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+            return None
+        try:
+            req = m_pb2.MovieDetailsRequest(tmdb_id=tmdb_id, media_type=media_type)
+            res = self.movie_stub.GetMovieDetails(req, timeout=5.0)
+        except (ValueError, OverflowError):
+            return None
         if not res.found:
             return None
 
@@ -227,20 +232,25 @@ class GatewayGRPCManager:
         poster_url: str = "",
         username: str = "",
     ) -> dict:
-        req = r_pb2.CreateReviewRequest(
-            tmdb_id=tmdb_id,
-            user_id=user_id,
-            rating=rating,
-            comment=comment,
-            contains_spoilers=contains_spoilers,
-            media_type=media_type or "movie",
-            season_number=season_number or 0,
-            episode_number=episode_number or 0,
-            movie_title=movie_title or "",
-            poster_url=poster_url or "",
-            username=username or user_id,
-        )
-        res = self.review_stub.CreateReview(req, timeout=10.0)
+        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+            return {"success": False, "message": "ID do filme fora do intervalo permitido."}
+        try:
+            req = r_pb2.CreateReviewRequest(
+                tmdb_id=tmdb_id,
+                user_id=user_id,
+                rating=rating,
+                comment=comment,
+                contains_spoilers=contains_spoilers,
+                media_type=media_type or "movie",
+                season_number=season_number or 0,
+                episode_number=episode_number or 0,
+                movie_title=movie_title or "",
+                poster_url=poster_url or "",
+                username=username or user_id,
+            )
+            res = self.review_stub.CreateReview(req, timeout=10.0)
+        except (ValueError, OverflowError) as e:
+            return {"success": False, "message": f"Dados inválidos: {e}"}
         return {
             "review_id": res.review_id,
             "tmdb_id": res.tmdb_id,
@@ -265,8 +275,13 @@ class GatewayGRPCManager:
         return [_pb_to_review_dict(r) for r in res.reviews]
 
     def get_reviews_by_movie(self, tmdb_id: int) -> list[dict]:
-        req = r_pb2.MovieReviewsRequest(tmdb_id=tmdb_id)
-        res = self.review_stub.GetReviewsByMovie(req, timeout=10.0)
+        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+            return []
+        try:
+            req = r_pb2.MovieReviewsRequest(tmdb_id=tmdb_id)
+            res = self.review_stub.GetReviewsByMovie(req, timeout=10.0)
+        except (ValueError, OverflowError):
+            return []
         return [_pb_to_review_dict(r) for r in res.reviews]
 
     def get_reviews_by_user(self, user_id: str = "", username: str = "") -> list[dict]:
@@ -287,8 +302,13 @@ class GatewayGRPCManager:
         }
 
     def get_season_episodes(self, tmdb_id: int, season_number: int) -> dict:
-        req = m_pb2.SeasonEpisodesRequest(tmdb_id=tmdb_id, season_number=season_number)
-        res = self.movie_stub.GetSeasonEpisodes(req, timeout=5.0)
+        if tmdb_id <= 0 or tmdb_id > 2_147_483_647 or season_number <= 0 or season_number > 2_147_483_647:
+            return {"episodes": []}
+        try:
+            req = m_pb2.SeasonEpisodesRequest(tmdb_id=tmdb_id, season_number=season_number)
+            res = self.movie_stub.GetSeasonEpisodes(req, timeout=5.0)
+        except (ValueError, OverflowError):
+            return {"episodes": []}
         return {
             "episodes": [
                 {
@@ -305,8 +325,13 @@ class GatewayGRPCManager:
         }
 
     def get_all_episodes(self, tmdb_id: int) -> dict:
-        req = m_pb2.AllEpisodesRequest(tmdb_id=tmdb_id)
-        res = self.movie_stub.GetAllEpisodes(req, timeout=8.0)
+        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+            return {}
+        try:
+            req = m_pb2.AllEpisodesRequest(tmdb_id=tmdb_id)
+            res = self.movie_stub.GetAllEpisodes(req, timeout=8.0)
+        except (ValueError, OverflowError):
+            return {}
         return {
             str(k): [
                 {

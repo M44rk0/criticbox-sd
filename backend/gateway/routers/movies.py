@@ -84,7 +84,7 @@ def get_now_playing_movies(
 
 @router.get("/{tmdb_id}", response_model=MovieDetailsResponse, summary="Detalhes do filme ou série via gRPC")
 def get_movie_details(
-    tmdb_id: int = Path(..., ge=1, description="ID TMDb do filme"),
+    tmdb_id: int = Path(..., ge=1, le=2_147_483_647, description="ID TMDb do filme"),
     type: str | None = Query(default=None, description="Tipo de mídia ('movie' ou 'tv')"),
 ):
     logger.info("Gateway GET /movies/%d (type: %s) -> Chamando MovieService gRPC", tmdb_id, type)
@@ -97,8 +97,8 @@ def get_movie_details(
 
 @router.get("/{tmdb_id}/season/{season_number}", summary="Episódios de uma temporada de série via gRPC")
 def get_season_episodes(
-    tmdb_id: int = Path(..., ge=1, description="ID TMDb da série"),
-    season_number: int = Path(..., ge=1, description="Número da temporada"),
+    tmdb_id: int = Path(..., ge=1, le=2_147_483_647, description="ID TMDb da série"),
+    season_number: int = Path(..., ge=1, le=2_147_483_647, description="Número da temporada"),
 ):
     logger.info("Gateway GET /movies/%d/season/%d -> Chamando MovieService gRPC", tmdb_id, season_number)
     grpc_manager = get_grpc_manager()
@@ -107,7 +107,7 @@ def get_season_episodes(
 
 @router.get("/{tmdb_id}/episodes", summary="Todos os episódios de todas as temporadas da série via gRPC")
 def get_all_episodes(
-    tmdb_id: int = Path(..., ge=1, description="ID TMDb da série"),
+    tmdb_id: int = Path(..., ge=1, le=2_147_483_647, description="ID TMDb da série"),
 ):
     logger.info("Gateway GET /movies/%d/episodes -> Chamando MovieService gRPC", tmdb_id)
     grpc_manager = get_grpc_manager()

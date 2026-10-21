@@ -33,14 +33,12 @@ export default function ReviewModal() {
     try {
       const payload = {
         tmdb_id: reviewModalMovie.tmdb_id,
-        movie_title: reviewModalMovie.title || '',
         media_type: reviewModalMovie.media_type || 'movie',
         rating: modalRating,
         comment: modalComment.trim(),
         contains_spoilers: modalSpoilers,
         season_number: null,
         episode_number: null,
-        poster_url: reviewModalMovie.poster_url || '',
       };
 
       await createReview(payload);

@@ -12,6 +12,7 @@ import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import MovieDetailPage from './pages/MovieDetailPage';
 import MyBoxPage from './pages/MyBoxPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function AuthRouteWatcher() {
   const location = useLocation();
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="/login" element={<HomePage />} />
             <Route path="/register" element={<HomePage />} />
             <Route path="/auth" element={<HomePage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
 
           <Footer />

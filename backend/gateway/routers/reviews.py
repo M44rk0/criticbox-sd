@@ -28,15 +28,35 @@ def create_review(
 ):
     author_user_id = current_user["user_id"]
     author_username = current_user.get("username", "")
+    grpc_manager = get_grpc_manager()
+
+    # Consulta os metadados oficiais no MovieService via gRPC
+    # para que ninguém possa enviar títulos, posters ou tipos arbitrários
+    movie_details = None
+    try:
+        movie_details = grpc_manager.get_movie_details(payload.tmdb_id, media_type=payload.media_type or "")
+    except Exception as e:
+        logger.warning("Falha ao consultar MovieService para tmdb_id=%d: %s", payload.tmdb_id, e)
+
+    if movie_details:
+        official_title = movie_details.get("title") or ""
+        official_poster = movie_details.get("poster_url") or ""
+        official_media_type = movie_details.get("media_type") or (payload.media_type or "movie")
+    else:
+        official_title = ""
+        official_poster = ""
+        official_media_type = payload.media_type or "movie"
+
     logger.info(
-        "Gateway POST /reviews -> Despachando via gRPC: @%s (UUID: %s) | ID: %d (%s) | Nota: %.1f",
+        "Gateway POST /reviews -> Despachando via gRPC: @%s (UUID: %s) | ID: %d (%s - '%s') | Nota: %.1f",
         author_username,
         author_user_id,
         payload.tmdb_id,
-        payload.media_type,
+        official_media_type,
+        official_title,
         payload.rating,
     )
-    grpc_manager = get_grpc_manager()
+
     res = grpc_manager.create_review(
         tmdb_id=payload.tmdb_id,
         user_id=author_user_id,
@@ -44,11 +64,11 @@ def create_review(
         rating=payload.rating,
         comment=payload.comment or "",
         contains_spoilers=payload.contains_spoilers,
-        media_type=payload.media_type or "movie",
+        media_type=official_media_type,
         season_number=payload.season_number,
         episode_number=payload.episode_number,
-        movie_title=payload.movie_title or "",
-        poster_url=payload.poster_url or "",
+        movie_title=official_title,
+        poster_url=official_poster,
     )
     if not res.get("success", False):
         raise HTTPException(
@@ -75,7 +95,7 @@ def list_reviews(limit: int = Query(default=50, ge=1, le=100)):
 
 
 @router.get("/movie/{tmdb_id}", response_model=list[ReviewListItem], summary="Listar críticas de um filme via gRPC")
-def list_movie_reviews(tmdb_id: int = Path(..., ge=1)):
+def list_movie_reviews(tmdb_id: int = Path(..., ge=1, le=2_147_483_647, description="ID TMDb do filme")):
     logger.info("Gateway GET /reviews/movie/%d -> Chamando ReviewService gRPC", tmdb_id)
     grpc_manager = get_grpc_manager()
     return grpc_manager.get_reviews_by_movie(tmdb_id)

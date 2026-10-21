@@ -46,6 +46,11 @@ class TestGRPCServices(unittest.TestCase):
         res_low = servicer.CreateReview(req_low, None)
         self.assertFalse(res_low.success)
 
+        req_fraction = r_pb2.CreateReviewRequest(tmdb_id=1, user_id="u", rating=0.6)
+        res_fraction = servicer.CreateReview(req_fraction, None)
+        self.assertFalse(res_fraction.success)
+        self.assertIn("0.5 e 5.0", res_fraction.message)
+
     def test_review_servicer_create_review_empty_user_id(self):
         servicer = ReviewServiceServicer()
         req = r_pb2.CreateReviewRequest(tmdb_id=1, user_id="   ", rating=4.0)
