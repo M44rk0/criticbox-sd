@@ -29,7 +29,7 @@ Armazena as avaliações feitas pela comunidade para filmes, séries completas o
 | Campo | Tipo | Restrições | Descrição |
 | :--- | :--- | :--- | :--- |
 | `id` | `VARCHAR(36)` | **PRIMARY KEY**, NOT NULL | Identificador único universal da avaliação gerado no formato UUID v4. |
-| `tmdb_id` | `INTEGER` | NOT NULL, INDEX | Identificador numérico da obra no catálogo externo da API The Movie Database (TMDb). |
+| `tmdb_id` | `INTEGER` | NOT NULL, INDEX | Identificador numérico da obra no catálogo do TMDb (validado no intervalo int32 positivo: `1` a `2.147.483.647`). |
 | `user_id` | `VARCHAR(50)` | NOT NULL, INDEX | Identificador (UUID) do usuário autor da avaliação. |
 | `username` | `VARCHAR(50)` | NOT NULL, INDEX, DEFAULT `""` | Nome de exibição do autor no momento da publicação (desnormalizado para renderização rápida). |
 | `rating` | `FLOAT` | NOT NULL, CHECK (`rating` entre `0.5` e `5.0`) | Nota atribuída pelo usuário, variando de 0.5 a 5.0 estrelas com incrementos de 0.5. |
@@ -39,8 +39,8 @@ Armazena as avaliações feitas pela comunidade para filmes, séries completas o
 | `media_type` | `VARCHAR(20)` | NOT NULL, DEFAULT `'movie'` | Tipo da mídia avaliada. Valores aceitos: `'movie'` (filme) ou `'tv'` (série de TV). |
 | `season_number` | `INTEGER` | NULLABLE | Número da temporada avaliada (preenchido apenas quando a avaliação é direcionada a um episódio específico de série). |
 | `episode_number` | `INTEGER` | NULLABLE | Número do episódio avaliado dentro da temporada (preenchido apenas quando a avaliação é direcionada a um episódio específico). |
-| `movie_title` | `VARCHAR(255)` | NOT NULL, DEFAULT `""` | Título da obra gravado atomicamente no momento da avaliação para leitura imediata sem requisições adicionais. |
-| `poster_url` | `VARCHAR(500)` | NOT NULL, DEFAULT `""` | URL completa da imagem do poster no CDN do TMDb, gravada na persistência para eliminar o gargalo de consultas N+1. |
+| `movie_title` | `VARCHAR(255)` | NOT NULL, DEFAULT `""` | Título oficial da obra resolvido pelo MovieService e gravado atomicamente para leitura rápida. |
+| `poster_url` | `VARCHAR(500)` | NOT NULL, DEFAULT `""` | URL completa do poster no CDN do TMDb, resolvida pelo MovieService e gravada para eliminar consultas N+1. |
 
 ---
 
@@ -69,3 +69,7 @@ Armazena as avaliações feitas pela comunidade para filmes, séries completas o
    - Apenas notas no intervalo de `0.5` a `5.0` (múltiplos de 0.5) são permitidas pelo Gateway e pela camada de persistência.
 4. **Desnormalização Controlada**:
    - Os campos `movie_title` e `poster_url` são fixados no ato da gravação da avaliação. Isso garante que feeds com dezenas de avaliações sejam lidos instantaneamente em um único `SELECT`, sem disparar requisições em cascata para a API do TMDb.
+5. **Enriquecimento Mandatório na Borda (Gateway ➔ MovieService)**:
+   - Para impedir que clientes web injetem títulos ou pôsteres arbitrários, o API Gateway consulta os metadados canônicos no `MovieService` via gRPC antes de despachar a criação para o `ReviewService`.
+6. **Exclusão Restrita ao Autor (`DeleteReview`)**:
+   - Uma avaliação só pode ser excluída pelo próprio autor autenticado via JWT (`user_id == author_id`), garantindo isolamento de permissões entre usuários na tela "Minha Caixa".

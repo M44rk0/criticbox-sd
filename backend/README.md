@@ -4,6 +4,7 @@ Microsserviços gRPC e API Gateway (FastAPI) para a plataforma Criticbox.
 
 ## Estrutura do Backend
 
+- `common/`: Utilitários de observabilidade e telemetria ponta a ponta (correlation ID `X-Request-ID` e interceptors gRPC).
 - `gateway/`: API Gateway REST em FastAPI (segurança, JWT, roteamento e validação de schemas).
 - `services/user_service/`: Microsserviço de Identidade & Autenticação gRPC (:50053) com banco exclusivo (`users.db` / `criticbox_users`).
 - `services/movie_service/`: Microsserviço de Catálogo & Mídia gRPC (:50051), stateless, com integração TMDb e cache em RAM.
@@ -11,7 +12,7 @@ Microsserviços gRPC e API Gateway (FastAPI) para a plataforma Criticbox.
 - `services/tmdb/`: Cliente TMDb, cache thread-safe com TTL, extratores e motor de recomendação por afinidade.
 - `proto/`: Contratos Protocol Buffers (`user.proto`, `movie.proto`, `review.proto`).
 - `generated/`: Stubs gRPC compilados para Python.
-- `tests/`: Suíte completa de testes automatizados com pytest (125 testes).
+- `tests/`: Suíte completa de testes automatizados com pytest (141 testes).
 - `scripts/`: Utilitários (compilação de protobufs).
 
 ## Como Executar

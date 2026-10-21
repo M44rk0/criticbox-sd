@@ -12,9 +12,9 @@ Em vez de uma aplicação monolítica onde rotas HTTP acessam o banco diretament
 
 1. **Frontend (SPA React)**: Interface com o usuário no navegador.
 2. **API Gateway (FastAPI / REST)**: Ponto único de entrada para a web, responsável por segurança, validações e orquestração.
-3. **UserService (gRPC / :50053)**: Microsserviço dedicado a identidades, cadastro, validação de credenciais e hash seguro com bcrypt.
-4. **MovieService (gRPC / :50051)**: Microsserviço focado no catálogo de títulos, integração com a API do TMDb, episódios e recomendações.
-5. **ReviewService (gRPC / :50052)**: Microsserviço focado na persistência de avaliações, moderação/spoilers e cálculo agregado de notas.
+3. **UserService (gRPC / :50053)**: Microsserviço dedicado a identidades, cadastro, validação de credenciais e hash seguro com PBKDF2-HMAC-SHA256.
+4. **MovieService (gRPC / :50051)**: Microsserviço focado no catálogo de títulos, integração com a API do TMDb, episódios, recomendações e agregação de notas da comunidade.
+5. **ReviewService (gRPC / :50052)**: Microsserviço focado na persistência de avaliações, moderação/spoilers, exclusão e cálculo agregado de notas.
 
 ### Diagrama da Topologia
 
@@ -33,6 +33,7 @@ Em vez de uma aplicação monolítica onde rotas HTTP acessam o banco diretament
 |  - Emissão e validação de tokens JWT (Bearer Auth)                                |
 |  - Tradução de exceções gRPC para códigos de status HTTP                          |
 |  - Pool de canais gRPC persistentes (GatewayGRPCManager)                          |
+|  - Rastreabilidade ponta a ponta com X-Request-ID                                 |
 +-----------------------------------------------------------------------------------+
          |                                |                                |
    gRPC / HTTP/2                    gRPC / HTTP/2                    gRPC / HTTP/2
@@ -44,13 +45,12 @@ Em vez de uma aplicação monolítica onde rotas HTTP acessam o banco diretament
 |      (:50053)      |           |      (:50051)      |           |      (:50052)      |
 | - Cadastro usuários|           | - Busca filmes/TV  |           | - Criar reviews    |
 | - Login e auth     |           | - Trailers e elenco|           | - Listar reviews   |
-| - Hash com bcrypt  |           | - Guias temporadas |           | - Bloqueio spoilers|
-| - Busca por perfil |           | - Recomendações    |           | - Médias e ratings |
-|                    |           | - Cache em memória |           | - Batch movie stats|
+| - Hash PBKDF2/SHA  |           | - Guias temporadas |           | - Excluir reviews  |
+| - Busca por perfil |           | - Recomendações    |           | - Bloqueio spoilers|
+|                    |           | - Cache em memória |           | - Médias e ratings |
+|                    |           |                    |──gRPC:50052──►| - Batch movie stats|
 +--------------------+           +--------------------+           +--------------------+
-         |                                |        |                       |
-         |                                |        +-- chamada gRPC inter--+
-         |                                |            serviço (:50052)    |
+         |                                |                                |
          |                                v                                |
          |                      +--------------------+                     |
          |                      |  API Externa TMDb  |                     |
@@ -105,13 +105,13 @@ No Criticbox SD, toda a comunicação interna no cluster de backend ocorre via g
 ## 4. Os Microsserviços Internos
 
 ### 4.1. UserService (Porta 50053)
-Implementado em `backend/services/user_service.py`, este microsserviço é o guardião das identidades do sistema:
-- **Autenticação Segura**: Armazena senhas com hash criptográfico usando `bcrypt`. A senha pura nunca é gravada no banco de dados.
+Implementado em `backend/services/user_service/`, este microsserviço é o guardião das identidades do sistema:
+- **Autenticação Segura**: Armazena senhas com hash criptográfico usando `PBKDF2-HMAC-SHA256` (100.000 iterações com salt de 16 bytes). A senha pura nunca é gravada no banco de dados.
 - **Cadastro e Login**: Provê os RPCs `RegisterUser` e `AuthenticateUser`.
 - **Separação de Responsabilidade (SRP)**: Isola regras de identidade e credenciais fora do escopo de reviews e mídias.
 
 ### 4.2. MovieService (Porta 50051)
-Implementado em `backend/services/movie_service.py`, este microsserviço gerencia todo o universo de catálogo de filmes e séries:
+Implementado em `backend/services/movie_service/`, este microsserviço gerencia todo o universo de catálogo de filmes e séries:
 - **Integração com TMDb**: Realiza buscas, obtém detalhes, elenco, trailers do YouTube e plataformas de streaming (Netflix, Prime Video, etc.).
 - **Paralelismo Concorrente**: Ao buscar detalhes de uma série de TV, usa um `ThreadPoolExecutor` para carregar em paralelo os episódios de múltiplas temporadas.
 - **Cache Thread-Safe com TTL**: Armazena em memória os resultados de consultas frequentes por 10 minutos. Se o cache atingir o limite (`MAX_CACHE_SIZE = 1000`), remove automaticamente chaves expiradas ou os 20% mais antigos.
@@ -119,11 +119,13 @@ Implementado em `backend/services/movie_service.py`, este microsserviço gerenci
 - **Cliente gRPC Inter-Serviço**: Para mostrar a nota média e o número de reviews do Criticbox junto com os dados do filme, o `MovieService` faz uma chamada gRPC direta ao `ReviewService` (`GetMovieStats` ou `GetBatchMovieStats`).
 
 ### 4.3. ReviewService (Porta 50052)
-Implementado em `backend/services/review_service.py`, este microsserviço é focado exclusivamente na experiência da comunidade e avaliações:
+Implementado em `backend/services/review_service/`, este microsserviço é focado exclusivamente na experiência da comunidade e avaliações:
 - **Controle de Avaliações**:
   - Permite avaliar tanto um título completo (filme ou série) quanto episódios individuais (definindo temporada e número do episódio).
   - Regra de Negócio: Bloqueia avaliações de títulos que ainda não estrearam oficialmente nos cinemas ou na TV.
   - Suporte a marcação de spoilers (comentários com spoilers são sinalizados para o front ocultar por padrão).
+- **Exclusão com Controle de Autoria (`DeleteReview`)**:
+  - Permite a remoção de avaliações pelo próprio autor (usado na tela "Minha Caixa"), garantindo que um usuário não possa deletar reviews de terceiros.
 - **Cálculo de Estatísticas em Batch**: Oferece o RPC `GetBatchMovieStats`, permitindo que uma lista de IDs de filmes receba suas médias e contagens em uma única chamada agregada, evitando consultas repetidas ao banco.
 
 ---
@@ -135,7 +137,7 @@ Implementado em `backend/services/review_service.py`, este microsserviço é foc
 2. O navegador dispara um `POST /auth/login` em JSON para o Gateway.
 3. O Gateway valida o formato dos dados com o schema `UserLoginRequest`.
 4. O Gateway invoca o RPC `AuthenticateUser` no `UserService` (:50053) via gRPC.
-5. O `UserService` consulta o hash no banco de dados e verifica a senha com `bcrypt.checkpw()`.
+5. O `UserService` consulta o hash no banco de dados e verifica a senha com `PBKDF2-HMAC-SHA256` via `hmac.compare_digest()`.
 6. Se a senha for correta, o `UserService` devolve sucesso e o ID do usuário ao Gateway.
 7. O Gateway gera um token JWT contendo `user_id` e `username`, devolvendo-o ao navegador em formato JSON com código HTTP 200.
 8. O frontend armazena o token no `localStorage` e passa a enviá-lo nas próximas requisições.
@@ -153,11 +155,20 @@ Implementado em `backend/services/review_service.py`, este microsserviço é foc
 1. O usuário autenticado digita um comentário, escolhe uma nota (ex: 4.5 estrelas) e clica em Publicar.
 2. O frontend envia `POST /reviews` com o cabeçalho `Authorization: Bearer <token>`.
 3. O Gateway valida o token JWT (garantindo que o usuário é quem diz ser e que a sessão não expirou).
-4. O Gateway valida o corpo da requisição (ex: garante que a nota está entre 0.5 e 5.0).
-5. O Gateway chama o RPC `CreateReview` no `ReviewService` via gRPC.
-6. O `ReviewService` verifica com o TMDb se o título já estreou. Se a data for futura, rejeita a review.
-7. O `ReviewService` grava a review no banco de dados vinculada ao `user_id` (UUID imutável) e `username` (nome de exibição) do autor, com título e URL do poster inclusos de forma atômica (eliminando requisições extras posteriores).
-8. O `ReviewService` responde sucesso com o novo ID da review criada, e o Gateway retorna HTTP 201 Created ao navegador.
+4. O Gateway valida o corpo da requisição (ex: garante que a nota está entre 0.5 e 5.0 e que o `tmdb_id` é um inteiro positivo).
+5. **Enriquecimento Canônico de Borda**: O Gateway consulta previamente o `MovieService` via gRPC stubs (`get_movie_details`) para extrair título oficial e URL do poster canônica do TMDb, impedindo injeção de dados forjados pelo cliente.
+6. O Gateway chama o RPC `CreateReview` no `ReviewService` via gRPC com os dados enriquecidos.
+7. O `ReviewService` verifica com o TMDb se o título já estreou. Se a data for futura, rejeita a review.
+8. O `ReviewService` grava a review no banco de dados vinculada ao `user_id` (UUID imutável) e `username` do autor, com título e poster inclusos de forma atômica (eliminando consultas N+1 posteriores).
+9. O `ReviewService` responde sucesso com o novo ID da review criada, e o Gateway retorna HTTP 201 Created ao navegador.
+
+### Fluxo D: Exclusão de Avaliação (Tela 'Minha Caixa')
+1. O usuário visualiza suas avaliações na tela "Minha Caixa" (`MyBoxPage`) e clica em Excluir em uma de suas críticas.
+2. O frontend despacha `DELETE /reviews/{review_id}` para o Gateway com o cabeçalho `Authorization: Bearer <token>`.
+3. O Gateway autentica o token JWT, identifica o `user_id` da sessão ativa e invoca o RPC `DeleteReview` no `ReviewService` via gRPC.
+4. O `ReviewService` valida se a avaliação pertence ao usuário solicitante no banco `reviews.db`.
+5. Comprovada a autoria, a linha correspondente é deletada atomicamente e o serviço retorna confirmação.
+6. O Gateway retorna HTTP 200 OK ao navegador, que atualiza a contagem e a lista em tela.
 
 ---
 
@@ -202,20 +213,29 @@ Ao iniciar o ecossistema com `poetry run start` (`run_all.py`):
 
 ---
 
-## 7. Mapeamento de Falhas (gRPC ➔ HTTP)
+## 7. Mapeamento de Falhas e Observabilidade
 
+### 7.1. Mapeamento de Exceções (gRPC ➔ HTTP)
 Para que o frontend receba códigos HTTP padronizados da web em vez de erros internos de socket, o arquivo `backend/gateway/exception_handlers.py` faz a tradução:
 
-| Código gRPC Interno | Código HTTP Devolvido | Cenário |
+| Código gRPC / Exceção | Código HTTP Devolvido | Cenário |
 | :--- | :---: | :--- |
 | `NOT_FOUND` | **404 Not Found** | Filme, série ou usuário não localizado. |
-| `INVALID_ARGUMENT` | **400 Bad Request** | Dados enviados de forma incorreta. |
-| `ALREADY_EXISTS` | **409 Conflict** | Usuário duplicado ou review repetida para o mesmo episódio. |
-| `UNAUTHENTICATED` | **401 Unauthorized** | Token ausente, inválido ou expirado. |
-| `PERMISSION_DENIED` | **403 Forbidden** | Operação restrita a outro usuário. |
+| `INVALID_ARGUMENT` | **400 Bad Request** | Dados enviados de forma incorreta ou nota fora do intervalo. |
+| `ALREADY_EXISTS` | **409 Conflict** | Usuário duplicado ou review repetida para a mesma obra/episódio. |
+| `UNAUTHENTICATED` | **401 Unauthorized** | Token JWT ausente, inválido ou expirado. |
+| `PERMISSION_DENIED` | **403 Forbidden** | Operação restrita a outro usuário (ex: exclusão de review de terceiro). |
 | `UNAVAILABLE` | **503 Service Unavailable** | Microsserviço gRPC correspondente indisponível. |
 | `DEADLINE_EXCEEDED` | **504 Gateway Timeout** | Tempo limite esgotado aguardando o microsserviço. |
 | `INTERNAL` | **503 Service Unavailable** | Erro interno tratado com fallback seguro. |
+| `ValueError` (Borda) | **400 Bad Request** | Parâmetro inválido ou fora dos limites int32 (`tmdb_id`). |
+
+### 7.2. Telemetria e Rastreabilidade Distribuída (Correlation ID)
+O Criticbox implementa rastreabilidade ponta a ponta com `common/telemetry.py`:
+1. **Middleware HTTP no Gateway**: Cada requisição externa recebe ou gera um identificador único `X-Request-ID` (UUID v4) retornado no cabeçalho de resposta.
+2. **ContextVar Assíncrono**: O correlation ID é isolado por contexto de execução assíncrona.
+3. **TraceClientInterceptor**: Interceptor de cliente gRPC que injeta automaticamente o metadado `x-request-id` nos stubs de chamada aos microsserviços.
+4. **Decorator `@traced_rpc`**: Nos microsserviços (`UserService`, `MovieService`, `ReviewService`), extrai o `x-request-id` dos metadados de contexto gRPC e formata as saídas de log estruturadas, permitindo rastrear o ciclo de vida completo de cada requisição através dos limites do cluster.
 
 ---
 
@@ -226,58 +246,43 @@ O projeto é estruturado em duas aplicações complementares e desacopladas (`ba
 ```text
 criticbox-sd/
 ├── backend/                    # Projeto Python isolado (gRPC + Gateway)
+│   ├── common/                 # Utilitários compartilhados e observabilidade
+│   │   └── telemetry.py        # Rastreabilidade ponta a ponta e correlation ID
 │   ├── gateway/                # API Gateway (REST HTTP / FastAPI)
 │   │   ├── auth.py             # Emissão e validação de tokens JWT (Bearer)
-│   │   ├── exception_handlers.py # Mapeamento gRPC RpcError -> HTTP status
+│   │   ├── exception_handlers.py # Mapeamento gRPC RpcError / ValueError -> HTTP status
 │   │   ├── grpc_clients.py     # Pool de stubs e canais gRPC persistentes
-│   │   ├── main.py             # Instância FastAPI e lifecycle das rotas
-│   │   ├── routers/            # Sub-rotas REST da API
-│   │   │   ├── auth.py         # Rotas /auth/register, /auth/login, /auth/me
-│   │   │   ├── movies.py       # Rotas /movies/... (detalhes, busca, trending)
-│   │   │   └── reviews.py      # Rotas /reviews/... (criação e listagem)
+│   │   ├── main.py             # Instância FastAPI, middleware e lifecycle
+│   │   ├── routers/            # Sub-rotas REST da API (/auth, /movies, /reviews)
 │   │   └── schemas/            # Schemas Pydantic tipados e modularizados
-│   │       ├── auth.py         # Schemas de login, registro e perfil
-│   │       ├── movies.py       # Schemas de catálogo, elenco e episódios
-│   │       ├── reviews.py      # Schemas de criação e listagem de reviews
-│   │       └── common.py       # Schemas de erros e respostas genéricas
 │   ├── services/               # Microsserviços Internos gRPC (Pacotes Autônomos)
 │   │   ├── user_service/       # Microsserviço de Identidade & Autenticação (:50053)
 │   │   │   ├── servicer.py     # Implementação gRPC (UserService)
-│   │   │   └── storage/        # Banco de Dados Exclusivo (users.db / criticbox_users)
-│   │   │       ├── connection.py
-│   │   │       ├── models.py   # UserBase & Entidade User
-│   │   │       └── repository.py
+│   │   │   └── storage/        # Banco Exclusivo (users.db / criticbox_users)
 │   │   ├── review_service/     # Microsserviço de Avaliações (:50052)
-│   │   │   ├── servicer.py     # Implementação gRPC (ReviewService)
-│   │   │   └── storage/        # Banco de Dados Exclusivo (reviews.db / criticbox_reviews)
-│   │   │       ├── connection.py
-│   │   │       ├── models.py   # ReviewBase & Entidade Review
-│   │   │       └── repository.py
+│   │   │   ├── servicer.py     # Implementação gRPC (ReviewService - Create/Delete)
+│   │   │   └── storage/        # Banco Exclusivo (reviews.db / criticbox_reviews)
 │   │   ├── movie_service/      # Microsserviço de Catálogo & TMDb (:50051 / Stateless)
 │   │   │   └── servicer.py     # Implementação gRPC (MovieService)
-│   │   └── tmdb/               # Módulo TMDb & Recomendações
-│   │   │   ├── client.py       # Cliente HTTP TMDb
-│   │   │   ├── catalog.py      # Operações de catálogo e temporadas
-│   │   │   ├── cache.py        # Cache thread-safe com TTL
-│   │   │   ├── extractors.py   # Normalização de payloads externos
-│   │   │   └── recommender.py  # Motor de recomendação baseado em afinidade
+│   │   └── tmdb/               # Módulo TMDb, cache TTL e recomendações
 │   ├── proto/                  # Contratos de interface Protocol Buffers
 │   │   ├── user.proto
 │   │   ├── movie.proto
 │   │   └── review.proto
 │   ├── generated/              # Código gerado pelo protoc para Python
-│   ├── tests/                  # Suíte de testes automatizados com pytest
+│   ├── tests/                  # Suíte de 141 testes automatizados com pytest
 │   ├── scripts/                # Scripts utilitários (compilação de protobufs)
 │   ├── pyproject.toml          # Dependências e scripts do Poetry
 │   ├── poetry.lock             # Lockfile de dependências Python
 │   └── run_all.py              # Orquestrador local de inicialização concorrente
 │
 ├── frontend/                   # Interface Web SPA (React + Vite)
-│   ├── src/                    # Componentes React, hooks, páginas e estilos
+│   ├── src/                    # Páginas (Home, Detalhes, Minha Caixa, 404), componentes e design
 │   ├── package.json            # Dependências e scripts do frontend
 │   └── vite.config.js          # Configuração de build e proxies locais
 │
-├── ARCHITECTURE.md             # Documento de arquitetura de sistemas
+├── ARCHITECTURE.md             # Documento de arquitetura de sistemas distribuídos
+├── DATA_DICTIONARY.md          # Dicionário de dados relacional (Database per Service)
 ├── DESIGN.md                   # Diretrizes e tokens visuais da aplicação
 └── README.md                   # Apresentação geral do projeto
 ```
