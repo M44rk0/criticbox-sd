@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { useReviewModal } from '../context/ReviewModalContext';
 import { useToast } from '../context/ToastContext';
 import { createReview } from '../api/reviews';
-import { isAnime } from '../utils/media';
+import { isAnime, isEpisodic } from '../utils/media';
 
 export default function ReviewModal() {
   const { reviewModalMovie, closeReviewModal, onReviewSuccess } = useReviewModal();
@@ -26,7 +26,7 @@ export default function ReviewModal() {
   if (!reviewModalMovie) return null;
 
   const displayedRating = hoverRating !== null ? hoverRating : modalRating;
-  const isTv = reviewModalMovie.media_type === 'tv';
+  const isTv = isEpisodic(reviewModalMovie);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -78,23 +78,13 @@ export default function ReviewModal() {
           <div>
             <div className="v1-header-bar">
               <div className="v1-meta-row">
-                <span className={`v1-chip-lancamento ${isAnime(reviewModalMovie) ? 'ep-chip-anime' : ''}`}>
-                  {isAnime(reviewModalMovie)
-                    ? 'AVALIAÇÃO DE ANIME COMPLETO'
-                    : isTv
-                    ? 'AVALIAÇÃO DE SÉRIE COMPLETA'
-                    : 'NOVA CRÍTICA'}
-                </span>
-                <span
-                  style={{
-                    marginLeft: '10px',
-                    color: 'var(--gray-400)',
-                    fontSize: '0.78rem',
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}
-                >
-                  NOTA: {displayedRating.toFixed(1)}
-                </span>
+                {(isAnime(reviewModalMovie) || isTv) && (
+                  <span className={`v1-chip-lancamento ${isAnime(reviewModalMovie) ? 'ep-chip-anime' : ''}`}>
+                    {isAnime(reviewModalMovie)
+                      ? 'AVALIAÇÃO DE ANIME COMPLETO'
+                      : 'AVALIAÇÃO DE SÉRIE COMPLETA'}
+                  </span>
+                )}
               </div>
               <button className="v1-close-btn" onClick={closeReviewModal} aria-label="Fechar" title="Fechar">
                 <X size={16} />

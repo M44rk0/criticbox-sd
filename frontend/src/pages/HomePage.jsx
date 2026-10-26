@@ -363,7 +363,10 @@ export default function HomePage() {
               </p>
               <div className="hero-ledger">
                 <div className="hero-ledger-item">
-                  <span className="hero-ledger-score">★ {heroMovie.tmdb_vote_average?.toFixed(1) || '-'}</span>
+                  <span className="hero-ledger-score">
+                    <span className="detail-ledger-star" aria-hidden="true">★</span>
+                    {heroMovie.tmdb_vote_average?.toFixed(1) || '-'}
+                  </span>
                   <div className="hero-ledger-meta">
                     <span className="hero-ledger-label">ÍNDICE TMDB</span>
                     <span className="hero-ledger-sub">BASE GLOBAL</span>
@@ -372,6 +375,7 @@ export default function HomePage() {
                 <div className="hero-ledger-divider"></div>
                 <div className="hero-ledger-item">
                   <span className="hero-ledger-score accent">
+                    <span className="cb-square-icon" aria-hidden="true">■</span>
                     {heroMovie.criticbox_rating > 0 ? heroMovie.criticbox_rating.toFixed(1) : '—'}
                   </span>
                   <div className="hero-ledger-meta">
@@ -487,6 +491,7 @@ export default function HomePage() {
                     posterUrl={pUrl}
                     showPoster={true}
                     canDelete={false}
+                    isAnime={isAnime(r)}
                   />
                 );
               })}

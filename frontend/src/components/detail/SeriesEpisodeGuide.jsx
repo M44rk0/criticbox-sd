@@ -2,6 +2,7 @@ import React from 'react';
 import { Tv, Tv2, Calendar, Star, Check } from 'lucide-react';
 import { formatReleaseDate } from '../../utils/date';
 import { useReviewModal } from '../../context/ReviewModalContext';
+import { isEpisodic } from '../../utils/media';
 
 export default function SeriesEpisodeGuide({
   movie,
@@ -14,7 +15,7 @@ export default function SeriesEpisodeGuide({
 }) {
   const { openEpisodeReviewModal } = useReviewModal();
 
-  if (movie.media_type !== 'tv' || !movie.seasons || movie.seasons.length === 0) {
+  if (!isEpisodic(movie) || !movie.seasons || movie.seasons.length === 0) {
     return null;
   }
 

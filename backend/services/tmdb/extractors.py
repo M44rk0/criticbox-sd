@@ -1,8 +1,38 @@
 from services.tmdb.client import TMDB_IMAGE_BASE
 
 
+def is_anime(m: dict) -> bool:
+    """Identifica se uma obra (filme ou série) é um Anime japonês."""
+    if not m:
+        return False
+
+    genre_ids = m.get("genre_ids") or []
+    if not genre_ids and "genres" in m:
+        genre_ids = [g.get("id") if isinstance(g, dict) else g for g in m.get("genres", [])]
+
+    has_animation = 16 in genre_ids
+    if not has_animation and "genres" in m:
+        genre_names = " ".join(
+            [(g.get("name", "") if isinstance(g, dict) else str(g)) for g in m.get("genres", [])]
+        ).lower()
+        if "animação" in genre_names or "animation" in genre_names:
+            has_animation = True
+
+    orig_lang = (m.get("original_language") or "").lower()
+    origin_countries = [str(c).upper() for c in (m.get("origin_country") or [])]
+    prod_countries = [
+        str(c.get("iso_3166_1", "") if isinstance(c, dict) else c).upper()
+        for c in (m.get("production_countries") or [])
+    ]
+    is_japanese = orig_lang == "ja" or "JP" in origin_countries or "JP" in prod_countries
+
+    return bool(has_animation and is_japanese)
+
+
 def _fmt(m: dict, default_media_type: str = "movie") -> dict:
     media_type = m.get("media_type") or default_media_type
+    if is_anime(m):
+        media_type = "anime"
     poster = m.get("poster_path")
     backdrop = m.get("backdrop_path")
     title = m.get("title") or m.get("name") or m.get("original_title") or m.get("original_name") or ""

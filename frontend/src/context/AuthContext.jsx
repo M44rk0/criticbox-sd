@@ -61,7 +61,7 @@ export function AuthProvider({ children }) {
     setUsername(data.username);
     setUserId(data.user_id || '');
     closeAuth();
-    showToast(`Bem-vindo(a), @${data.username}!`, false);
+    showToast(`Bem-vindo(a), ${data.username}!`, false);
     return data;
   };
 
@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
     setUsername(data.username);
     setUserId(data.user_id || '');
     closeAuth();
-    showToast(`Conta criada com sucesso! @${data.username}`, false);
+    showToast(`Conta criada com sucesso! ${data.username}`, false);
     return data;
   };
 

@@ -37,7 +37,7 @@ export default function EpisodeReviewModal() {
     try {
       const payload = {
         tmdb_id: movie.tmdb_id,
-        media_type: 'tv',
+        media_type: movie.media_type || 'tv',
         rating: modalRating,
         comment: modalComment.trim(),
         contains_spoilers: modalSpoilers,
@@ -121,16 +121,6 @@ export default function EpisodeReviewModal() {
               <div className="v1-meta-row">
                 <span className="v1-chip-lancamento">
                   AVALIAÇÃO DE EPISÓDIO
-                </span>
-                <span
-                  style={{
-                    marginLeft: '10px',
-                    color: 'var(--gray-400)',
-                    fontSize: '0.78rem',
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}
-                >
-                  NOTA: {displayedRating.toFixed(1)}
                 </span>
               </div>
               <button

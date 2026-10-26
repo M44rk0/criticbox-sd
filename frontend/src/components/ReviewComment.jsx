@@ -1,12 +1,37 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
-export default function ReviewComment({ comment, containsSpoilers }) {
+export default function ReviewComment({ comment, containsSpoilers, allowExpand = false }) {
   const [revealed, setRevealed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
   if (!comment) return null;
+
+  const isLong = comment.length > 220;
+  const displayText = allowExpand && isLong && !expanded ? `${comment.slice(0, 200)}...` : comment;
+
   if (!containsSpoilers) {
-    return <p className="review-card-text">{comment}</p>;
+    return (
+      <div className="review-comment-wrap">
+        <p className="review-card-text">
+          {displayText}
+          {allowExpand && isLong && (
+            <button
+              type="button"
+              className="review-expand-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(!expanded);
+              }}
+            >
+              {expanded ? ' Recolher' : ' Ler mais'}
+            </button>
+          )}
+        </p>
+      </div>
+    );
   }
+
   return (
     <div className="spoiler-wrap">
       <p
@@ -14,7 +39,19 @@ export default function ReviewComment({ comment, containsSpoilers }) {
         onClick={() => !revealed && setRevealed(true)}
         style={!revealed ? { cursor: 'pointer' } : undefined}
       >
-        {comment}
+        {!revealed ? comment : displayText}
+        {revealed && allowExpand && isLong && (
+          <button
+            type="button"
+            className="review-expand-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded(!expanded);
+            }}
+          >
+            {expanded ? ' Recolher' : ' Ler mais'}
+          </button>
+        )}
       </p>
       {!revealed ? (
         <button

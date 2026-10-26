@@ -13,6 +13,7 @@ from services.tmdb.extractors import (
     _extract_recommendations,
     _extract_watch_providers,
     _fmt,
+    is_anime,
 )
 
 logger = logging.getLogger("criticbox-tmdb-catalog")
@@ -139,6 +140,12 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
             _set_cache(cache_key, tv_details)
             return tv_details
 
+    if media_type == "anime":
+        tv_details = _get_tv_details(tmdb_id)
+        if tv_details and tv_details.get("media_type") == "anime":
+            _set_cache(cache_key, tv_details)
+            return tv_details
+
     try:
         movie_obj = tmdb.Movies(tmdb_id)
         data = movie_obj.info(
@@ -198,7 +205,7 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
                 "directors": directors,
                 "cast": cast_list,
                 "trailer_url": trailer_url,
-                "media_type": "movie",
+                "media_type": "anime" if is_anime(data) else "movie",
                 "number_of_seasons": 0,
                 "number_of_episodes": 0,
                 "seasons": [],
@@ -362,7 +369,7 @@ def _get_tv_details(tmdb_id: int) -> dict | None:
                 "directors": creators,
                 "cast": cast_list,
                 "trailer_url": trailer_url,
-                "media_type": "tv",
+                "media_type": "anime" if is_anime(data) else "tv",
                 "number_of_seasons": data.get("number_of_seasons", len(seasons)),
                 "number_of_episodes": data.get("number_of_episodes", 0),
                 "seasons": seasons,

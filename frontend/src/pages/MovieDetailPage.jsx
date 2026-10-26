@@ -26,7 +26,7 @@ import RecommendationsCarousel from '../components/detail/RecommendationsCarouse
 import NotFoundPage from './NotFoundPage';
 import { formatReleaseDate, isUnreleased } from '../utils/date';
 import { SERIES_EPISODES_CACHE } from '../utils/constants';
-import { isAnime, getMediaTypeLabel } from '../utils/media';
+import { isAnime, isEpisodic, getMediaTypeLabel, saveCachedMediaMeta } from '../utils/media';
 
 const INITIAL_CAST_COUNT = 6;
 
@@ -65,7 +65,16 @@ export default function MovieDetailPage() {
       setMovie(movieData);
       setReviews(reviewsData || []);
 
-      if (movieData.media_type === 'tv') {
+      if (movieData?.tmdb_id) {
+        saveCachedMediaMeta(movieData.tmdb_id, {
+          isAnime: isAnime(movieData),
+          media_type: movieData.media_type || mediaType,
+        });
+      }
+
+      const isSeriesOrAnime = isEpisodic(movieData);
+
+      if (isSeriesOrAnime) {
         const mid = movieData.tmdb_id || id;
         if (SERIES_EPISODES_CACHE[mid]) {
           setSeasonEpisodesMap((prev) => ({ ...prev, ...SERIES_EPISODES_CACHE[mid] }));
@@ -81,9 +90,16 @@ export default function MovieDetailPage() {
         }
 
         if (movieData.seasons && movieData.seasons.length > 0) {
-          const firstSeasonNum = movieData.seasons[0].season_number || 1;
-          setSelectedSeason(firstSeasonNum);
-          loadSeasonEpisodes(firstSeasonNum);
+          // Seleciona por padrão a última temporada lançada
+          let targetSeasonNum = movieData.seasons[movieData.seasons.length - 1].season_number || 1;
+          if (
+            movieData.last_episode_to_air?.season_number &&
+            movieData.seasons.some((s) => s.season_number === movieData.last_episode_to_air.season_number)
+          ) {
+            targetSeasonNum = movieData.last_episode_to_air.season_number;
+          }
+          setSelectedSeason(targetSeasonNum);
+          loadSeasonEpisodes(targetSeasonNum);
         }
       }
     } catch (err) {
@@ -117,7 +133,7 @@ export default function MovieDetailPage() {
   };
 
   useEffect(() => {
-    if (movie?.media_type === 'tv' && reviews.length > 0) {
+    if ((movie?.media_type === 'tv' || movie?.media_type === 'anime') && reviews.length > 0) {
       const reviewedSeasons = [...new Set(reviews.map((r) => r.season_number).filter(Boolean))];
       reviewedSeasons.forEach((sNum) => {
         if (!seasonEpisodesMap[sNum] && !seasonEpisodesMap[String(sNum)]) {
@@ -165,9 +181,14 @@ export default function MovieDetailPage() {
       )
     : reviews;
 
+  const isSeriesOrAnime = Boolean(
+    movie.media_type === 'tv' ||
+    (movie.media_type === 'anime' && (movie.number_of_seasons > 0 || (movie.seasons && movie.seasons.length > 0)))
+  );
+
   const userAlreadyReviewed = Boolean(
     username &&
-      (movie.media_type === 'tv'
+      (isSeriesOrAnime
         ? userReviews.some((r) => (!r.season_number || r.season_number === 0) && (!r.episode_number || r.episode_number === 0))
         : userReviews.length > 0)
   );
@@ -234,7 +255,7 @@ export default function MovieDetailPage() {
 
   const scrollRecs = (dir) => {
     if (recsCarouselRef.current) {
-      const scrollAmt = dir === 'left' ? -350 : 350;
+      const scrollAmt = dir === 'left' ? -520 : 520;
       recsCarouselRef.current.scrollBy({ left: scrollAmt, behavior: 'smooth' });
     }
   };
@@ -287,7 +308,7 @@ export default function MovieDetailPage() {
                 onClick={() => openReviewModal(movie, loadData)}
               >
                 <Star size={15} fill="currentColor" />
-                AVALIAR {isAnime(movie) ? (movie.media_type === 'tv' ? 'ANIME COMPLETO' : 'ESTE ANIME') : movie.media_type === 'tv' ? 'SÉRIE COMPLETA' : 'ESTE FILME'}
+                AVALIAR {isAnime(movie) ? (isSeriesOrAnime ? 'ANIME COMPLETO' : 'ESTE ANIME') : isSeriesOrAnime ? 'SÉRIE COMPLETA' : 'ESTE FILME'}
               </button>
             )}
 
@@ -322,50 +343,27 @@ export default function MovieDetailPage() {
               VOLTAR
             </button>
 
-            {/* KICKER DE CABEÇALHO BRUTALISTA */}
+            {/* KICKER DE CABEÇALHO REFINADO */}
             <div className="movie-detail-kicker">
-              <span className={`movie-kicker-type ${isAnime(movie) ? 'anime' : movie.media_type === 'tv' ? 'series' : ''}`}>
-                {isAnime(movie) ? (
-                  <>
-                    <Sparkles size={11} /> ANIME
-                  </>
-                ) : movie.media_type === 'tv' ? (
-                  <>
-                    <Tv size={11} /> SÉRIE
-                  </>
-                ) : (
-                  <>
-                    <Film size={11} /> FILME
-                  </>
-                )}
+              <span className="movie-kicker-type">
+                {isAnime(movie) ? 'ANIME' : movie.media_type === 'tv' ? 'SÉRIE' : 'FILME'}
               </span>
-              {movie.certification && (
-                <>
-                  <span className="movie-kicker-dot">•</span>
-                  {getClassIndBadge(movie.certification)}
-                </>
-              )}
+              {movie.certification && getClassIndBadge(movie.certification)}
               {movie.genres && movie.genres.length > 0 && (
-                <>
-                  <span className="movie-kicker-dot">•</span>
-                  <span className="movie-kicker-genres">{movie.genres.slice(0, 3).join(' / ').toUpperCase()}</span>
-                </>
+                <span className="movie-kicker-genres">{movie.genres.slice(0, 3).join(' · ')}</span>
               )}
               {movie.status && (
-                <>
-                  <span className="movie-kicker-dot">•</span>
-                  <span className="movie-kicker-status">{translateStatus(movie.status).toUpperCase()}</span>
-                </>
+                <span className="movie-kicker-status">• {translateStatus(movie.status)}</span>
               )}
             </div>
 
-            {/* TÍTULO (SEM LOGO) */}
+            {/* TÍTULO */}
             <h1 className="movie-detail-title">{movie.title}</h1>
 
-            {/* TÍTULO ORIGINAL (APENAS O TEXTO + IDIOMA BADGE) */}
+            {/* TÍTULO ORIGINAL (QUANDO DIFERENTE) */}
             {movie.original_title && movie.original_title.toLowerCase() !== movie.title.toLowerCase() && (
               <div className="movie-original-title">
-                <span><strong>{movie.original_title}</strong></span>
+                <span>{movie.original_title}</span>
                 {movie.original_language && (
                   <span className="movie-genre-badge" style={{ padding: '1px 6px', fontSize: '0.62rem' }}>
                     {movie.original_language.toUpperCase()}
@@ -374,12 +372,13 @@ export default function MovieDetailPage() {
               </div>
             )}
 
+            {/* TAGLINE EDITORIAL SUAVE */}
             {movie.tagline && <p className="movie-detail-tagline">"{movie.tagline}"</p>}
 
-            {/* METADADOS: DATA + TEMPO/TEMPORADAS + IDIOMAS */}
+            {/* METADADOS ESSENCIAIS: ANO • TEMPO/TEMPORADAS • IDIOMAS */}
             <div className="movie-detail-meta">
               <span>{movie.release_date ? movie.release_date.substring(0, 4) : '2026'}</span>
-              {movie.media_type === 'tv' && movie.number_of_seasons ? (
+              {isEpisodic(movie) && movie.number_of_seasons ? (
                 <span>
                   • {movie.number_of_seasons} Temporada{movie.number_of_seasons > 1 ? 's' : ''} (
                   {movie.number_of_episodes || 0} eps)
@@ -392,19 +391,27 @@ export default function MovieDetailPage() {
               )}
             </div>
 
-            {/* DIREÇÃO / CRIADORES */}
+            {/* CRIAÇÃO & DIREÇÃO (INLINE TIPOGRÁFICO ELEGANTE, SEM BLOCOS PESADOS) */}
             {movie.directors && movie.directors.length > 0 && (
-              <div className="movie-detail-directors">
-                <span className="director-label">{movie.media_type === 'tv' ? 'CRIADO POR / DIREÇÃO:' : 'DIREÇÃO:'}</span>
-                {movie.directors.map((d) => (
-                  <span key={d} className="director-chip">
-                    {d}
-                  </span>
-                ))}
+              <div className="movie-detail-directors-inline">
+                <span className="director-inline-label">
+                  {isEpisodic(movie) ? 'Criação / Direção:' : 'Direção:'}
+                </span>
+                <span className="director-inline-names">
+                  {movie.directors.slice(0, 3).join(', ')}
+                  {movie.directors.length > 3 && (
+                    <span className="director-inline-more"> (+{movie.directors.length - 3})</span>
+                  )}
+                </span>
               </div>
             )}
 
-            {/* LINKS EXTERNOS: IMDB & SITE OFICIAL */}
+            {/* SINOPSE */}
+            <p className="movie-detail-synopsis">
+              {movie.overview || 'Sinopse não disponível para este título.'}
+            </p>
+
+            {/* LINKS EXTERNOS SUTIS (IMDB & SITE OFICIAL) */}
             {(movie.imdb_id || movie.homepage) && (
               <div className="movie-external-links">
                 {movie.imdb_id && (
@@ -415,7 +422,7 @@ export default function MovieDetailPage() {
                     className="movie-ext-badge imdb"
                   >
                     IMDb
-                    <ExternalLink size={11} />
+                    <ExternalLink size={10} />
                   </a>
                 )}
                 {movie.homepage && (
@@ -425,24 +432,20 @@ export default function MovieDetailPage() {
                     rel="noreferrer"
                     className="movie-ext-badge"
                   >
-                    <Globe size={11} />
-                    SITE OFICIAL
-                    <ExternalLink size={11} />
+                    <Globe size={10} />
+                    Site Oficial
+                    <ExternalLink size={10} />
                   </a>
                 )}
               </div>
             )}
 
-            {/* SINOPSE */}
-            <p className="movie-detail-synopsis">
-              {movie.overview || 'Sinopse não disponível para este título.'}
-            </p>
-
-            {/* LEDGER DE AVALIAÇÃO OFICIAL */}
+            {/* LEDGER DE AVALIAÇÃO DESTILADO (APENAS TMDB E CRITICBOX) */}
             <div className="movie-detail-ledger">
               <div className="detail-ledger-item">
                 <span className="detail-ledger-score">
-                  ★ {movie.tmdb_vote_average ? movie.tmdb_vote_average.toFixed(1) : '-'}
+                  <span className="detail-ledger-star" aria-hidden="true">★</span>
+                  {movie.tmdb_vote_average ? movie.tmdb_vote_average.toFixed(1) : '-'}
                 </span>
                 <div className="detail-ledger-meta">
                   <span className="detail-ledger-label">ÍNDICE TMDB</span>
@@ -453,28 +456,28 @@ export default function MovieDetailPage() {
               </div>
               <div className="detail-ledger-divider" />
               <div className="detail-ledger-item">
-                <span className="detail-ledger-score accent">
-                  {movie.criticbox_rating > 0 ? movie.criticbox_rating.toFixed(1) : '—'}
+                <span className={`detail-ledger-score ${movie.criticbox_rating > 0 ? 'accent' : 'unrated'}`}>
+                  {movie.criticbox_rating > 0 ? (
+                    <>
+                      <span className="cb-square-icon" aria-hidden="true">■</span>
+                      {movie.criticbox_rating.toFixed(1)}
+                    </>
+                  ) : (
+                    <>
+                      <span className="cb-square-icon" aria-hidden="true">■</span>
+                      —
+                    </>
+                  )}
                 </span>
                 <div className="detail-ledger-meta">
                   <span className="detail-ledger-label">NOTA CRITICBOX</span>
-                  <span className="detail-ledger-sub">{movie.criticbox_review_count || 0} CRÍTICAS</span>
+                  <span className="detail-ledger-sub">
+                    {movie.criticbox_review_count > 0
+                      ? `${movie.criticbox_review_count} ${movie.criticbox_review_count === 1 ? 'CRÍTICA' : 'CRÍTICAS'}`
+                      : 'SEM AVALIAÇÕES'}
+                  </span>
                 </div>
               </div>
-              {movie.popularity > 0 && (
-                <>
-                  <div className="detail-ledger-divider" />
-                  <div className="detail-ledger-item">
-                    <span className="detail-ledger-score muted">
-                      {Math.round(movie.popularity)}
-                    </span>
-                    <div className="detail-ledger-meta">
-                      <span className="detail-ledger-label">POPULARIDADE</span>
-                      <span className="detail-ledger-sub">RANKING ATUAL</span>
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           </div>
         </div>
@@ -558,12 +561,12 @@ export default function MovieDetailPage() {
           ) : userAlreadyReviewed ? (
             <span className="movie-already-reviewed-badge" style={{ padding: '6px 14px' }}>
               <Check size={14} />
-              {isAnime(movie) ? 'AVALIAÇÃO DO ANIME PUBLICADA' : movie.media_type === 'tv' ? 'AVALIAÇÃO DA SÉRIE PUBLICADA' : 'SUA CRÍTICA JÁ FOI PUBLICADA'}
+              {isAnime(movie) ? 'AVALIAÇÃO DO ANIME PUBLICADA' : isEpisodic(movie) ? 'AVALIAÇÃO DA SÉRIE PUBLICADA' : 'SUA CRÍTICA JÁ FOI PUBLICADA'}
             </span>
           ) : (
             <button className="nav-btn nav-btn-accent" onClick={() => openReviewModal(movie, loadData)}>
               <Plus size={14} style={{ marginRight: '6px' }} />
-              {isAnime(movie) ? (movie.media_type === 'tv' ? 'AVALIAR ANIME COMPLETO' : 'AVALIAR ANIME') : movie.media_type === 'tv' ? 'AVALIAR SÉRIE COMPLETA' : 'ESCREVER CRÍTICA'}
+              {isAnime(movie) ? (isEpisodic(movie) ? 'AVALIAR ANIME COMPLETO' : 'AVALIAR ANIME') : isEpisodic(movie) ? 'AVALIAR SÉRIE COMPLETA' : 'ESCREVER CRÍTICA'}
             </button>
           )}
         </div>
@@ -604,6 +607,7 @@ export default function MovieDetailPage() {
                   episodeName={epDetails?.name}
                   episodeStillUrl={epDetails?.still_url}
                   onDelete={loadData}
+                  isAnime={isAnime(movie)}
                 />
               );
             })}
@@ -625,6 +629,7 @@ export default function MovieDetailPage() {
                   episodeName={epDetails?.name}
                   episodeStillUrl={epDetails?.still_url}
                   onDelete={loadData}
+                  isAnime={isAnime(movie)}
                 />
               );
             })}

@@ -66,7 +66,7 @@ export default function Navbar() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span className="nav-user-pill">
               <User size={13} />
-              @{username}
+              {username}
             </span>
             <button className="nav-btn nav-btn-ghost" onClick={logout}>
               <LogOut size={13} style={{ marginRight: '6px' }} />

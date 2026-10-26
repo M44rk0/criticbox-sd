@@ -92,20 +92,23 @@ export default function MovieCarouselSection({
                       <span className="movie-card-tag">
                         {m.release_date ? m.release_date.substring(0, 4) : '2026'} • {getMediaTypeLabel(m)}
                       </span>
-                      <span className="movie-card-score-pill">
-                        ★ {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
-                      </span>
-                    </div>
-                    <h3 className="movie-card-title">{m.title}</h3>
-                    <div className="movie-card-meta">
                       {m.criticbox_rating > 0 ? (
-                        <span className="movie-card-cb-score">
-                          CRITICBOX: <strong>{m.criticbox_rating.toFixed(1)}</strong>
+                        <span
+                          className="movie-card-score-pill movie-card-cb-pill"
+                          title={`Nota Criticbox: ${m.criticbox_rating.toFixed(1)}`}
+                        >
+                          <span className="cb-square-icon" aria-hidden="true">■</span> {m.criticbox_rating.toFixed(1)}
                         </span>
                       ) : (
-                        <span className="movie-card-cb-empty">SEM CRÍTICAS</span>
+                        <span
+                          className="movie-card-score-pill"
+                          title={`Nota IMDb: ${m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}`}
+                        >
+                          ★ {m.tmdb_vote_average ? m.tmdb_vote_average.toFixed(1) : '-'}
+                        </span>
                       )}
                     </div>
+                    <h3 className="movie-card-title">{m.title}</h3>
                   </div>
                 </div>
               );

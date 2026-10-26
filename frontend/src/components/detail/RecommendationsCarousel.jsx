@@ -1,5 +1,6 @@
 import React from 'react';
 import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getMediaTypeLabel } from '../../utils/media';
 
 export default function RecommendationsCarousel({
   recommendations = [],
@@ -18,7 +19,7 @@ export default function RecommendationsCarousel({
           <span className="section-num">
             <Film size={18} />
           </span>
-          <h2 className="section-title">Títulos Recomendados</h2>
+          <h2 className="section-title">TÍTULOS RECOMENDADOS</h2>
         </div>
         <div className="carousel-controls">
           <button
@@ -40,32 +41,57 @@ export default function RecommendationsCarousel({
         </div>
       </div>
 
-      <div className="recommendations-wrap">
-        <div className="recommendations-carousel" ref={recsCarouselRef}>
-          {recommendations.map((rec) => {
+      <div className="movies-carousel-wrap">
+        <div className="movies-carousel" ref={recsCarouselRef}>
+          {recommendations.map((rec, idx) => {
             const recId = rec.tmdb_id || rec.id;
+            const mediaType = rec.media_type || 'movie';
+            const rankNum = idx + 1 < 10 ? `0${idx + 1}` : idx + 1;
+
             return (
               <div
-                key={recId}
-                className="rec-card"
+                key={`${recId}_${idx}`}
+                className="movie-card"
                 onClick={() => {
-                  navigate(`/movie/${recId}?type=${rec.media_type || 'movie'}`);
+                  navigate(`/movie/${recId}?type=${mediaType}`);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                title={rec.title}
+                title={`Ver detalhes de ${rec.title}`}
               >
-                <img
-                  src={
-                    rec.poster_url ||
-                    'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=400&q=80'
-                  }
-                  alt={rec.title}
-                  className="rec-poster"
-                  loading="lazy"
-                />
-                <div className="rec-info">
-                  <span className="rec-title">{rec.title}</span>
-                  <span className="rec-rating">★ {rec.tmdb_vote_average ? rec.tmdb_vote_average.toFixed(1) : '-'}</span>
+                <div className="movie-card-poster">
+                  <img
+                    src={
+                      rec.poster_url ||
+                      'https://via.placeholder.com/500x750?text=Sem+Poster'
+                    }
+                    alt={rec.title}
+                    loading="lazy"
+                  />
+                  <span className="movie-card-rank">#{rankNum}</span>
+                </div>
+                <div className="movie-card-info">
+                  <div className="movie-card-topline">
+                    <span className="movie-card-tag">
+                      {rec.release_date ? rec.release_date.substring(0, 4) : '2026'} • {getMediaTypeLabel(rec)}
+                    </span>
+                    {rec.criticbox_rating > 0 ? (
+                      <span
+                        className="movie-card-score-pill movie-card-cb-pill"
+                        title={`Nota Criticbox: ${rec.criticbox_rating.toFixed(1)}`}
+                      >
+                        <span className="cb-square-icon" aria-hidden="true">■</span>
+                        {rec.criticbox_rating.toFixed(1)}
+                      </span>
+                    ) : (
+                      <span
+                        className="movie-card-score-pill"
+                        title={`Nota IMDb: ${rec.tmdb_vote_average ? rec.tmdb_vote_average.toFixed(1) : '-'}`}
+                      >
+                        ★ {rec.tmdb_vote_average ? rec.tmdb_vote_average.toFixed(1) : '-'}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="movie-card-title">{rec.title}</h3>
                 </div>
               </div>
             );

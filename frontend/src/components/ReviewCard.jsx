@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Star, StarHalf, Film, Trash2 } from 'lucide-react';
 import ReviewComment from './ReviewComment';
 import { formatReviewDate } from '../utils/date';
+import { isAnime as isAnimeUtil, isEpisodic, getCachedMediaMeta } from '../utils/media';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useReviewModal } from '../context/ReviewModalContext';
@@ -75,13 +76,13 @@ function DeleteActionWidget({ showConfirm, setShowConfirm, isDeleting, onConfirm
       type="button"
       className="review-delete-btn"
       title="Excluir sua avaliação"
+      aria-label="Excluir sua avaliação"
       onClick={(e) => {
         e.stopPropagation();
         setShowConfirm(true);
       }}
     >
-      <Trash2 size={12} strokeWidth={2} />
-      <span>EXCLUIR</span>
+      <Trash2 size={13} strokeWidth={2} />
     </button>
   );
 }
@@ -94,6 +95,10 @@ export default function ReviewCard({
   episodeStillUrl = '',
   onDelete = null,
   canDelete = true,
+  variant = 'editorial',
+  context = 'feed',
+  isAnime: isAnimeProp = false,
+  mediaLabel: mediaLabelProp = '',
 }) {
   const navigate = useNavigate();
   const { isLoggedIn, username: authUsername, userId: authUserId } = useAuth();
@@ -110,6 +115,8 @@ export default function ReviewCard({
         (review.user_id && authUserId && review.user_id === authUserId) ||
         (review.user_id && authUsername && review.user_id.toLowerCase() === authUsername.toLowerCase()))
   );
+
+  const isMyBox = context === 'my-box';
 
   const handleConfirmDelete = async (e) => {
     e?.stopPropagation();
@@ -133,6 +140,105 @@ export default function ReviewCard({
     ? `T${review.season_number < 10 ? `0${review.season_number}` : review.season_number}E${review.episode_number < 10 ? `0${review.episode_number}` : review.episode_number}`
     : review.season_number ? `T${review.season_number}` : null;
 
+  const cachedMeta = getCachedMediaMeta(review.tmdb_id);
+  const isAnimeItem = Boolean(
+    isAnimeProp ||
+    (review && isAnimeUtil(review)) ||
+    cachedMeta?.isAnime
+  );
+
+  const mediaLabel =
+    mediaLabelProp ||
+    (isAnimeItem ? 'ANIME' : isEpisodic(review) ? 'SÉRIE' : 'FILME');
+  const isTv = isEpisodic(review);
+
+  /* =====================================================================
+     VARIAÇÃO A: DIÁRIO EDITORIAL (Recomendada para Arquivo Pessoal)
+     ===================================================================== */
+  if (showPoster && variant === 'editorial') {
+    return (
+      <article className="review-card variant-editorial">
+        <div
+          className="editorial-poster-box"
+          onClick={() => navigate(`/movie/${review.tmdb_id}?type=${review.media_type || 'movie'}`)}
+          title={`Ver detalhes de ${review.movie_title || 'Título'}`}
+        >
+          {posterUrl ? (
+            <img src={posterUrl} alt={review.movie_title || 'Poster'} loading="lazy" />
+          ) : (
+            <div className="review-card-poster-placeholder">
+              <Film size={26} color="var(--gray-500)" />
+            </div>
+          )}
+        </div>
+
+        <div className="editorial-content-box">
+          <div className="editorial-header">
+            <div className="editorial-title-wrap">
+              <div className="editorial-title-flow">
+                <h3
+                  className={`editorial-title ${isTv ? 'is-tv' : ''}`}
+                  onClick={() => navigate(`/movie/${review.tmdb_id}?type=${review.media_type || 'movie'}`)}
+                  title={review.movie_title || `Título #${review.tmdb_id}`}
+                >
+                  {review.movie_title || `Título #${review.tmdb_id}`}
+                </h3>
+                {episodeCode && (
+                  <span className="review-scope-chip editorial-scope-chip">
+                    {episodeCode}
+                  </span>
+                )}
+                {episodeName && (
+                  <span className="editorial-episode-name">"{episodeName}"</span>
+                )}
+              </div>
+            </div>
+
+            <div
+              className="review-card-stars"
+              title={`${review.rating ? review.rating.toFixed(1) : '0'}/5 estrelas`}
+              aria-label={`Nota: ${review.rating ? review.rating.toFixed(1) : '0'} de 5 estrelas`}
+            >
+              {renderStars(review.rating)}
+            </div>
+          </div>
+
+          <div className="editorial-comment-wrap">
+            <ReviewComment comment={review.comment} containsSpoilers={review.contains_spoilers} allowExpand={true} />
+          </div>
+
+          <div className="editorial-footer">
+            <div className="editorial-footer-left">
+              <span className="editorial-media-badge">{mediaLabel}</span>
+              <span className="editorial-footer-dot">·</span>
+              <span className="editorial-date-stamp">
+                {formatReviewDate(review.created_at)}
+              </span>
+              {!isMyBox && review.username && (
+                <>
+                  <span className="editorial-footer-dot">·</span>
+                  <span className="editorial-author-tag">por {review.username}</span>
+                </>
+              )}
+            </div>
+
+            {isAuthor && (
+              <DeleteActionWidget
+                showConfirm={showConfirm}
+                setShowConfirm={setShowConfirm}
+                isDeleting={isDeleting}
+                onConfirm={handleConfirmDelete}
+              />
+            )}
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  /* =====================================================================
+     LAYOUT PADRÃO (FEED E DETALHES)
+     ===================================================================== */
   if (showPoster) {
     return (
       <div className={`review-card review-card-with-poster ${episodeStillUrl ? 'review-card-has-still' : ''}`}>
@@ -160,7 +266,7 @@ export default function ReviewCard({
           <div className="review-card-header">
             <span
               className="review-card-movie"
-              style={{ cursor: 'pointer', textDecoration: 'underline' }}
+              style={{ cursor: 'pointer' }}
               onClick={() => navigate(`/movie/${review.tmdb_id}?type=${review.media_type || 'movie'}`)}
             >
               {review.movie_title || `Título #${review.tmdb_id}`}
@@ -181,11 +287,11 @@ export default function ReviewCard({
               {renderStars(review.rating)}
             </div>
           </div>
-          <ReviewComment comment={review.comment} containsSpoilers={review.contains_spoilers} />
+          <ReviewComment comment={review.comment} containsSpoilers={review.contains_spoilers} allowExpand={true} />
           <div className="review-card-user">
             <div className="review-card-user-info">
               <span className="review-card-avatar">{(review.username || review.user_id || 'U')[0].toUpperCase()}</span>
-              <span className="review-card-username">@{review.username || review.user_id}</span>
+              <span className="review-card-username">{review.username || review.user_id}</span>
             </div>
             <div className="review-card-user-meta">
               <span className="review-card-date">{formatReviewDate(review.created_at)}</span>
@@ -217,7 +323,7 @@ export default function ReviewCard({
         <div className="review-card-header">
           <div className="movie-review-author-info">
             <span className="review-card-avatar">{(review.username || review.user_id || 'U')[0].toUpperCase()}</span>
-            <span className="review-card-username">@{review.username || review.user_id}</span>
+            <span className="review-card-username">{review.username || review.user_id}</span>
             {episodeCode && (
               <span className="review-scope-chip">{episodeCode}</span>
             )}
@@ -238,7 +344,7 @@ export default function ReviewCard({
           </div>
         </div>
 
-        <ReviewComment comment={review.comment} containsSpoilers={review.contains_spoilers} />
+        <ReviewComment comment={review.comment} containsSpoilers={review.contains_spoilers} allowExpand={true} />
 
         <div className="movie-review-footer">
           <span className="review-card-date">{formatReviewDate(review.created_at)}</span>

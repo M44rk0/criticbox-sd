@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, Sparkles, DollarSign, User, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatReleaseDate } from '../../utils/date';
+import { isEpisodic } from '../../utils/media';
 
 export default function ProductionDossier({
   movie,
@@ -39,12 +40,14 @@ export default function ProductionDossier({
     return map[s] || s;
   };
 
+  const isTvShow = isEpisodic(movie);
+
   const renderCrewTab = () => {
     const cards = [];
     if (movie.directors && movie.directors.length > 0) {
       cards.push(
         <div key="directors" className="dossier-card">
-          <span className="dossier-label">{movie.media_type === 'tv' ? 'CRIAÇÃO / DIREÇÃO' : 'DIREÇÃO'}</span>
+          <span className="dossier-label">{isTvShow ? 'CRIAÇÃO / DIREÇÃO' : 'DIREÇÃO'}</span>
           <span className="dossier-value">{movie.directors.join(', ')}</span>
         </div>
       );
@@ -124,7 +127,7 @@ export default function ProductionDossier({
   const renderMarketTab = () => (
     <div className="info-tab-content">
       <div className="dossier-grid">
-        {movie.media_type === 'movie' ? (
+        {!isTvShow ? (
           <>
             <div className="dossier-card">
               <span className="dossier-label">ORÇAMENTO ESTIMADO</span>
@@ -186,27 +189,39 @@ export default function ProductionDossier({
 
   return (
     <section className="section" style={{ paddingTop: '30px', paddingBottom: '30px' }}>
-      <div className="detail-info-tabs">
+      <div className="detail-info-tabs" role="tablist">
         <button
+          type="button"
+          role="tab"
+          aria-selected={activeInfoTab === 'cast'}
           className={`detail-info-tab ${activeInfoTab === 'cast' ? 'active' : ''}`}
           onClick={() => setActiveInfoTab('cast')}
         >
-          <Users size={15} />
-          Elenco Principal {castList.length > 0 ? `(${castList.length})` : ''}
+          <Users size={14} />
+          <span>Elenco Principal</span>
+          {castList.length > 0 && (
+            <span className="detail-tab-count">{castList.length}</span>
+          )}
         </button>
         <button
+          type="button"
+          role="tab"
+          aria-selected={activeInfoTab === 'crew'}
           className={`detail-info-tab ${activeInfoTab === 'crew' ? 'active' : ''}`}
           onClick={() => setActiveInfoTab('crew')}
         >
-          <Sparkles size={15} />
-          Ficha Técnica
+          <Sparkles size={14} />
+          <span>Ficha Técnica</span>
         </button>
         <button
+          type="button"
+          role="tab"
+          aria-selected={activeInfoTab === 'market'}
           className={`detail-info-tab ${activeInfoTab === 'market' ? 'active' : ''}`}
           onClick={() => setActiveInfoTab('market')}
         >
-          <DollarSign size={15} />
-          Mercado
+          <DollarSign size={14} />
+          <span>Mercado</span>
         </button>
       </div>
 

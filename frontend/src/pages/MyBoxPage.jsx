@@ -13,6 +13,7 @@ import { useReviewModal } from '../context/ReviewModalContext';
 import { getMyReviews } from '../api/reviews';
 import { getMovieDetails } from '../api/movies';
 import { getClientToken } from '../api/client';
+import { isAnime, isEpisodic } from '../utils/media';
 import ReviewCard from '../components/ReviewCard';
 
 export default function MyBoxPage() {
@@ -25,7 +26,7 @@ export default function MyBoxPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'movie' | 'tv'
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'movie' | 'tv' | 'anime'
   const [searchQuery, setSearchQuery] = useState('');
 
   const loadMyReviews = async () => {
@@ -51,25 +52,27 @@ export default function MyBoxPage() {
       console.log(`[Criticbox:MyBox] ${list.length} críticas recebidas com sucesso.`);
       setReviews(list);
 
-      // Coleta pôsteres existentes e prepara carregamento para faltantes
+      // Coleta pôsteres existentes
       const initialPosters = {};
-      const missing = [];
+      const missingPosters = [];
+
       list.forEach((r) => {
         if (r.poster_url) {
           initialPosters[`${r.tmdb_id}_${r.media_type || 'movie'}`] = r.poster_url;
           initialPosters[r.tmdb_id] = r.poster_url;
         } else {
-          missing.push({ id: r.tmdb_id, type: r.media_type || 'movie' });
+          missingPosters.push({ id: r.tmdb_id, type: r.media_type || 'movie' });
         }
       });
-      setPosters((prev) => ({ ...prev, ...initialPosters }));
+      setPosters(initialPosters);
 
-      if (missing.length > 0) {
+      // Backfill assíncrono enxuto apenas se houver reviews sem pôster persistido
+      if (missingPosters.length > 0) {
         const unique = Array.from(
-          new Map(missing.map((item) => [`${item.id}_${item.type}`, item])).values()
+          new Map(missingPosters.map((item) => [`${item.id}_${item.type}`, item])).values()
         );
         Promise.all(
-          unique.slice(0, 15).map(async ({ id, type }) => {
+          unique.slice(0, 5).map(async ({ id, type }) => {
             try {
               const details = await getMovieDetails(id, type);
               if (details?.poster_url) {
@@ -102,21 +105,38 @@ export default function MyBoxPage() {
   const stats = useMemo(() => {
     const total = reviews.length;
     if (total === 0) {
-      return { total: 0, avg: '—', moviesCount: 0, tvCount: 0 };
+      return { total: 0, avg: '—', moviesCount: 0, tvCount: 0, animeCount: 0 };
     }
     const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
     const avg = (sum / total).toFixed(1);
-    const moviesCount = reviews.filter((r) => !r.media_type || r.media_type === 'movie').length;
-    const tvCount = reviews.filter((r) => r.media_type === 'tv').length;
-    return { total, avg, moviesCount, tvCount };
+
+    let animeCount = 0;
+    let tvCount = 0;
+    let moviesCount = 0;
+
+    reviews.forEach((r) => {
+      if (isAnime(r)) {
+        animeCount++;
+      } else if (isEpisodic(r)) {
+        tvCount++;
+      } else {
+        moviesCount++;
+      }
+    });
+
+    return { total, avg, moviesCount, tvCount, animeCount };
   }, [reviews]);
 
   // Filtragem
   const filteredReviews = useMemo(() => {
     return reviews.filter((r) => {
+      const isAnimeItem = isAnime(r);
+      const isEpisodicItem = isEpisodic(r);
+
       // Filtro de aba
-      if (activeTab === 'movie' && r.media_type === 'tv') return false;
-      if (activeTab === 'tv' && r.media_type !== 'tv') return false;
+      if (activeTab === 'movie' && (isAnimeItem || isEpisodicItem)) return false;
+      if (activeTab === 'tv' && (isAnimeItem || !isEpisodicItem)) return false;
+      if (activeTab === 'anime' && !isAnimeItem) return false;
 
       // Filtro de busca textual
       if (searchQuery.trim()) {
@@ -134,27 +154,38 @@ export default function MyBoxPage() {
     <div className="my-box-page">
       {/* CABEÇALHO DA MINHA CAIXA */}
       <header className="my-box-header">
-        <h1 className="my-box-title">MINHA CAIXA</h1>
+        <div className="my-box-header-main">
+          <h1 className="my-box-title">MINHA CAIXA</h1>
+          <p className="my-box-subtitle">Seu arquivo pessoal de avaliações e impressões críticas.</p>
+        </div>
 
         {/* LEDGER ARQUITETURAL COMPACTO */}
         {isLoggedIn && reviews.length > 0 && (
           <div className="my-box-ledger">
             <div className="my-box-ledger-cell">
               <span className="my-box-ledger-val accent">{stats.total}</span>
-              <span className="my-box-ledger-lbl">CRÍTICAS</span>
+              <span className="my-box-ledger-lbl">Críticas</span>
             </div>
             <div className="my-box-ledger-cell">
-              <span className="my-box-ledger-val">★ {stats.avg}</span>
-              <span className="my-box-ledger-lbl">MÉDIA GERAL</span>
+              <span className="my-box-ledger-val">
+                <span className="my-box-star">★</span> {stats.avg}
+              </span>
+              <span className="my-box-ledger-lbl">Média</span>
             </div>
             <div className="my-box-ledger-cell">
               <span className="my-box-ledger-val">{stats.moviesCount}</span>
-              <span className="my-box-ledger-lbl">FILMES</span>
+              <span className="my-box-ledger-lbl">Filmes</span>
             </div>
             <div className="my-box-ledger-cell">
               <span className="my-box-ledger-val">{stats.tvCount}</span>
-              <span className="my-box-ledger-lbl">SÉRIES / EPISÓDIOS</span>
+              <span className="my-box-ledger-lbl">Séries</span>
             </div>
+            {stats.animeCount > 0 && (
+              <div className="my-box-ledger-cell">
+                <span className="my-box-ledger-val">{stats.animeCount}</span>
+                <span className="my-box-ledger-lbl">Animes</span>
+              </div>
+            )}
           </div>
         )}
       </header>
@@ -163,11 +194,11 @@ export default function MyBoxPage() {
       {!isLoggedIn ? (
         <div className="my-box-empty-card">
           <div className="my-box-empty-icon">
-            <LogIn size={24} />
+            <LogIn size={20} />
           </div>
           <h2 className="my-box-empty-title">IDENTIFICAÇÃO NECESSÁRIA</h2>
           <p className="my-box-empty-desc">
-            Faça login com sua conta para acessar seu arquivo pessoal de críticas e gerenciar suas avaliações.
+            Entre na sua conta para acessar seu arquivo pessoal de críticas e gerenciar suas avaliações.
           </p>
           <div className="my-box-auth-buttons">
             <button className="nav-btn nav-btn-accent" onClick={() => openAuth('login')}>
@@ -198,14 +229,14 @@ export default function MyBoxPage() {
           </button>
         </div>
       ) : reviews.length === 0 ? (
-        /* CAIXA VAZIA (SEM NENHUMA REVIEW REGISTRADA AINDA) */
+        /* CAIXA VAZIA */
         <div className="my-box-empty-card">
           <div className="my-box-empty-icon">
-            <Inbox size={26} />
+            <Inbox size={22} />
           </div>
           <h2 className="my-box-empty-title">SUA CAIXA ESTÁ VAZIA</h2>
           <p className="my-box-empty-desc">
-            Você ainda não registrou nenhuma avaliação crítica ou nota. Explore o catálogo em alta, pesquise suas obras favoritas e compartilhe seus ensaios com a comunidade.
+            Você ainda não registrou nenhuma avaliação. Explore o catálogo para registrar suas notas e comentários.
           </p>
           <button className="nav-btn nav-btn-accent" onClick={() => navigate('/search?filter=trending')}>
             <Compass size={14} style={{ marginRight: '8px' }} />
@@ -224,7 +255,7 @@ export default function MyBoxPage() {
                 className={`my-box-seg-btn ${activeTab === 'all' ? 'active' : ''}`}
                 onClick={() => setActiveTab('all')}
               >
-                <span>TODAS</span>
+                <span>Todas</span>
                 <span className="my-box-tab-count">{reviews.length}</span>
               </button>
               <button
@@ -234,7 +265,7 @@ export default function MyBoxPage() {
                 className={`my-box-seg-btn ${activeTab === 'movie' ? 'active' : ''}`}
                 onClick={() => setActiveTab('movie')}
               >
-                <span>FILMES</span>
+                <span>Filmes</span>
                 <span className="my-box-tab-count">{stats.moviesCount}</span>
               </button>
               <button
@@ -244,9 +275,21 @@ export default function MyBoxPage() {
                 className={`my-box-seg-btn ${activeTab === 'tv' ? 'active' : ''}`}
                 onClick={() => setActiveTab('tv')}
               >
-                <span>SÉRIES / EPISÓDIOS</span>
+                <span>Séries</span>
                 <span className="my-box-tab-count">{stats.tvCount}</span>
               </button>
+              {(stats.animeCount > 0 || activeTab === 'anime') && (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'anime'}
+                  className={`my-box-seg-btn ${activeTab === 'anime' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('anime')}
+                >
+                  <span>Animes</span>
+                  <span className="my-box-tab-count">{stats.animeCount}</span>
+                </button>
+              )}
             </div>
 
             <div className="my-box-search-field">
@@ -270,17 +313,6 @@ export default function MyBoxPage() {
                 </button>
               )}
             </div>
-          </div>
-
-          {/* STATUS DA FILTRAGEM */}
-          <div className="my-box-meta-strip">
-            <span className="my-box-meta-text">
-              {searchQuery.trim()
-                ? `FILTRANDO: ${filteredReviews.length} DE ${reviews.length} AVALIAÇÕES ENCONTRADAS`
-                : activeTab !== 'all'
-                  ? `EXIBINDO ${filteredReviews.length} ${activeTab === 'movie' ? 'FILMES' : 'SÉRIES / EPISÓDIOS'}`
-                  : `${reviews.length} AVALIAÇÕES NO TOTAL`}
-            </span>
           </div>
 
           {filteredReviews.length === 0 ? (
@@ -317,6 +349,9 @@ export default function MyBoxPage() {
                     showPoster={true}
                     onDelete={handleDeleteReview}
                     canDelete={true}
+                    variant="editorial"
+                    context="my-box"
+                    isAnime={isAnime(r)}
                   />
                 );
               })}
