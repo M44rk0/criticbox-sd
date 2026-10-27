@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { getMediaTypeLabel } from '../utils/media';
+import PosterQuickActions from './PosterQuickActions';
 
 export default function MovieCarouselSection({
   id,
@@ -86,6 +87,12 @@ export default function MovieCarouselSection({
                       loading="lazy"
                     />
                     <span className="movie-card-rank">#{rankNum}</span>
+                    <PosterQuickActions
+                      tmdbId={movieId}
+                      mediaType={mediaType}
+                      title={m.title}
+                      posterUrl={m.poster_url}
+                    />
                   </div>
                   <div className="movie-card-info">
                     <div className="movie-card-topline">

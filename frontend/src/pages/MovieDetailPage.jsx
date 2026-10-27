@@ -14,9 +14,12 @@ import {
   Film,
   Globe,
   Sparkles,
+  Eye,
+  Heart,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useReviewModal } from '../context/ReviewModalContext';
+import { useActivity } from '../context/ActivityContext';
 import { getMovieDetails, getSeasonEpisodes, getSeriesEpisodes } from '../api/movies';
 import { getMovieReviews } from '../api/reviews';
 import ReviewCard from '../components/ReviewCard';
@@ -38,6 +41,7 @@ export default function MovieDetailPage() {
 
   const { username } = useAuth();
   const { openReviewModal } = useReviewModal();
+  const { getCachedStatus, fetchStatus, toggleWatched, toggleFavorite } = useActivity();
 
   const [movie, setMovie] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -70,6 +74,7 @@ export default function MovieDetailPage() {
           isAnime: isAnime(movieData),
           media_type: movieData.media_type || mediaType,
         });
+        fetchStatus(movieData.tmdb_id, movieData.media_type || mediaType || 'movie', true);
       }
 
       const isSeriesOrAnime = isEpisodic(movieData);
@@ -193,6 +198,12 @@ export default function MovieDetailPage() {
         : userReviews.length > 0)
   );
 
+  const mediaKeyType = movie?.media_type || mediaType || 'movie';
+  const currentStatus = getCachedStatus(id, mediaKeyType);
+  const isWatched = Boolean(currentStatus.is_watched || userAlreadyReviewed);
+  const isFavorite = Boolean(currentStatus.is_favorite);
+  const hasReview = Boolean(currentStatus.has_review || userAlreadyReviewed);
+
   const runtimeHours = movie.runtime ? Math.floor(movie.runtime / 60) : 0;
   const runtimeMins = movie.runtime ? movie.runtime % 60 : 0;
   const runtimeStr = movie.runtime ? `${runtimeHours > 0 ? `${runtimeHours}H ` : ''}${runtimeMins}MIN` : '';
@@ -290,6 +301,43 @@ export default function MovieDetailPage() {
                 }
                 alt={movie.title}
               />
+            </div>
+
+            {/* BARRA DE ATIVIDADE: ASSISTIDO & FAVORITO */}
+            <div className="movie-detail-activity-bar">
+              <button
+                type="button"
+                className={`movie-detail-act-btn ${isWatched ? 'active-watched' : ''}`}
+                onClick={() =>
+                  toggleWatched({
+                    tmdbId: id,
+                    mediaType: mediaKeyType,
+                    title: movie.title,
+                    posterUrl: movie.poster_url,
+                  })
+                }
+                title={isWatched ? 'Assistido — Clique para alternar' : 'Marcar como assistido'}
+              >
+                <Eye size={15} strokeWidth={isWatched ? 2.5 : 2} />
+                <span>ASSISTIDO</span>
+              </button>
+
+              <button
+                type="button"
+                className={`movie-detail-act-btn ${isFavorite ? 'active-favorite' : ''}`}
+                onClick={() =>
+                  toggleFavorite({
+                    tmdbId: id,
+                    mediaType: mediaKeyType,
+                    title: movie.title,
+                    posterUrl: movie.poster_url,
+                  })
+                }
+                title={isFavorite ? 'Favorito — Clique para remover' : 'Adicionar aos favoritos'}
+              >
+                <Heart size={15} fill={isFavorite ? 'currentColor' : 'none'} strokeWidth={isFavorite ? 2.5 : 2} />
+                <span>{isFavorite ? 'FAVORITO' : 'FAVORITAR'}</span>
+              </button>
             </div>
 
             {unreleased ? (

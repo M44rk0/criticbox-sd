@@ -10,6 +10,7 @@ import {
   getRecommendations,
   searchMovies,
 } from '../api/movies';
+import PosterQuickActions from '../components/PosterQuickActions';
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -238,6 +239,12 @@ export default function SearchPage() {
                   <div className="movie-card-poster">
                     <img src={m.poster_url || 'https://via.placeholder.com/500x750?text=Sem+Poster'} alt={m.title} loading="lazy" />
                     <span className="movie-card-rank">#{(pageParam - 1) * 20 + idx + 1}</span>
+                    <PosterQuickActions
+                      tmdbId={m.tmdb_id || m.id}
+                      mediaType={m.media_type || 'movie'}
+                      title={m.title}
+                      posterUrl={m.poster_url}
+                    />
                   </div>
                   <div className="movie-card-info">
                     <div className="movie-card-topline">

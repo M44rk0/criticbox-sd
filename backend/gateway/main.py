@@ -18,7 +18,7 @@ import time
 
 from common.telemetry import configure_service_logger, generate_request_id, set_request_id
 from gateway.exception_handlers import register_exception_handlers
-from gateway.routers import auth_router, movies_router, reviews_router
+from gateway.routers import activity_router, auth_router, movies_router, reviews_router
 
 logger = configure_service_logger("Gateway")
 
@@ -101,6 +101,7 @@ def app_frontend():
 app.include_router(auth_router)
 app.include_router(movies_router)
 app.include_router(reviews_router)
+app.include_router(activity_router)
 
 
 @app.get("/{full_path:path}", include_in_schema=False)

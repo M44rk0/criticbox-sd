@@ -12,7 +12,12 @@ from sqlalchemy import Engine, create_engine, delete, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from services.review_service.storage.models import Review, ReviewBase
+from services.review_service.storage.models import (
+    FavoriteItem,
+    Review,
+    ReviewBase,
+    WatchedItem,
+)
 
 load_dotenv()
 
@@ -104,6 +109,8 @@ def init_db():
 def clear_db():
     with get_session() as session:
         session.execute(delete(Review))
+        session.execute(delete(WatchedItem))
+        session.execute(delete(FavoriteItem))
 
 
 class DBClient:

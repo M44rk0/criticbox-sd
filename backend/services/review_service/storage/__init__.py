@@ -10,22 +10,29 @@ from services.review_service.storage.connection import (
     init_db,
     is_mysql,
 )
-from services.review_service.storage.models import Review, ReviewBase
+from services.review_service.storage.models import FavoriteItem, Review, ReviewBase, WatchedItem
 from services.review_service.storage.repository import (
     _format_review_row,
     add_review,
+    delete_review,
     get_all_reviews,
     get_batch_movie_stats,
+    get_media_status,
     get_movie_stats,
     get_reviews_by_movie,
     get_reviews_by_user,
-    delete_review,
+    get_user_favorites,
+    get_user_watched,
+    toggle_favorite,
+    toggle_watched,
     update_review_poster,
 )
 
 __all__ = [
     "ReviewBase",
     "Review",
+    "WatchedItem",
+    "FavoriteItem",
     "init_db",
     "clear_db",
     "get_engine",
@@ -45,4 +52,9 @@ __all__ = [
     "get_all_reviews",
     "get_reviews_by_movie",
     "get_reviews_by_user",
+    "toggle_watched",
+    "toggle_favorite",
+    "get_user_watched",
+    "get_user_favorites",
+    "get_media_status",
 ]

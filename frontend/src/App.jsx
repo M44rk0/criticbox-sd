@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ActivityProvider } from './context/ActivityContext';
 import { ReviewModalProvider } from './context/ReviewModalContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -33,7 +34,8 @@ export default function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <ReviewModalProvider>
+        <ActivityProvider>
+          <ReviewModalProvider>
           <AuthRouteWatcher />
           {/* Hidden SVG for half-star gradient */}
           <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
@@ -68,6 +70,7 @@ export default function App() {
           <ReviewModal />
           <EpisodeReviewModal />
         </ReviewModalProvider>
+        </ActivityProvider>
       </AuthProvider>
     </ToastProvider>
   );

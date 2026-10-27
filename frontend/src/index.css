@@ -5494,3 +5494,229 @@ body {
   }
 }
 
+/* ==========================================================================
+   POSTER QUICK ACTIONS (WATCHED & FAVORITES HOVER OVERLAY)
+   ========================================================================== */
+/* ==========================================================================
+   POSTER QUICK ACTIONS (HORIZONTAL SEGMENTED BAR AT POSTER BASE)
+   ========================================================================== */
+.poster-quick-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  display: flex;
+  align-items: stretch;
+  background: rgba(7, 9, 13, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  z-index: 5;
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.movie-card:hover .poster-quick-actions,
+.movie-card:focus-within .poster-quick-actions {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.poster-action-btn {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.poster-action-btn:last-child {
+  border-right: none;
+}
+
+.poster-action-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.poster-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+}
+
+/* ACTIVE WATCHED BUTTON */
+.poster-action-btn.poster-action-watched.active {
+  background: var(--accent);
+  color: #000000;
+  font-weight: 800;
+}
+
+.poster-action-btn.poster-action-watched.active:hover {
+  background: #ffffff;
+  color: #000000;
+}
+
+/* ACTIVE FAVORITE BUTTON */
+.poster-action-btn.poster-action-favorite.active {
+  background: #ff3366;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.poster-action-btn.poster-action-favorite.active:hover {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+/* DETAIL HERO ACTIVITY BUTTONS BAR (UNIFIED SEGMENTED CONTROL) */
+.movie-detail-activity-bar {
+  display: flex;
+  margin-top: 10px;
+  width: 100%;
+  border: 1px solid var(--gray-700);
+  background: rgba(10, 12, 17, 0.85);
+  box-sizing: border-box;
+}
+
+.movie-detail-act-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--gray-700);
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.movie-detail-act-btn:last-child {
+  border-right: none;
+}
+
+.movie-detail-act-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--white);
+}
+
+.movie-detail-act-btn.active-watched {
+  background: var(--accent);
+  color: #000000;
+  font-weight: 800;
+}
+
+.movie-detail-act-btn.active-watched:hover {
+  background: #ffffff;
+  color: #000000;
+}
+
+.movie-detail-act-btn.active-favorite {
+  background: #ff3366;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.movie-detail-act-btn.active-favorite:hover {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   MINHA CAIXA: TOP LEVEL VIEW SELECTOR (CRÍTICAS / ASSISTIDOS / FAVORITOS)
+   ========================================================================== */
+.my-box-view-selector {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+  padding: 0;
+  overflow: visible;
+  scrollbar-width: none;
+}
+
+.my-box-view-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.my-box-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--gray-800);
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.my-box-view-btn:last-child {
+  border-right: none;
+}
+
+.my-box-view-btn:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.my-box-view-btn.active {
+  background: var(--accent);
+  color: #000000;
+  font-weight: 800;
+}
+
+.my-box-view-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gray-300);
+}
+
+.my-box-view-btn.active .my-box-view-badge {
+  background: rgba(0, 0, 0, 0.22);
+  color: #000000;
+  font-weight: 800;
+}
+
+
+
+

@@ -13,6 +13,7 @@ export default defineConfig({
       '/movies': GATEWAY_URL,
       '/reviews': GATEWAY_URL,
       '/auth': GATEWAY_URL,
+      '/activity': GATEWAY_URL,
       '/docs': GATEWAY_URL,
       '/openapi.json': GATEWAY_URL,
     }

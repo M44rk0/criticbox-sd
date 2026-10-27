@@ -5,7 +5,19 @@ from typing import Any
 from sqlalchemy import and_, func, or_, select, update
 
 from services.review_service.storage.connection import get_session
-from services.review_service.storage.models import Review
+from services.review_service.storage.models import FavoriteItem, Review, WatchedItem
+
+
+def _user_condition(model, user_id: str, username: str = ""):
+    conds = []
+    if user_id:
+        conds.append(model.user_id == user_id)
+        conds.append(func.lower(model.user_id) == user_id.lower())
+    if username:
+        conds.append(func.lower(model.username) == username.lower())
+    if user_id and not username:
+        conds.append(func.lower(model.username) == user_id.lower())
+    return or_(*conds) if conds else and_()
 
 
 def _format_review_row(r: Any) -> dict:
@@ -119,6 +131,28 @@ def add_review(
             poster_url=poster_url or "",
         )
         session.add(new_review)
+
+        # Regra de negócio: Se o filme tem review, ele é automaticamente assistido
+        user_w_cond = _user_condition(WatchedItem, user_id, username)
+        existing_watched = session.scalar(
+            select(WatchedItem).where(
+                WatchedItem.tmdb_id == tmdb_id,
+                WatchedItem.media_type == media_type,
+                user_w_cond,
+            )
+        )
+        if not existing_watched:
+            new_watched = WatchedItem(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                username=username,
+                tmdb_id=tmdb_id,
+                media_type=media_type,
+                movie_title=movie_title or "",
+                poster_url=poster_url or "",
+                created_at=created_at,
+            )
+            session.add(new_watched)
 
     return {
         "review_id": review_id,
@@ -245,4 +279,259 @@ def delete_review(review_id: str, user_id: str = "", username: str = "") -> dict
         session.delete(review)
 
     return {"success": True, "message": "Avaliação removida com sucesso."}
+
+
+def toggle_watched(
+    tmdb_id: int,
+    user_id: str,
+    username: str = "",
+    media_type: str = "movie",
+    movie_title: str = "",
+    poster_url: str = "",
+) -> dict:
+    media_type = media_type or "movie"
+    username = username or user_id
+
+    with get_session() as session:
+        user_cond = _user_condition(WatchedItem, user_id, username)
+        watched_item = session.scalar(
+            select(WatchedItem).where(
+                WatchedItem.tmdb_id == tmdb_id,
+                WatchedItem.media_type == media_type,
+                user_cond,
+            )
+        )
+
+        # Regra de negócio: Se o filme tem review, ele é automaticamente assistido
+        rev_cond = _user_condition(Review, user_id, username)
+        has_review = session.scalar(
+            select(Review.id).where(
+                Review.tmdb_id == tmdb_id,
+                Review.media_type == media_type,
+                rev_cond,
+            )
+        )
+
+        if watched_item or has_review:
+            # Usuário deseja desmarcar
+            if has_review:
+                return {
+                    "success": False,
+                    "message": "Este título possui uma avaliação registrada e não pode ser desmarcado dos assistidos sem antes excluir a avaliação.",
+                    "active": True,
+                }
+            if watched_item:
+                session.delete(watched_item)
+            return {
+                "success": True,
+                "message": "Título removido dos assistidos.",
+                "active": False,
+            }
+
+        # Não está assistido -> Adiciona
+        created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        new_watched = WatchedItem(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            username=username,
+            tmdb_id=tmdb_id,
+            media_type=media_type,
+            movie_title=movie_title or "",
+            poster_url=poster_url or "",
+            created_at=created_at,
+        )
+        session.add(new_watched)
+        return {
+            "success": True,
+            "message": "Título marcado como assistido.",
+            "active": True,
+        }
+
+
+def toggle_favorite(
+    tmdb_id: int,
+    user_id: str,
+    username: str = "",
+    media_type: str = "movie",
+    movie_title: str = "",
+    poster_url: str = "",
+) -> dict:
+    media_type = media_type or "movie"
+    username = username or user_id
+
+    with get_session() as session:
+        user_cond = _user_condition(FavoriteItem, user_id, username)
+        fav_item = session.scalar(
+            select(FavoriteItem).where(
+                FavoriteItem.tmdb_id == tmdb_id,
+                FavoriteItem.media_type == media_type,
+                user_cond,
+            )
+        )
+
+        if fav_item:
+            session.delete(fav_item)
+            return {
+                "success": True,
+                "message": "Título removido dos favoritos.",
+                "active": False,
+            }
+
+        created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        new_fav = FavoriteItem(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            username=username,
+            tmdb_id=tmdb_id,
+            media_type=media_type,
+            movie_title=movie_title or "",
+            poster_url=poster_url or "",
+            created_at=created_at,
+        )
+        session.add(new_fav)
+        return {
+            "success": True,
+            "message": "Título adicionado aos favoritos.",
+            "active": True,
+        }
+
+
+def get_user_watched(user_id: str, username: str = "") -> list[dict]:
+    with get_session() as session:
+        # Busca avaliações do usuário para enriquecer e garantir regra de "tem review = assistido"
+        rev_cond = _user_condition(Review, user_id, username)
+        user_reviews = session.scalars(select(Review).where(rev_cond).order_by(Review.created_at.desc())).all()
+        review_map: dict[tuple[int, str], Review] = {}
+        for r in user_reviews:
+            k = (int(r.tmdb_id), str(r.media_type or "movie"))
+            if k not in review_map:
+                review_map[k] = r
+
+        # Busca registros explícitos de watched
+        w_cond = _user_condition(WatchedItem, user_id, username)
+        watched_rows = session.scalars(select(WatchedItem).where(w_cond).order_by(WatchedItem.created_at.desc())).all()
+
+        combined: dict[tuple[int, str], dict] = {}
+        for w in watched_rows:
+            k = (int(w.tmdb_id), str(w.media_type or "movie"))
+            rev = review_map.get(k)
+            combined[k] = {
+                "id": w.id,
+                "tmdb_id": int(w.tmdb_id),
+                "user_id": w.user_id,
+                "username": w.username,
+                "media_type": w.media_type,
+                "movie_title": w.movie_title,
+                "poster_url": w.poster_url,
+                "created_at": w.created_at,
+                "user_rating": float(rev.rating) if rev else 0.0,
+                "has_review": bool(rev),
+                "review_id": str(rev.id) if rev else "",
+            }
+
+        # Adiciona filmes avaliados que ainda não constavam na tabela watched (retrocompatibilidade automática)
+        for k, r in review_map.items():
+            if k not in combined:
+                combined[k] = {
+                    "id": f"rev_{r.id}",
+                    "tmdb_id": int(r.tmdb_id),
+                    "user_id": r.user_id,
+                    "username": r.username,
+                    "media_type": r.media_type or "movie",
+                    "movie_title": r.movie_title or "",
+                    "poster_url": r.poster_url or "",
+                    "created_at": r.created_at,
+                    "user_rating": float(r.rating),
+                    "has_review": True,
+                    "review_id": str(r.id),
+                }
+
+        items = list(combined.values())
+        items.sort(key=lambda x: str(x.get("created_at", "")), reverse=True)
+        return items
+
+
+def get_user_favorites(user_id: str, username: str = "") -> list[dict]:
+    with get_session() as session:
+        # Busca avaliações do usuário para enriquecer com nota caso exista
+        rev_cond = _user_condition(Review, user_id, username)
+        user_reviews = session.scalars(select(Review).where(rev_cond)).all()
+        review_map = {(int(r.tmdb_id), str(r.media_type or "movie")): r for r in user_reviews}
+
+        fav_cond = _user_condition(FavoriteItem, user_id, username)
+        fav_rows = session.scalars(select(FavoriteItem).where(fav_cond).order_by(FavoriteItem.created_at.desc())).all()
+
+        results = []
+        for f in fav_rows:
+            k = (int(f.tmdb_id), str(f.media_type or "movie"))
+            rev = review_map.get(k)
+            results.append({
+                "id": f.id,
+                "tmdb_id": int(f.tmdb_id),
+                "user_id": f.user_id,
+                "username": f.username,
+                "media_type": f.media_type,
+                "movie_title": f.movie_title,
+                "poster_url": f.poster_url,
+                "created_at": f.created_at,
+                "user_rating": float(rev.rating) if rev else 0.0,
+                "has_review": bool(rev),
+                "review_id": str(rev.id) if rev else "",
+            })
+        return results
+
+
+def get_media_status(tmdb_id: int, user_id: str, username: str = "", media_type: str = "movie") -> dict:
+    media_type = media_type or "movie"
+    if not user_id and not username:
+        return {
+            "tmdb_id": tmdb_id,
+            "media_type": media_type,
+            "is_watched": False,
+            "is_favorite": False,
+            "has_review": False,
+            "user_rating": 0.0,
+            "review_id": "",
+        }
+
+    with get_session() as session:
+        rev_cond = _user_condition(Review, user_id, username)
+        rev = session.scalar(
+            select(Review)
+            .where(
+                Review.tmdb_id == tmdb_id,
+                Review.media_type == media_type,
+                rev_cond,
+            )
+            .order_by(Review.created_at.desc())
+        )
+
+        w_cond = _user_condition(WatchedItem, user_id, username)
+        watched_item = session.scalar(
+            select(WatchedItem.id).where(
+                WatchedItem.tmdb_id == tmdb_id,
+                WatchedItem.media_type == media_type,
+                w_cond,
+            )
+        )
+
+        fav_cond = _user_condition(FavoriteItem, user_id, username)
+        fav_item = session.scalar(
+            select(FavoriteItem.id).where(
+                FavoriteItem.tmdb_id == tmdb_id,
+                FavoriteItem.media_type == media_type,
+                fav_cond,
+            )
+        )
+
+        return {
+            "tmdb_id": tmdb_id,
+            "media_type": media_type,
+            "is_watched": bool(watched_item or rev),
+            "is_favorite": bool(fav_item),
+            "has_review": bool(rev),
+            "user_rating": float(rev.rating) if rev else 0.0,
+            "review_id": str(rev.id) if rev else "",
+        }
+
 

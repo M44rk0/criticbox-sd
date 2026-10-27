@@ -1,6 +1,7 @@
 import React from 'react';
 import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMediaTypeLabel } from '../../utils/media';
+import PosterQuickActions from '../PosterQuickActions';
 
 export default function RecommendationsCarousel({
   recommendations = [],
@@ -68,6 +69,12 @@ export default function RecommendationsCarousel({
                     loading="lazy"
                   />
                   <span className="movie-card-rank">#{rankNum}</span>
+                  <PosterQuickActions
+                    tmdbId={recId}
+                    mediaType={mediaType}
+                    title={rec.title}
+                    posterUrl={rec.poster_url}
+                  />
                 </div>
                 <div className="movie-card-info">
                   <div className="movie-card-topline">

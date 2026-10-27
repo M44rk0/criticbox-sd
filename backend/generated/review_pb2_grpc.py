@@ -72,6 +72,31 @@ class ReviewServiceStub:
                 request_serializer=review__pb2.DeleteReviewRequest.SerializeToString,
                 response_deserializer=review__pb2.DeleteReviewResponse.FromString,
                 _registered_method=True)
+        self.ToggleWatched = channel.unary_unary(
+                '/review.ReviewService/ToggleWatched',
+                request_serializer=review__pb2.ToggleActivityRequest.SerializeToString,
+                response_deserializer=review__pb2.ToggleActivityResponse.FromString,
+                _registered_method=True)
+        self.ToggleFavorite = channel.unary_unary(
+                '/review.ReviewService/ToggleFavorite',
+                request_serializer=review__pb2.ToggleActivityRequest.SerializeToString,
+                response_deserializer=review__pb2.ToggleActivityResponse.FromString,
+                _registered_method=True)
+        self.GetUserWatched = channel.unary_unary(
+                '/review.ReviewService/GetUserWatched',
+                request_serializer=review__pb2.UserActivityListRequest.SerializeToString,
+                response_deserializer=review__pb2.ActivityItemListResponse.FromString,
+                _registered_method=True)
+        self.GetUserFavorites = channel.unary_unary(
+                '/review.ReviewService/GetUserFavorites',
+                request_serializer=review__pb2.UserActivityListRequest.SerializeToString,
+                response_deserializer=review__pb2.ActivityItemListResponse.FromString,
+                _registered_method=True)
+        self.GetMediaStatus = channel.unary_unary(
+                '/review.ReviewService/GetMediaStatus',
+                request_serializer=review__pb2.MediaStatusRequest.SerializeToString,
+                response_deserializer=review__pb2.MediaStatusResponse.FromString,
+                _registered_method=True)
 
 
 class ReviewServiceServicer:
@@ -119,6 +144,36 @@ class ReviewServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ToggleWatched(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ToggleFavorite(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUserWatched(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUserFavorites(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMediaStatus(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ReviewServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -156,6 +211,31 @@ def add_ReviewServiceServicer_to_server(servicer, server):
                     servicer.DeleteReview,
                     request_deserializer=review__pb2.DeleteReviewRequest.FromString,
                     response_serializer=review__pb2.DeleteReviewResponse.SerializeToString,
+            ),
+            'ToggleWatched': grpc.unary_unary_rpc_method_handler(
+                    servicer.ToggleWatched,
+                    request_deserializer=review__pb2.ToggleActivityRequest.FromString,
+                    response_serializer=review__pb2.ToggleActivityResponse.SerializeToString,
+            ),
+            'ToggleFavorite': grpc.unary_unary_rpc_method_handler(
+                    servicer.ToggleFavorite,
+                    request_deserializer=review__pb2.ToggleActivityRequest.FromString,
+                    response_serializer=review__pb2.ToggleActivityResponse.SerializeToString,
+            ),
+            'GetUserWatched': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserWatched,
+                    request_deserializer=review__pb2.UserActivityListRequest.FromString,
+                    response_serializer=review__pb2.ActivityItemListResponse.SerializeToString,
+            ),
+            'GetUserFavorites': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserFavorites,
+                    request_deserializer=review__pb2.UserActivityListRequest.FromString,
+                    response_serializer=review__pb2.ActivityItemListResponse.SerializeToString,
+            ),
+            'GetMediaStatus': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMediaStatus,
+                    request_deserializer=review__pb2.MediaStatusRequest.FromString,
+                    response_serializer=review__pb2.MediaStatusResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -347,6 +427,141 @@ class ReviewService:
             '/review.ReviewService/DeleteReview',
             review__pb2.DeleteReviewRequest.SerializeToString,
             review__pb2.DeleteReviewResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ToggleWatched(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/review.ReviewService/ToggleWatched',
+            review__pb2.ToggleActivityRequest.SerializeToString,
+            review__pb2.ToggleActivityResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ToggleFavorite(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/review.ReviewService/ToggleFavorite',
+            review__pb2.ToggleActivityRequest.SerializeToString,
+            review__pb2.ToggleActivityResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUserWatched(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/review.ReviewService/GetUserWatched',
+            review__pb2.UserActivityListRequest.SerializeToString,
+            review__pb2.ActivityItemListResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUserFavorites(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/review.ReviewService/GetUserFavorites',
+            review__pb2.UserActivityListRequest.SerializeToString,
+            review__pb2.ActivityItemListResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMediaStatus(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/review.ReviewService/GetMediaStatus',
+            review__pb2.MediaStatusRequest.SerializeToString,
+            review__pb2.MediaStatusResponse.FromString,
             options,
             channel_credentials,
             insecure,

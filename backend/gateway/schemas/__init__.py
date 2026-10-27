@@ -19,6 +19,12 @@ from gateway.schemas.movies import (
     SeasonInfo,
     WatchProviders,
 )
+from gateway.schemas.activity import (
+    ActivityItemResponse,
+    MediaStatusResponse,
+    ToggleActivityRequest,
+    ToggleActivityResponse,
+)
 from gateway.schemas.reviews import (
     ReviewCreateRequest,
     ReviewListItem,
@@ -44,4 +50,8 @@ __all__ = [
     "MovieDetailsResponse",
     "ValidationErrorItem",
     "ValidationErrorResponse",
+    "ToggleActivityRequest",
+    "ToggleActivityResponse",
+    "ActivityItemResponse",
+    "MediaStatusResponse",
 ]

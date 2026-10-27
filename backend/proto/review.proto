@@ -10,6 +10,11 @@ service ReviewService {
   rpc GetReviewsByMovie (MovieReviewsRequest) returns (GetAllReviewsResponse);
   rpc GetReviewsByUser (UserReviewsRequest) returns (GetAllReviewsResponse);
   rpc DeleteReview (DeleteReviewRequest) returns (DeleteReviewResponse);
+  rpc ToggleWatched (ToggleActivityRequest) returns (ToggleActivityResponse);
+  rpc ToggleFavorite (ToggleActivityRequest) returns (ToggleActivityResponse);
+  rpc GetUserWatched (UserActivityListRequest) returns (ActivityItemListResponse);
+  rpc GetUserFavorites (UserActivityListRequest) returns (ActivityItemListResponse);
+  rpc GetMediaStatus (MediaStatusRequest) returns (MediaStatusResponse);
 }
 
 
@@ -107,4 +112,60 @@ message DeleteReviewResponse {
   bool success = 1;
   string message = 2;
 }
+
+message ToggleActivityRequest {
+  int32 tmdb_id = 1;
+  string user_id = 2;
+  string username = 3;
+  string media_type = 4;
+  string movie_title = 5;
+  string poster_url = 6;
+}
+
+message ToggleActivityResponse {
+  bool success = 1;
+  string message = 2;
+  bool active = 3;
+}
+
+message UserActivityListRequest {
+  string user_id = 1;
+  string username = 2;
+}
+
+message ActivityItem {
+  string id = 1;
+  int32 tmdb_id = 2;
+  string user_id = 3;
+  string username = 4;
+  string media_type = 5;
+  string movie_title = 6;
+  string poster_url = 7;
+  string created_at = 8;
+  float user_rating = 9;
+  bool has_review = 10;
+  string review_id = 11;
+}
+
+message ActivityItemListResponse {
+  repeated ActivityItem items = 1;
+  int32 total_count = 2;
+}
+
+message MediaStatusRequest {
+  int32 tmdb_id = 1;
+  string user_id = 2;
+  string username = 3;
+  string media_type = 4;
+}
+
+message MediaStatusResponse {
+  int32 tmdb_id = 1;
+  bool is_watched = 2;
+  bool is_favorite = 3;
+  bool has_review = 4;
+  float user_rating = 5;
+  string review_id = 6;
+}
+
 

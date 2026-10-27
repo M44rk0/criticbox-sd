@@ -66,3 +66,18 @@ def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(
         )
 
     return {"user_id": user_id, "username": username}
+
+
+def get_optional_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> dict | None:
+    if not credentials or credentials.scheme.lower() != "bearer" or not credentials.credentials:
+        return None
+    try:
+        payload = decode_access_token(credentials.credentials)
+        user_id = payload.get("sub")
+        username = payload.get("username")
+        if user_id and username:
+            return {"user_id": user_id, "username": username}
+    except Exception:
+        return None
+    return None
+

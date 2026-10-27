@@ -67,6 +67,22 @@ def _pb_to_review_dict(r) -> dict:
     }
 
 
+def _pb_to_activity_dict(item) -> dict:
+    return {
+        "id": item.id,
+        "tmdb_id": item.tmdb_id,
+        "user_id": item.user_id,
+        "username": getattr(item, "username", "") or item.user_id,
+        "media_type": getattr(item, "media_type", "movie") or "movie",
+        "movie_title": getattr(item, "movie_title", "") or "",
+        "poster_url": getattr(item, "poster_url", "") or "",
+        "created_at": item.created_at,
+        "user_rating": round(float(item.user_rating), 1) if getattr(item, "user_rating", 0.0) > 0 else None,
+        "has_review": bool(getattr(item, "has_review", False)),
+        "review_id": getattr(item, "review_id", "") or "",
+    }
+
+
 class GatewayGRPCManager:
     _instance = None
 
@@ -86,9 +102,16 @@ class GatewayGRPCManager:
         return cls._instance
 
     def _init_channels(self):
-        user_target = f"{USER_HOST}:{USER_PORT}"
-        movie_target = f"{MOVIE_HOST}:{MOVIE_PORT}"
-        review_target = f"{REVIEW_HOST}:{REVIEW_PORT}"
+        user_host = os.getenv("USER_SERVICE_HOST", USER_HOST)
+        user_port = os.getenv("USER_SERVICE_PORT", USER_PORT)
+        movie_host = os.getenv("MOVIE_SERVICE_HOST", MOVIE_HOST)
+        movie_port = os.getenv("MOVIE_SERVICE_PORT", MOVIE_PORT)
+        review_host = os.getenv("REVIEW_SERVICE_HOST", REVIEW_HOST)
+        review_port = os.getenv("REVIEW_SERVICE_PORT", REVIEW_PORT)
+
+        user_target = f"{user_host}:{user_port}"
+        movie_target = f"{movie_host}:{movie_port}"
+        review_target = f"{review_host}:{review_port}"
         logger.info(
             "Inicializando canais gRPC: User -> %s | Movie -> %s | Review -> %s",
             user_target,
@@ -299,6 +322,88 @@ class GatewayGRPCManager:
         return {
             "success": res.success,
             "message": res.message,
+        }
+
+    def toggle_watched(
+        self,
+        tmdb_id: int,
+        user_id: str,
+        username: str = "",
+        media_type: str = "movie",
+        movie_title: str = "",
+        poster_url: str = "",
+    ) -> dict:
+        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+            return {"success": False, "message": "ID TMDb inválido", "active": False}
+        req = r_pb2.ToggleActivityRequest(
+            tmdb_id=tmdb_id,
+            user_id=user_id,
+            username=username or user_id,
+            media_type=media_type or "movie",
+            movie_title=movie_title or "",
+            poster_url=poster_url or "",
+        )
+        res = self.review_stub.ToggleWatched(req, timeout=10.0)
+        return {"success": res.success, "message": res.message, "active": res.active}
+
+    def toggle_favorite(
+        self,
+        tmdb_id: int,
+        user_id: str,
+        username: str = "",
+        media_type: str = "movie",
+        movie_title: str = "",
+        poster_url: str = "",
+    ) -> dict:
+        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+            return {"success": False, "message": "ID TMDb inválido", "active": False}
+        req = r_pb2.ToggleActivityRequest(
+            tmdb_id=tmdb_id,
+            user_id=user_id,
+            username=username or user_id,
+            media_type=media_type or "movie",
+            movie_title=movie_title or "",
+            poster_url=poster_url or "",
+        )
+        res = self.review_stub.ToggleFavorite(req, timeout=10.0)
+        return {"success": res.success, "message": res.message, "active": res.active}
+
+    def get_user_watched(self, user_id: str = "", username: str = "") -> list[dict]:
+        req = r_pb2.UserActivityListRequest(user_id=user_id or username, username=username or user_id)
+        res = self.review_stub.GetUserWatched(req, timeout=10.0)
+        return [_pb_to_activity_dict(it) for it in res.items]
+
+    def get_user_favorites(self, user_id: str = "", username: str = "") -> list[dict]:
+        req = r_pb2.UserActivityListRequest(user_id=user_id or username, username=username or user_id)
+        res = self.review_stub.GetUserFavorites(req, timeout=10.0)
+        return [_pb_to_activity_dict(it) for it in res.items]
+
+    def get_media_status(self, tmdb_id: int, user_id: str = "", username: str = "", media_type: str = "movie") -> dict:
+        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+            return {
+                "tmdb_id": tmdb_id,
+                "media_type": media_type,
+                "is_watched": False,
+                "is_favorite": False,
+                "has_review": False,
+                "user_rating": None,
+                "review_id": "",
+            }
+        req = r_pb2.MediaStatusRequest(
+            tmdb_id=tmdb_id,
+            user_id=user_id or username,
+            username=username or user_id,
+            media_type=media_type or "movie",
+        )
+        res = self.review_stub.GetMediaStatus(req, timeout=10.0)
+        return {
+            "tmdb_id": res.tmdb_id,
+            "media_type": media_type,
+            "is_watched": res.is_watched,
+            "is_favorite": res.is_favorite,
+            "has_review": res.has_review,
+            "user_rating": round(float(res.user_rating), 1) if res.user_rating > 0 else None,
+            "review_id": res.review_id,
         }
 
     def get_season_episodes(self, tmdb_id: int, season_number: int) -> dict:

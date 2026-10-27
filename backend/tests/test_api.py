@@ -35,6 +35,10 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        os.environ["USER_SERVICE_PORT"] = "50057"
+        os.environ["MOVIE_SERVICE_PORT"] = "50055"
+        os.environ["REVIEW_SERVICE_PORT"] = "50056"
+        os.environ["API_PORT"] = "8000"
         # Reset gRPC manager instance to use the test ports
         GatewayGRPCManager._instance = None
 

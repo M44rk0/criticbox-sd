@@ -59,6 +59,22 @@ def _build_review_item_pb(r: dict, default_title: str = "") -> r_pb2.ReviewItem:
     )
 
 
+def _build_activity_item_pb(item: dict) -> r_pb2.ActivityItem:
+    return r_pb2.ActivityItem(
+        id=str(item.get("id", "") or ""),
+        tmdb_id=int(item.get("tmdb_id", 0) or 0),
+        user_id=str(item.get("user_id", "") or ""),
+        username=str(item.get("username", "") or ""),
+        media_type=str(item.get("media_type", "movie") or "movie"),
+        movie_title=str(item.get("movie_title", "") or ""),
+        poster_url=str(item.get("poster_url", "") or ""),
+        created_at=str(item.get("created_at", "") or ""),
+        user_rating=float(item.get("user_rating", 0.0) or 0.0),
+        has_review=bool(item.get("has_review", False)),
+        review_id=str(item.get("review_id", "") or ""),
+    )
+
+
 class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
     def __init__(self):
         database.init_db()
@@ -226,6 +242,82 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
         return r_pb2.DeleteReviewResponse(
             success=res["success"],
             message=res["message"],
+        )
+
+    @traced_rpc()
+    def ToggleWatched(self, request, context):
+        logger.info(
+            "ToggleWatched -> User: %s | ID: %d (%s)",
+            request.user_id,
+            request.tmdb_id,
+            request.media_type,
+        )
+        res = database.toggle_watched(
+            tmdb_id=request.tmdb_id,
+            user_id=request.user_id,
+            username=getattr(request, "username", "") or "",
+            media_type=getattr(request, "media_type", "movie") or "movie",
+            movie_title=getattr(request, "movie_title", "") or "",
+            poster_url=getattr(request, "poster_url", "") or "",
+        )
+        return r_pb2.ToggleActivityResponse(
+            success=res["success"],
+            message=res["message"],
+            active=res.get("active", False),
+        )
+
+    @traced_rpc()
+    def ToggleFavorite(self, request, context):
+        logger.info(
+            "ToggleFavorite -> User: %s | ID: %d (%s)",
+            request.user_id,
+            request.tmdb_id,
+            request.media_type,
+        )
+        res = database.toggle_favorite(
+            tmdb_id=request.tmdb_id,
+            user_id=request.user_id,
+            username=getattr(request, "username", "") or "",
+            media_type=getattr(request, "media_type", "movie") or "movie",
+            movie_title=getattr(request, "movie_title", "") or "",
+            poster_url=getattr(request, "poster_url", "") or "",
+        )
+        return r_pb2.ToggleActivityResponse(
+            success=res["success"],
+            message=res["message"],
+            active=res.get("active", False),
+        )
+
+    @traced_rpc()
+    def GetUserWatched(self, request, context):
+        req_username = getattr(request, "username", "") or ""
+        raw_items = database.get_user_watched(user_id=request.user_id, username=req_username)
+        pb_items = [_build_activity_item_pb(it) for it in raw_items]
+        return r_pb2.ActivityItemListResponse(items=pb_items, total_count=len(pb_items))
+
+    @traced_rpc()
+    def GetUserFavorites(self, request, context):
+        req_username = getattr(request, "username", "") or ""
+        raw_items = database.get_user_favorites(user_id=request.user_id, username=req_username)
+        pb_items = [_build_activity_item_pb(it) for it in raw_items]
+        return r_pb2.ActivityItemListResponse(items=pb_items, total_count=len(pb_items))
+
+    @traced_rpc()
+    def GetMediaStatus(self, request, context):
+        req_username = getattr(request, "username", "") or ""
+        res = database.get_media_status(
+            tmdb_id=request.tmdb_id,
+            user_id=request.user_id,
+            username=req_username,
+            media_type=getattr(request, "media_type", "movie") or "movie",
+        )
+        return r_pb2.MediaStatusResponse(
+            tmdb_id=res["tmdb_id"],
+            is_watched=res["is_watched"],
+            is_favorite=res["is_favorite"],
+            has_review=res["has_review"],
+            user_rating=res["user_rating"],
+            review_id=res["review_id"],
         )
 
 

@@ -77,6 +77,8 @@ export async function apiFetch(endpoint, options = {}) {
   if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(options.body);
+  } else if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
   }
 
   // Deduplica requisições GET simultâneas em trânsito
