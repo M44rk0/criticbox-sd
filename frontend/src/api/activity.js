@@ -37,9 +37,11 @@ export async function getMyFavorites(page = 1, pageSize = 40) {
 }
 
 export async function getUserWatched(username, page = 1, pageSize = 40) {
-  return await apiFetch(`/activity/user/${encodeURIComponent(username)}/watched?page=${page}&page_size=${pageSize}`);
+  const clean = (username || '').replace(/^@+/, '').trim();
+  return await apiFetch(`/activity/user/${encodeURIComponent(clean)}/watched?page=${page}&page_size=${pageSize}`);
 }
 
 export async function getUserFavorites(username, page = 1, pageSize = 40) {
-  return await apiFetch(`/activity/user/${encodeURIComponent(username)}/favorites?page=${page}&page_size=${pageSize}`);
+  const clean = (username || '').replace(/^@+/, '').trim();
+  return await apiFetch(`/activity/user/${encodeURIComponent(clean)}/favorites?page=${page}&page_size=${pageSize}`);
 }

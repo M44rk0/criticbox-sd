@@ -10,17 +10,25 @@ from services.user_service.storage.connection import (
     init_db,
     is_mysql,
 )
-from services.user_service.storage.models import User, UserBase
+from services.user_service.storage.models import Follow, User, UserBase
 from services.user_service.storage.repository import (
     _hash_password,
     _verify_password,
     authenticate_user,
     create_user,
+    follow_user,
+    get_user_followers,
+    get_user_following,
+    get_user_profile,
+    search_users,
+    unfollow_user,
+    update_user_profile,
 )
 
 __all__ = [
     "UserBase",
     "User",
+    "Follow",
     "init_db",
     "clear_db",
     "get_engine",
@@ -33,6 +41,14 @@ __all__ = [
     "DBClient",
     "create_user",
     "authenticate_user",
+    "search_users",
+    "follow_user",
+    "unfollow_user",
+    "get_user_profile",
+    "update_user_profile",
+    "get_user_followers",
+    "get_user_following",
     "_hash_password",
     "_verify_password",
 ]
+

@@ -62,6 +62,9 @@ def _pb_to_review_dict(r) -> dict:
         "season_number": r.season_number if getattr(r, "season_number", 0) > 0 else None,
         "episode_number": r.episode_number if getattr(r, "episode_number", 0) > 0 else None,
         "poster_url": getattr(r, "poster_url", "") or "",
+        "custom_rating": getattr(r, "custom_rating", 0) or 0,
+        "watched_with": getattr(r, "watched_with", "") or "",
+        "viewing_venue": getattr(r, "viewing_venue", "") or "",
         "success": True,
         "message": "",
     }
@@ -241,6 +244,75 @@ class GatewayGRPCManager:
             "username": res.username,
         }
 
+    @staticmethod
+    def _map_user_summary(u) -> dict:
+        return {
+            "user_id": u.user_id,
+            "username": u.username,
+            "created_at": u.created_at,
+            "avatar_url": getattr(u, "avatar_url", "") or "",
+        }
+
+    def search_users(self, query: str, limit: int = 10) -> list[dict]:
+        req = u_pb2.SearchUsersRequest(query=query, limit=limit)
+        res = self.user_stub.SearchUsers(req, timeout=5.0)
+        return [self._map_user_summary(u) for u in res.users]
+
+    def follow_user(self, follower_id: str, following_id: str) -> dict:
+        req = u_pb2.FollowUserRequest(follower_id=follower_id, following_id=following_id)
+        res = self.user_stub.FollowUser(req, timeout=5.0)
+        return {
+            "success": res.success,
+            "message": res.message,
+            "is_mutual": res.is_mutual,
+        }
+
+    def unfollow_user(self, follower_id: str, following_id: str) -> dict:
+        req = u_pb2.UnfollowUserRequest(follower_id=follower_id, following_id=following_id)
+        res = self.user_stub.UnfollowUser(req, timeout=5.0)
+        return {
+            "success": res.success,
+            "message": res.message,
+        }
+
+    def get_user_profile(self, username: str, current_user_id: str = "") -> dict:
+        req = u_pb2.GetUserProfileRequest(username=username, current_user_id=current_user_id)
+        res = self.user_stub.GetUserProfile(req, timeout=5.0)
+        return {
+            "success": res.success,
+            "message": res.message,
+            "user_id": res.user_id,
+            "username": res.username,
+            "created_at": res.created_at,
+            "followers_count": res.followers_count,
+            "following_count": res.following_count,
+            "is_following": res.is_following,
+            "is_followed_by": res.is_followed_by,
+            "is_mutual": res.is_mutual,
+            "avatar_url": getattr(res, "avatar_url", "") or "",
+            "four_pillars": getattr(res, "four_pillars", "") or "",
+        }
+
+    def update_user_profile(self, user_id: str, avatar_url: str = "", four_pillars: str = "") -> dict:
+        req = u_pb2.UpdateUserProfileRequest(user_id=user_id, avatar_url=avatar_url, four_pillars=four_pillars)
+        res = self.user_stub.UpdateUserProfile(req, timeout=5.0)
+        return {
+            "success": res.success,
+            "message": res.message,
+            "avatar_url": getattr(res, "avatar_url", "") or "",
+            "four_pillars": getattr(res, "four_pillars", "") or "",
+        }
+
+    def get_user_followers(self, user_id: str) -> list[dict]:
+        req = u_pb2.GetUserFollowsRequest(user_id=user_id, follow_type="followers")
+        res = self.user_stub.GetUserFollows(req, timeout=5.0)
+        return [self._map_user_summary(u) for u in res.users]
+
+    def get_user_following(self, user_id: str) -> list[dict]:
+        req = u_pb2.GetUserFollowsRequest(user_id=user_id, follow_type="following")
+        res = self.user_stub.GetUserFollows(req, timeout=5.0)
+        return [self._map_user_summary(u) for u in res.users]
+
     def create_review(
         self,
         tmdb_id: int,
@@ -254,6 +326,9 @@ class GatewayGRPCManager:
         movie_title: str = "",
         poster_url: str = "",
         username: str = "",
+        custom_rating: int | None = None,
+        watched_with: str = "",
+        viewing_venue: str = "",
     ) -> dict:
         if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
             return {"success": False, "message": "ID do filme fora do intervalo permitido."}
@@ -270,6 +345,9 @@ class GatewayGRPCManager:
                 movie_title=movie_title or "",
                 poster_url=poster_url or "",
                 username=username or user_id,
+                custom_rating=custom_rating or 0,
+                watched_with=watched_with or "",
+                viewing_venue=viewing_venue or "",
             )
             res = self.review_stub.CreateReview(req, timeout=10.0)
         except (ValueError, OverflowError) as e:
@@ -288,6 +366,9 @@ class GatewayGRPCManager:
             "season_number": res.season_number if res.season_number > 0 else None,
             "episode_number": res.episode_number if res.episode_number > 0 else None,
             "poster_url": getattr(res, "poster_url", "") or poster_url,
+            "custom_rating": getattr(res, "custom_rating", 0) or 0,
+            "watched_with": getattr(res, "watched_with", "") or "",
+            "viewing_venue": getattr(res, "viewing_venue", "") or "",
             "success": res.success,
             "message": res.message,
         }

@@ -18,7 +18,7 @@ import { getMyReviews } from '../api/reviews';
 import { getMyWatched, getMyFavorites } from '../api/activity';
 import { getMovieDetails } from '../api/movies';
 import { getClientToken } from '../api/client';
-import { isAnime } from '../utils/media';
+import { isAnime, isEpisodic } from '../utils/media';
 import {
   computeReviewStats,
   computeActivityStats,
@@ -27,6 +27,7 @@ import {
 import ReviewCard from '../components/ReviewCard';
 import MediaActivityGrid from '../components/MediaActivityGrid';
 import MyBoxLedger from '../components/MyBoxLedger';
+import './MyBoxPage.css';
 
 // Cache em memória de "Minha Caixa" para navegações instantâneas (0ms) na SPA
 const globalMyBoxCache = {
@@ -77,8 +78,23 @@ export default function MyBoxPage() {
 
   // Filtros internos da visão ativa
   const [activeCategory, setActiveCategory] = useState('all'); // 'all' | 'movie' | 'tv' | 'anime'
+  const [reviewFilter, setReviewFilter] = useState('all'); // 'all' | 'unreviewed' (específico de assistidos)
   const [searchQuery, setSearchQuery] = useState('');
   const isInitialLoad = useRef(!hasValidCache);
+
+  const applyWatchedData = (data) => {
+    if (!Array.isArray(data)) return;
+    setWatchedList(data);
+    seedActivityItems(data, 'watched');
+    globalMyBoxCache.watched = data;
+  };
+
+  const applyFavoritesData = (data) => {
+    if (!Array.isArray(data)) return;
+    setFavoritesList(data);
+    seedActivityItems(data, 'favorite');
+    globalMyBoxCache.favorites = data;
+  };
 
   const loadAllBoxData = async (isSilent = false) => {
     const activeToken = token || getClientToken();
@@ -103,17 +119,11 @@ export default function MyBoxPage() {
       const favList = Array.isArray(favoritesData) ? favoritesData : [];
 
       setReviews(revList);
-      setWatchedList(watList);
-      setFavoritesList(favList);
-
-      // Semeia o cache global de atividades para consistência imediata
-      seedActivityItems(watList, 'watched');
-      seedActivityItems(favList, 'favorite');
+      applyWatchedData(watList);
+      applyFavoritesData(favList);
 
       // Atualiza o cache global em nível de módulo
       globalMyBoxCache.reviews = revList;
-      globalMyBoxCache.watched = watList;
-      globalMyBoxCache.favorites = favList;
       globalMyBoxCache.lastLoadedUser = username;
       globalMyBoxCache.lastActivityRevision = activityRevision;
       globalMyBoxCache.lastReviewRevision = reviewRevision;
@@ -122,29 +132,17 @@ export default function MyBoxPage() {
       // Coleta e mescla pôsteres preservando os já existentes
       setPosters((prev) => {
         const next = { ...prev, ...(globalMyBoxCache.posters || {}) };
-        revList.forEach((r) => {
-          if (r.poster_url) {
-            next[`${r.tmdb_id}_${r.media_type || 'movie'}`] = r.poster_url;
-            next[r.tmdb_id] = r.poster_url;
-          }
-        });
-        watList.forEach((w) => {
-          if (w.poster_url) {
-            next[`${w.tmdb_id}_${w.media_type || 'movie'}`] = w.poster_url;
-            next[w.tmdb_id] = w.poster_url;
-          }
-        });
-        favList.forEach((f) => {
-          if (f.poster_url) {
-            next[`${f.tmdb_id}_${f.media_type || 'movie'}`] = f.poster_url;
-            next[f.tmdb_id] = f.poster_url;
+        [...revList, ...watList, ...favList].forEach((item) => {
+          if (item.poster_url) {
+            next[`${item.tmdb_id}_${item.media_type || 'movie'}`] = item.poster_url;
+            next[item.tmdb_id] = item.poster_url;
           }
         });
         globalMyBoxCache.posters = next;
         return next;
       });
 
-      // Backfill assíncrono apenas se houver reviews sem pôster
+      // Backfill assíncrono atômico apenas se houver reviews sem pôster
       const missingPosters = [];
       revList.forEach((r) => {
         if (!r.poster_url && !globalMyBoxCache.posters[`${r.tmdb_id}_${r.media_type || 'movie'}`]) {
@@ -156,24 +154,28 @@ export default function MyBoxPage() {
         const unique = Array.from(
           new Map(missingPosters.map((item) => [`${item.id}_${item.type}`, item])).values()
         );
-        Promise.all(
+        const fetchedEntries = await Promise.all(
           unique.slice(0, 5).map(async ({ id, type }) => {
             try {
               const details = await getMovieDetails(id, type);
-              if (details?.poster_url) {
-                setPosters((prev) => {
-                  const updated = {
-                    ...prev,
-                    [`${id}_${type}`]: details.poster_url,
-                    [id]: details.poster_url,
-                  };
-                  globalMyBoxCache.posters = updated;
-                  return updated;
-                });
-              }
-            } catch (e) {}
+              return details?.poster_url ? { id, type, posterUrl: details.poster_url } : null;
+            } catch (e) {
+              return null;
+            }
           })
         );
+        const validPosters = fetchedEntries.filter(Boolean);
+        if (validPosters.length > 0) {
+          setPosters((prev) => {
+            const updated = { ...prev };
+            validPosters.forEach(({ id, type, posterUrl }) => {
+              updated[`${id}_${type}`] = posterUrl;
+              updated[id] = posterUrl;
+            });
+            globalMyBoxCache.posters = updated;
+            return updated;
+          });
+        }
       }
     } catch (err) {
       if (!isSilent) {
@@ -205,12 +207,13 @@ export default function MyBoxPage() {
     loadAllBoxData(isSilent);
   }, [isLoggedIn, token, username]);
 
-  // Sincronização em segundo plano apenas quando uma crítica é salva ou excluída
+  // Sincronização em segundo plano quando uma crítica é salva ou excluída
   useEffect(() => {
     if (reviewRevision === 0) return;
     if (isInitialLoad.current) return;
     reviewsDirtyRef.current = true;
-    if (activeViewRef.current === 'reviews') {
+    watchedDirtyRef.current = true;
+    if (activeViewRef.current === 'reviews' || activeViewRef.current === 'watched') {
       loadAllBoxData(true);
     }
   }, [reviewRevision]);
@@ -229,39 +232,15 @@ export default function MyBoxPage() {
 
     if (currentTab === 'watched') {
       watchedDirtyRef.current = true;
-      getMyFavorites(1, 100)
-        .then((favData) => {
-          if (Array.isArray(favData)) {
-            setFavoritesList(favData);
-            seedActivityItems(favData, 'favorite');
-            globalMyBoxCache.favorites = favData;
-          }
-        })
-        .catch(() => {});
+      getMyFavorites(1, 100).then(applyFavoritesData).catch(() => {});
     } else if (currentTab === 'favorites') {
       favoritesDirtyRef.current = true;
-      getMyWatched(1, 100)
-        .then((watData) => {
-          if (Array.isArray(watData)) {
-            setWatchedList(watData);
-            seedActivityItems(watData, 'watched');
-            globalMyBoxCache.watched = watData;
-          }
-        })
-        .catch(() => {});
+      getMyWatched(1, 100).then(applyWatchedData).catch(() => {});
     } else {
       Promise.all([getMyWatched(1, 100).catch(() => []), getMyFavorites(1, 100).catch(() => [])]).then(
         ([watData, favData]) => {
-          if (Array.isArray(watData)) {
-            setWatchedList(watData);
-            seedActivityItems(watData, 'watched');
-            globalMyBoxCache.watched = watData;
-          }
-          if (Array.isArray(favData)) {
-            setFavoritesList(favData);
-            seedActivityItems(favData, 'favorite');
-            globalMyBoxCache.favorites = favData;
-          }
+          applyWatchedData(watData);
+          applyFavoritesData(favData);
         }
       );
     }
@@ -271,30 +250,15 @@ export default function MyBoxPage() {
   const handleViewChange = (newView) => {
     setActiveView(newView);
     setActiveCategory('all');
+    setReviewFilter('all');
     setSearchQuery('');
 
     if (newView === 'watched' && watchedDirtyRef.current) {
       watchedDirtyRef.current = false;
-      getMyWatched(1, 100)
-        .then((data) => {
-          if (Array.isArray(data)) {
-            setWatchedList(data);
-            seedActivityItems(data, 'watched');
-            globalMyBoxCache.watched = data;
-          }
-        })
-        .catch(() => {});
+      getMyWatched(1, 100).then(applyWatchedData).catch(() => {});
     } else if (newView === 'favorites' && favoritesDirtyRef.current) {
       favoritesDirtyRef.current = false;
-      getMyFavorites(1, 100)
-        .then((data) => {
-          if (Array.isArray(data)) {
-            setFavoritesList(data);
-            seedActivityItems(data, 'favorite');
-            globalMyBoxCache.favorites = data;
-          }
-        })
-        .catch(() => {});
+      getMyFavorites(1, 100).then(applyFavoritesData).catch(() => {});
     } else if (newView === 'reviews' && reviewsDirtyRef.current) {
       reviewsDirtyRef.current = false;
       getMyReviews()
@@ -309,11 +273,38 @@ export default function MyBoxPage() {
   };
 
   const handleDeleteReview = (deletedId) => {
+    const deletedRev = reviews.find((r) => r.review_id === deletedId);
     setReviews((prev) => {
       const next = prev.filter((r) => r.review_id !== deletedId);
       globalMyBoxCache.reviews = next;
       return next;
     });
+
+    // Ao apagar uma crítica, a obra DEVE continuar como assistida!
+    // Atualiza o item em watchedList para has_review = false e user_rating = 0
+    if (deletedRev) {
+      setWatchedList((prev) => {
+        const next = prev.map((w) => {
+          if (
+            Number(w.tmdb_id) === Number(deletedRev.tmdb_id) &&
+            (w.media_type || 'movie') === (deletedRev.media_type || 'movie')
+          ) {
+            return {
+              ...w,
+              has_review: false,
+              user_rating: 0,
+              review_id: '',
+            };
+          }
+          return w;
+        });
+        globalMyBoxCache.watched = next;
+        return next;
+      });
+    }
+
+    reviewsDirtyRef.current = true;
+    watchedDirtyRef.current = true;
   };
 
   // Estatísticas computadas via helpers puros
@@ -327,16 +318,34 @@ export default function MyBoxPage() {
     [reviews, activeCategory, searchQuery]
   );
   const filteredWatched = useMemo(
-    () => filterActivityItems(watchedList, activeCategory, searchQuery),
-    [watchedList, activeCategory, searchQuery]
+    () => filterActivityItems(watchedList, activeCategory, searchQuery, reviewFilter),
+    [watchedList, activeCategory, searchQuery, reviewFilter]
   );
   const filteredFavorites = useMemo(
     () => filterActivityItems(favoritesList, activeCategory, searchQuery),
     [favoritesList, activeCategory, searchQuery]
   );
 
-  // Metadados da visão ativa para o ledger e contadores das tabs
+  // Contagem de títulos não avaliados por categoria para a aba assistidos
+  const unreviewedCategoryCounts = useMemo(() => {
+    let all = 0, movie = 0, tv = 0, anime = 0;
+    watchedList.forEach((w) => {
+      if (!w.has_review) {
+        all++;
+        if (isAnime(w)) anime++;
+        else if (isEpisodic(w)) tv++;
+        else movie++;
+      }
+    });
+    return { all, movie, tv, anime };
+  }, [watchedList]);
+
+  // Metadados da visão ativa para os contadores das tabs
   const currentCategoryCounts = useMemo(() => {
+    if (activeView === 'watched' && reviewFilter === 'unreviewed') {
+      return unreviewedCategoryCounts;
+    }
+
     const activeStats =
       activeView === 'reviews'
         ? reviewStats
@@ -350,7 +359,16 @@ export default function MyBoxPage() {
       tv: activeStats.tvCount,
       anime: activeStats.animeCount,
     };
-  }, [activeView, reviewStats, watchedStats, favoriteStats]);
+  }, [activeView, reviewFilter, unreviewedCategoryCounts, reviewStats, watchedStats, favoriteStats]);
+
+  // Verifica se o usuário possui qualquer anime no acervo para manter a aba Animes estável
+  const hasAnyAnime = useMemo(() => {
+    return (
+      (reviewStats.animeCount || 0) > 0 ||
+      (watchedStats.animeCount || 0) > 0 ||
+      (favoriteStats.animeCount || 0) > 0
+    );
+  }, [reviewStats, watchedStats, favoriteStats]);
 
   const hasAnyActivity = reviews.length > 0 || watchedList.length > 0 || favoritesList.length > 0;
 
@@ -453,48 +471,77 @@ export default function MyBoxPage() {
 
           {/* BARRA DE FERRAMENTAS: CATEGORIA (TODAS/FILMES/SÉRIES/ANIMES) + BUSCA TEXTUAL */}
           <div className="my-box-toolbar">
-            <div className="my-box-segmented-tabs" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeCategory === 'all'}
-                className={`my-box-seg-btn ${activeCategory === 'all' ? 'active' : ''}`}
-                onClick={() => setActiveCategory('all')}
-              >
-                <span>Todas</span>
-                <span className="my-box-tab-count">{currentCategoryCounts.all}</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeCategory === 'movie'}
-                className={`my-box-seg-btn ${activeCategory === 'movie' ? 'active' : ''}`}
-                onClick={() => setActiveCategory('movie')}
-              >
-                <span>Filmes</span>
-                <span className="my-box-tab-count">{currentCategoryCounts.movie}</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeCategory === 'tv'}
-                className={`my-box-seg-btn ${activeCategory === 'tv' ? 'active' : ''}`}
-                onClick={() => setActiveCategory('tv')}
-              >
-                <span>Séries</span>
-                <span className="my-box-tab-count">{currentCategoryCounts.tv}</span>
-              </button>
-              {(currentCategoryCounts.anime > 0 || activeCategory === 'anime') && (
+            <div className="my-box-filters-group">
+              {/* SEGMENTAÇÃO DE FORMATO */}
+              <div className="my-box-segmented-tabs" role="tablist">
                 <button
                   type="button"
                   role="tab"
-                  aria-selected={activeCategory === 'anime'}
-                  className={`my-box-seg-btn ${activeCategory === 'anime' ? 'active' : ''}`}
-                  onClick={() => setActiveCategory('anime')}
+                  aria-selected={activeCategory === 'all'}
+                  className={`my-box-seg-btn ${activeCategory === 'all' ? 'active' : ''}`}
+                  onClick={() => setActiveCategory('all')}
                 >
-                  <span>Animes</span>
-                  <span className="my-box-tab-count">{currentCategoryCounts.anime}</span>
+                  <span>Todas</span>
+                  <span className="my-box-tab-count">{currentCategoryCounts.all}</span>
                 </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeCategory === 'movie'}
+                  className={`my-box-seg-btn ${activeCategory === 'movie' ? 'active' : ''}`}
+                  onClick={() => setActiveCategory('movie')}
+                >
+                  <span>Filmes</span>
+                  <span className="my-box-tab-count">{currentCategoryCounts.movie}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeCategory === 'tv'}
+                  className={`my-box-seg-btn ${activeCategory === 'tv' ? 'active' : ''}`}
+                  onClick={() => setActiveCategory('tv')}
+                >
+                  <span>Séries</span>
+                  <span className="my-box-tab-count">{currentCategoryCounts.tv}</span>
+                </button>
+                {(hasAnyAnime || currentCategoryCounts.anime > 0 || activeCategory === 'anime') && (
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeCategory === 'anime'}
+                    className={`my-box-seg-btn ${activeCategory === 'anime' ? 'active' : ''}`}
+                    onClick={() => setActiveCategory('anime')}
+                  >
+                    <span>Animes</span>
+                    <span className="my-box-tab-count">{currentCategoryCounts.anime}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* SEGMENTAÇÃO EXCLUSIVA DE ASSISTIDOS: TODOS / NÃO AVALIADOS */}
+              {activeView === 'watched' && (
+                <div className="my-box-segmented-tabs my-box-status-tabs" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={reviewFilter === 'all'}
+                    className={`my-box-seg-btn ${reviewFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setReviewFilter('all')}
+                  >
+                    <span>Todos</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={reviewFilter === 'unreviewed'}
+                    className={`my-box-seg-btn ${reviewFilter === 'unreviewed' ? 'active' : ''}`}
+                    onClick={() => setReviewFilter('unreviewed')}
+                    title="Mostrar apenas títulos assistidos que ainda não possuem avaliação"
+                  >
+                    <span>Não Avaliados</span>
+                    <span className="my-box-tab-count">{watchedStats.unreviewedCount}</span>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -532,37 +579,22 @@ export default function MyBoxPage() {
               =============================================================== */}
           {activeView === 'reviews' && (
             reviews.length === 0 ? (
-              <div className="my-box-empty-card">
-                <div className="my-box-empty-icon">
-                  <Inbox size={22} />
-                </div>
-                <h2 className="my-box-empty-title">SUA CAIXA DE CRÍTICAS ESTÁ VAZIA</h2>
-                <p className="my-box-empty-desc">
-                  Você ainda não registrou nenhuma avaliação crítica. Explore o catálogo para registrar suas notas e comentários.
-                </p>
-                <button className="nav-btn nav-btn-accent" onClick={() => navigate('/search?filter=trending')}>
-                  <Compass size={14} style={{ marginRight: '8px' }} />
-                  EXPLORAR CATÁLOGO EM ALTA
-                </button>
-              </div>
+              <MyBoxEmptyCard
+                icon={<Inbox size={22} />}
+                title="SUA CAIXA DE CRÍTICAS ESTÁ VAZIA"
+                description="Você ainda não registrou nenhuma avaliação crítica. Explore o catálogo para registrar suas notas e comentários."
+                ctaLabel="EXPLORAR CATÁLOGO EM ALTA"
+                onExplore={() => navigate('/search?filter=trending')}
+              />
             ) : filteredReviews.length === 0 ? (
-              <div className="my-box-empty-card" style={{ padding: '48px 24px' }}>
-                <h3 className="my-box-empty-title" style={{ fontSize: '1.15rem' }}>
-                  NENHUMA CRÍTICA ENCONTRADA
-                </h3>
-                <p className="my-box-empty-desc" style={{ marginBottom: '16px' }}>
-                  Nenhuma avaliação corresponde aos filtros ou ao termo pesquisado.
-                </p>
-                <button
-                  className="nav-btn nav-btn-ghost"
-                  onClick={() => {
-                    setActiveCategory('all');
-                    setSearchQuery('');
-                  }}
-                >
-                  LIMPAR FILTROS
-                </button>
-              </div>
+              <MyBoxFilterEmptyCard
+                title="NENHUMA CRÍTICA ENCONTRADA"
+                description="Nenhuma avaliação corresponde aos filtros ou ao termo pesquisado."
+                onReset={() => {
+                  setActiveCategory('all');
+                  setSearchQuery('');
+                }}
+              />
             ) : (
               <div className="my-box-reviews-grid">
                 {filteredReviews.map((r) => {
@@ -594,38 +626,31 @@ export default function MyBoxPage() {
               =============================================================== */}
           {activeView === 'watched' && (
             watchedList.length === 0 ? (
-              <div className="my-box-empty-card">
-                <div className="my-box-empty-icon">
-                  <Eye size={22} />
-                </div>
-                <h2 className="my-box-empty-title">NENHUM TÍTULO MARCADO COMO ASSISTIDO</h2>
-                <p className="my-box-empty-desc">
-                  Marque filmes, séries e animes que você já assistiu pelo catálogo ou pela página do filme para manter seu histórico de cinema.
-                  Lembre-se: qualquer filme que você avaliar vira automaticamente assistido!
-                </p>
-                <button className="nav-btn nav-btn-accent" onClick={() => navigate('/search?filter=trending')}>
-                  <Compass size={14} style={{ marginRight: '8px' }} />
-                  EXPLORAR CATÁLOGO PARA MARCAR
-                </button>
-              </div>
+              <MyBoxEmptyCard
+                icon={<Eye size={22} />}
+                title="NENHUM TÍTULO MARCADO COMO ASSISTIDO"
+                description="Marque filmes, séries e animes que você já assistiu pelo catálogo ou pela página do filme para manter seu histórico de cinema. Lembre-se: qualquer filme que você avaliar vira automaticamente assistido!"
+                ctaLabel="EXPLORAR CATÁLOGO PARA MARCAR"
+                onExplore={() => navigate('/search?filter=trending')}
+              />
             ) : filteredWatched.length === 0 ? (
-              <div className="my-box-empty-card" style={{ padding: '48px 24px' }}>
-                <h3 className="my-box-empty-title" style={{ fontSize: '1.15rem' }}>
-                  NENHUM TÍTULO ENCONTRADO NOS ASSISTIDOS
-                </h3>
-                <p className="my-box-empty-desc" style={{ marginBottom: '16px' }}>
-                  Nenhum título corresponde aos filtros ativos ou ao termo pesquisado.
-                </p>
-                <button
-                  className="nav-btn nav-btn-ghost"
-                  onClick={() => {
-                    setActiveCategory('all');
-                    setSearchQuery('');
-                  }}
-                >
-                  LIMPAR FILTROS
-                </button>
-              </div>
+              <MyBoxFilterEmptyCard
+                title={
+                  reviewFilter === 'unreviewed'
+                    ? 'NENHUM TÍTULO PENDENTE DE CRÍTICA'
+                    : 'NENHUM TÍTULO ENCONTRADO NOS ASSISTIDOS'
+                }
+                description={
+                  reviewFilter === 'unreviewed'
+                    ? 'Parabéns! Todas as obras assistidas correspondentes aos filtros ativos já possuem uma crítica registrada.'
+                    : 'Nenhum título corresponde aos filtros ativos ou ao termo pesquisado.'
+                }
+                onReset={() => {
+                  setActiveCategory('all');
+                  setReviewFilter('all');
+                  setSearchQuery('');
+                }}
+              />
             ) : (
               <MediaActivityGrid
                 items={filteredWatched}
@@ -641,37 +666,23 @@ export default function MyBoxPage() {
               =============================================================== */}
           {activeView === 'favorites' && (
             favoritesList.length === 0 ? (
-              <div className="my-box-empty-card">
-                <div className="my-box-empty-icon" style={{ borderColor: 'rgba(255, 51, 102, 0.3)', color: '#ff3366' }}>
-                  <Heart size={22} fill="currentColor" />
-                </div>
-                <h2 className="my-box-empty-title">NENHUM TÍTULO FAVORITADO</h2>
-                <p className="my-box-empty-desc">
-                  Favorite as obras que marcaram sua vida cinéfila. Ao passar o mouse sobre qualquer pôster no catálogo ou na página de detalhes, clique no coração para adicionar aos favoritos.
-                </p>
-                <button className="nav-btn nav-btn-accent" onClick={() => navigate('/search?filter=trending')}>
-                  <Compass size={14} style={{ marginRight: '8px' }} />
-                  EXPLORAR CATÁLOGO EM ALTA
-                </button>
-              </div>
+              <MyBoxEmptyCard
+                icon={<Heart size={22} fill="currentColor" />}
+                iconStyle={{ borderColor: 'rgba(255, 51, 102, 0.3)', color: '#ff3366' }}
+                title="NENHUM TÍTULO FAVORITADO"
+                description="Favorite as obras que marcaram sua trajetória no cinema. Ao passar o mouse sobre qualquer pôster no catálogo ou na página de detalhes, clique no coração para adicionar aos favoritos."
+                ctaLabel="EXPLORAR CATÁLOGO EM ALTA"
+                onExplore={() => navigate('/search?filter=trending')}
+              />
             ) : filteredFavorites.length === 0 ? (
-              <div className="my-box-empty-card" style={{ padding: '48px 24px' }}>
-                <h3 className="my-box-empty-title" style={{ fontSize: '1.15rem' }}>
-                  NENHUM FAVORITO ENCONTRADO
-                </h3>
-                <p className="my-box-empty-desc" style={{ marginBottom: '16px' }}>
-                  Nenhum favorito corresponde aos filtros ou termo pesquisado.
-                </p>
-                <button
-                  className="nav-btn nav-btn-ghost"
-                  onClick={() => {
-                    setActiveCategory('all');
-                    setSearchQuery('');
-                  }}
-                >
-                  LIMPAR FILTROS
-                </button>
-              </div>
+              <MyBoxFilterEmptyCard
+                title="NENHUM FAVORITO ENCONTRADO"
+                description="Nenhum favorito corresponde aos filtros ou termo pesquisado."
+                onReset={() => {
+                  setActiveCategory('all');
+                  setSearchQuery('');
+                }}
+              />
             ) : (
               <MediaActivityGrid
                 items={filteredFavorites}
@@ -683,6 +694,38 @@ export default function MyBoxPage() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function MyBoxEmptyCard({ icon, iconStyle, title, description, ctaLabel, onExplore }) {
+  return (
+    <div className="my-box-empty-card">
+      <div className="my-box-empty-icon" style={iconStyle}>
+        {icon}
+      </div>
+      <h2 className="my-box-empty-title">{title}</h2>
+      <p className="my-box-empty-desc">{description}</p>
+      <button className="nav-btn nav-btn-accent" onClick={onExplore}>
+        <Compass size={14} style={{ marginRight: '8px' }} />
+        {ctaLabel}
+      </button>
+    </div>
+  );
+}
+
+function MyBoxFilterEmptyCard({ title, description, onReset }) {
+  return (
+    <div className="my-box-empty-card" style={{ padding: '48px 24px' }}>
+      <h3 className="my-box-empty-title" style={{ fontSize: '1.15rem' }}>
+        {title}
+      </h3>
+      <p className="my-box-empty-desc" style={{ marginBottom: '16px' }}>
+        {description}
+      </p>
+      <button className="nav-btn nav-btn-ghost" onClick={onReset}>
+        LIMPAR FILTROS
+      </button>
     </div>
   );
 }

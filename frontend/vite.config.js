@@ -14,6 +14,7 @@ export default defineConfig({
       '/reviews': GATEWAY_URL,
       '/auth': GATEWAY_URL,
       '/activity': GATEWAY_URL,
+      '/users': GATEWAY_URL,
       '/docs': GATEWAY_URL,
       '/openapi.json': GATEWAY_URL,
     }

@@ -9,7 +9,8 @@ export async function getMovieReviews(movieId) {
 }
 
 export async function getUserReviews(userId) {
-  return apiFetch(`/reviews/user/${userId}`);
+  const clean = (userId || '').replace(/^@+/, '').trim();
+  return apiFetch(`/reviews/user/${encodeURIComponent(clean)}`);
 }
 
 export async function getMyReviews() {

@@ -37,6 +37,8 @@ export default function MediaActivityGrid({
                 mediaType={mediaType}
                 title={title}
                 posterUrl={poster}
+                userRating={userRating}
+                hasReview={hasReview}
               />
             </div>
 

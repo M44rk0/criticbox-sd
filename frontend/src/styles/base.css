@@ -1,0 +1,19 @@
+/* ==========================================================================
+   CSS RESET & BASE TYPOGRAPHY
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: 0 !important;
+}
+
+body {
+  background: var(--bg-body);
+  color: var(--white);
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}

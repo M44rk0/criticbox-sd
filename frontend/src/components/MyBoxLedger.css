@@ -1,0 +1,79 @@
+/* ==========================================================================
+   MINHA CAIXA STATS LEDGER COMPONENT
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+/* REFINED STATS LEDGER */
+.my-box-ledger {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+}
+
+.my-box-ledger-cell {
+  padding: 10px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--gray-800);
+  transition: background-color 0.15s ease;
+}
+
+.my-box-ledger-cell:last-child {
+  border-right: none;
+}
+
+.my-box-ledger-cell:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.my-box-ledger-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.my-box-ledger-val.accent {
+  color: var(--accent);
+}
+
+.my-box-star {
+  color: #fbbf24;
+  font-size: 0.88rem;
+  margin-right: 4px;
+}
+
+.my-box-ledger-lbl {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 768px) {
+  .my-box-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .my-box-ledger {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .my-box-ledger-cell:nth-child(2) {
+    border-right: none;
+  }
+  .my-box-ledger-cell:nth-child(1),
+  .my-box-ledger-cell:nth-child(2) {
+    border-bottom: 1px solid var(--gray-800);
+  }
+}

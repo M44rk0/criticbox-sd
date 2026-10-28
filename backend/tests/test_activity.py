@@ -97,10 +97,16 @@ class TestActivityStorage(unittest.TestCase):
         self.assertTrue(unmark_attempt["active"])
         self.assertIn("avaliação registrada", unmark_attempt["message"].lower())
 
-        # 4. Se a review for excluída, desmarcar passa a ser permitido
+        # 4. Se a review for excluída, o filme DEVE continuar como assistido (mas sem review)
         del_res = database.delete_review(rev["review_id"], user_id="user_cine", username="cinefilo")
         self.assertTrue(del_res["success"])
 
+        watched_still_present = database.get_user_watched(user_id="user_cine", username="cinefilo")
+        self.assertEqual(len(watched_still_present), 1)
+        self.assertFalse(watched_still_present[0]["has_review"])
+        self.assertEqual(watched_still_present[0]["user_rating"], 0.0)
+
+        # 5. Agora que a review foi apagada, desmarcar manualmente passa a ser permitido
         unmark_after_del = database.toggle_watched(
             tmdb_id=550,
             user_id="user_cine",

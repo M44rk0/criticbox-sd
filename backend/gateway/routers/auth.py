@@ -7,7 +7,7 @@ from gateway.grpc_clients import get_grpc_manager
 from gateway.schemas.auth import (
     AuthResponse,
     UserLoginRequest,
-    UserProfileResponse,
+    UserMeResponse,
     UserRegisterRequest,
 )
 
@@ -68,11 +68,11 @@ def login_user(payload: UserLoginRequest):
 
 @router.get(
     "/me",
-    response_model=UserProfileResponse,
+    response_model=UserMeResponse,
     summary="Perfil do usuário autenticado",
 )
 def get_my_profile(current_user: dict = Depends(get_current_user)):
-    return UserProfileResponse(
+    return UserMeResponse(
         user_id=current_user["user_id"],
         username=current_user["username"],
     )

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useRef } from 'react';
+import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const ToastContext = createContext(null);
@@ -7,13 +7,13 @@ export function ToastProvider({ children }) {
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
 
-  const showToast = (message, isError = false) => {
+  const showToast = useCallback((message, isError = false) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     setToast({ message, isError });
     toastTimeoutRef.current = setTimeout(() => {
       setToast(null);
     }, 3800);
-  };
+  }, []);
 
   return (
     <ToastContext.Provider value={{ showToast }}>

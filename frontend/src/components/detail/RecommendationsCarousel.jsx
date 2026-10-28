@@ -2,6 +2,7 @@ import React from 'react';
 import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMediaTypeLabel } from '../../utils/media';
 import PosterQuickActions from '../PosterQuickActions';
+import './RecommendationsCarousel.css';
 
 export default function RecommendationsCarousel({
   recommendations = [],

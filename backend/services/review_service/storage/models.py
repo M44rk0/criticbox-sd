@@ -22,6 +22,10 @@ class Review(ReviewBase):
     episode_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     movie_title: Mapped[str] = mapped_column(String(255), default="", nullable=False)
     poster_url: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    custom_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    watched_with: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    viewing_venue: Mapped[str] = mapped_column(String(100), default="", nullable=False)
+
 
 
 class WatchedItem(ReviewBase):

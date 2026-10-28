@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, StarHalf, Film, Trash2 } from 'lucide-react';
+import { Star, StarHalf, Film, Trash2, Users, Tv, MapPin } from 'lucide-react';
 import ReviewComment from './ReviewComment';
 import { formatReviewDate } from '../utils/date';
 import { isAnime as isAnimeUtil, isEpisodic, getCachedMediaMeta } from '../utils/media';
@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useReviewModal } from '../context/ReviewModalContext';
 import { deleteReview } from '../api/reviews';
+import './ReviewCard.css';
 
 function renderStars(rating) {
   const score = Number(rating) || 0;
@@ -86,6 +87,99 @@ function DeleteActionWidget({ showConfirm, setShowConfirm, isDeleting, onConfirm
     </button>
   );
 }
+
+function PrivateSessionMeta({ review, navigate }) {
+  if (!review.watched_with && !review.viewing_venue) return null;
+
+  const venueLower = (review.viewing_venue || '').toLowerCase();
+  const VenueIcon = venueLower.includes('cine') ? Film : venueLower.includes('stream') ? Tv : MapPin;
+
+  return (
+    <div className="review-card-session-meta" title="Detalhes privados da sua sessão (visíveis apenas na sua caixa)">
+      {review.watched_with && (
+        <div className="review-card-session-item">
+          <Users size={12} className="review-card-session-icon" />
+          <span>
+            {review.watched_with.split(',').map((name, i, arr) => {
+              const trimmed = name.trim();
+              const isMention = trimmed.startsWith('@');
+              const usernameOnly = isMention ? trimmed.replace(/^@+/, '') : trimmed;
+              return (
+                <React.Fragment key={i}>
+                  {isMention ? (
+                    <span
+                      className="review-card-mention-link"
+                      style={{ cursor: 'pointer' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/user/${usernameOnly}`);
+                      }}
+                      title={`Ver perfil de ${usernameOnly}`}
+                    >
+                      {usernameOnly}
+                    </span>
+                  ) : (
+                    <span>{trimmed}</span>
+                  )}
+                  {i < arr.length - 1 && ', '}
+                </React.Fragment>
+              );
+            })}
+          </span>
+        </div>
+      )}
+
+      {review.watched_with && review.viewing_venue && (
+        <span className="review-card-session-dot">·</span>
+      )}
+
+      {review.viewing_venue && (
+        <div className="review-card-session-item" title={`Local: ${review.viewing_venue}`}>
+          <VenueIcon size={12} className="review-card-session-icon" />
+          <span className="review-card-venue-text">{review.viewing_venue}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function ReviewMiniAvatar({ review }) {
+  const handle = review.username || review.user_id || 'U';
+  return (
+    <span className="review-card-mini-avatar">
+      {review.user_avatar ? (
+        <img src={review.user_avatar} alt={handle} />
+      ) : (
+        <span>{handle[0].toUpperCase()}</span>
+      )}
+    </span>
+  );
+}
+
+function ReviewRatingBlock({ review, isMyBox }) {
+  const ratingText = review.rating ? review.rating.toFixed(1) : '0';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {isMyBox && review.custom_rating > 0 && (
+        <span
+          className="review-card-private-badge"
+          title="Sua nota pessoal (privada, visível apenas na sua caixa)"
+        >
+          ★ {review.custom_rating} / 9999
+        </span>
+      )}
+      <div
+        className="review-card-stars"
+        title={`${ratingText}/5 estrelas`}
+        aria-label={`Nota: ${ratingText} de 5 estrelas`}
+      >
+        {renderStars(review.rating)}
+      </div>
+    </div>
+  );
+}
+
 
 export default function ReviewCard({
   review,
@@ -194,18 +288,15 @@ export default function ReviewCard({
               </div>
             </div>
 
-            <div
-              className="review-card-stars"
-              title={`${review.rating ? review.rating.toFixed(1) : '0'}/5 estrelas`}
-              aria-label={`Nota: ${review.rating ? review.rating.toFixed(1) : '0'} de 5 estrelas`}
-            >
-              {renderStars(review.rating)}
-            </div>
+            <ReviewRatingBlock review={review} isMyBox={isMyBox} />
           </div>
 
           <div className="editorial-comment-wrap">
             <ReviewComment comment={review.comment} containsSpoilers={review.contains_spoilers} allowExpand={true} />
           </div>
+
+          {/* DETALHES PRIVADOS DA SESSÃO: EXIBIDOS APENAS EM MINHA CAIXA */}
+          {isMyBox && <PrivateSessionMeta review={review} navigate={navigate} />}
 
           <div className="editorial-footer">
             <div className="editorial-footer-left">
@@ -214,13 +305,25 @@ export default function ReviewCard({
               <span className="editorial-date-stamp">
                 {formatReviewDate(review.created_at)}
               </span>
-              {!isMyBox && review.username && (
+              {!isMyBox && (review.username || review.user_id) && (
                 <>
                   <span className="editorial-footer-dot">·</span>
-                  <span className="editorial-author-tag">por {review.username}</span>
+                  <span
+                    className="editorial-author-tag"
+                    style={{ cursor: 'pointer' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/user/${review.username || review.user_id}`);
+                    }}
+                    title={`Ver perfil de ${review.username || review.user_id}`}
+                  >
+                    <ReviewMiniAvatar review={review} />
+                    <span>{review.username || review.user_id}</span>
+                  </span>
                 </>
               )}
             </div>
+
 
             {isAuthor && (
               <DeleteActionWidget
@@ -279,20 +382,25 @@ export default function ReviewCard({
                 <span className="review-episode-name">"{episodeName}"</span>
               )}
             </span>
-            <div
-              className="review-card-stars"
-              title={`${review.rating ? review.rating.toFixed(1) : '0'}/5 estrelas`}
-              aria-label={`Nota: ${review.rating ? review.rating.toFixed(1) : '0'} de 5 estrelas`}
-            >
-              {renderStars(review.rating)}
-            </div>
+            <ReviewRatingBlock review={review} isMyBox={isMyBox} />
           </div>
           <ReviewComment comment={review.comment} containsSpoilers={review.contains_spoilers} allowExpand={true} />
+          {isMyBox && <PrivateSessionMeta review={review} navigate={navigate} />}
           <div className="review-card-user">
-            <div className="review-card-user-info">
-              <span className="review-card-avatar">{(review.username || review.user_id || 'U')[0].toUpperCase()}</span>
-              <span className="review-card-username">{review.username || review.user_id}</span>
-            </div>
+            {!isMyBox && (
+              <div
+                className="review-card-user-info"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/user/${review.username || review.user_id}`);
+                }}
+                title={`Ver perfil de ${review.username || review.user_id}`}
+              >
+                <ReviewMiniAvatar review={review} />
+                <span className="review-card-username">{review.username || review.user_id}</span>
+              </div>
+            )}
             <div className="review-card-user-meta">
               <span className="review-card-date">{formatReviewDate(review.created_at)}</span>
               {isAuthor && (
@@ -321,30 +429,35 @@ export default function ReviewCard({
       )}
       <div className="review-card-body">
         <div className="review-card-header">
-          <div className="movie-review-author-info">
-            <span className="review-card-avatar">{(review.username || review.user_id || 'U')[0].toUpperCase()}</span>
-            <span className="review-card-username">{review.username || review.user_id}</span>
-            {episodeCode && (
-              <span className="review-scope-chip">{episodeCode}</span>
-            )}
-            {episodeName && (
-              <span className="review-episode-name" title={episodeName}>
-                "{episodeName}"
-              </span>
-            )}
-          </div>
-          <div className="movie-review-rating-wrap">
+          {!isMyBox && (
             <div
-              className="review-card-stars"
-              title={`${review.rating ? review.rating.toFixed(1) : '0'}/5 estrelas`}
-              aria-label={`Nota: ${review.rating ? review.rating.toFixed(1) : '0'} de 5 estrelas`}
+              className="movie-review-author-info"
+              style={{ cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/user/${review.username || review.user_id}`);
+              }}
+              title={`Ver perfil de ${review.username || review.user_id}`}
             >
-              {renderStars(review.rating)}
+              <ReviewMiniAvatar review={review} />
+              <span className="review-card-username">{review.username || review.user_id}</span>
+              {episodeCode && (
+                <span className="review-scope-chip">{episodeCode}</span>
+              )}
+              {episodeName && (
+                <span className="review-episode-name" title={episodeName}>
+                  "{episodeName}"
+                </span>
+              )}
             </div>
+          )}
+          <div className="movie-review-rating-wrap">
+            <ReviewRatingBlock review={review} isMyBox={isMyBox} />
           </div>
         </div>
 
         <ReviewComment comment={review.comment} containsSpoilers={review.contains_spoilers} allowExpand={true} />
+        {isMyBox && <PrivateSessionMeta review={review} navigate={navigate} />}
 
         <div className="movie-review-footer">
           <span className="review-card-date">{formatReviewDate(review.created_at)}</span>
@@ -360,4 +473,5 @@ export default function ReviewCard({
       </div>
     </div>
   );
+
 }

@@ -13,6 +13,8 @@ import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import MovieDetailPage from './pages/MovieDetailPage';
 import MyBoxPage from './pages/MyBoxPage';
+import UserProfilePage from './pages/UserProfilePage';
+import EditProfilePage from './pages/EditProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
 
 function AuthRouteWatcher() {
@@ -54,6 +56,10 @@ export default function App() {
             <Route path="/minha-caixa" element={<MyBoxPage />} />
             <Route path="/minhacaixa" element={<MyBoxPage />} />
             <Route path="/my-box" element={<MyBoxPage />} />
+            <Route path="/editar-perfil" element={<EditProfilePage />} />
+            <Route path="/user/:username" element={<UserProfilePage />} />
+            <Route path="/u/:username" element={<UserProfilePage />} />
+            <Route path="/perfil/:username" element={<UserProfilePage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/movie/:id" element={<MovieDetailPage />} />
             <Route path="/movies/:id" element={<MovieDetailPage />} />
@@ -62,6 +68,7 @@ export default function App() {
             <Route path="/auth" element={<HomePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+
 
           <Footer />
 

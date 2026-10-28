@@ -1,0 +1,53 @@
+/* ==========================================================================
+   MOVIE CAROUSEL HORIZONTAL SCROLL SECTION
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+/* SINGLE-LINE MOVIE CAROUSEL */
+.movies-carousel-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.movies-carousel {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-top: 4px;
+  padding-bottom: 14px;
+  width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-700) var(--bg-card);
+}
+
+.movies-carousel::-webkit-scrollbar {
+  height: 6px;
+}
+
+.movies-carousel::-webkit-scrollbar-track {
+  background: var(--bg-card);
+  border-radius: 0;
+}
+
+.movies-carousel::-webkit-scrollbar-thumb {
+  background: var(--gray-700);
+  border-radius: 0;
+}
+
+.movies-carousel::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+.movies-carousel .movie-card {
+  min-width: 215px;
+  max-width: 215px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .movies-carousel .movie-card {
+    min-width: 165px;
+    max-width: 165px;
+  }
+}

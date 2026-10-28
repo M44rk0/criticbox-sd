@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, LogIn, UserPlus, User, LogOut } from 'lucide-react';
+import { Search, LogIn, UserPlus, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import './Navbar.css';
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoggedIn, username, openAuth, logout } = useAuth();
+  const { isLoggedIn, username, avatarUrl, openAuth, logout } = useAuth();
   const [navSearch, setNavSearch] = useState('');
 
   const handleSearchKeyDown = (e) => {
@@ -64,10 +65,19 @@ export default function Navbar() {
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span className="nav-user-pill">
-              <User size={13} />
-              {username}
-            </span>
+            <button
+              type="button"
+              className="nav-user-avatar-btn"
+              onClick={() => navigate(`/user/${username}`)}
+              title={`Perfil de @${username}`}
+              aria-label={`Perfil de @${username}`}
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={username} className="nav-user-avatar-img" />
+              ) : (
+                <span className="nav-user-avatar-initial">{(username || 'U')[0].toUpperCase()}</span>
+              )}
+            </button>
             <button className="nav-btn nav-btn-ghost" onClick={logout}>
               <LogOut size={13} style={{ marginRight: '6px' }} />
               SAIR

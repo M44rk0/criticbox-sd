@@ -44,6 +44,23 @@ class ReviewCreateRequest(BaseModel):
         description="Número do episódio avaliado (para séries)",
         json_schema_extra={"example": 3},
     )
+    custom_rating: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=9999,
+        description="Nota personalizada opcional de 0 a 9999",
+        json_schema_extra={"example": 850},
+    )
+    watched_with: Optional[str] = Field(
+        default="",
+        description="Com quem assistiu a obra (menções de usuários ou nomes)",
+        json_schema_extra={"example": "@lucas, Mariana"},
+    )
+    viewing_venue: Optional[str] = Field(
+        default="",
+        description="Onde assistiu (cinema, streaming, avião, prostíbulo, etc.)",
+        json_schema_extra={"example": "cinema"},
+    )
     model_config = ConfigDict(extra="ignore")
 
     @field_validator("tmdb_id")
@@ -98,6 +115,11 @@ class ReviewListItem(BaseModel):
     season_number: Optional[int] = None
     episode_number: Optional[int] = None
     poster_url: str = ""
+    custom_rating: Optional[int] = None
+    watched_with: str = ""
+    viewing_venue: str = ""
+    user_avatar: str = ""
+
 
 
 class ReviewResponse(ReviewListItem):

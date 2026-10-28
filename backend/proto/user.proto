@@ -5,6 +5,12 @@ package user;
 service UserService {
   rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse);
   rpc AuthenticateUser (AuthenticateUserRequest) returns (AuthenticateUserResponse);
+  rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse);
+  rpc FollowUser (FollowUserRequest) returns (FollowUserResponse);
+  rpc UnfollowUser (UnfollowUserRequest) returns (UnfollowUserResponse);
+  rpc GetUserProfile (GetUserProfileRequest) returns (GetUserProfileResponse);
+  rpc GetUserFollows (GetUserFollowsRequest) returns (GetUserFollowsResponse);
+  rpc UpdateUserProfile (UpdateUserProfileRequest) returns (UpdateUserProfileResponse);
 }
 
 message RegisterUserRequest {
@@ -30,3 +36,84 @@ message AuthenticateUserResponse {
   string user_id = 3;
   string username = 4;
 }
+
+message SearchUsersRequest {
+  string query = 1;
+  int32 limit = 2;
+}
+
+message UserSummary {
+  string user_id = 1;
+  string username = 2;
+  string created_at = 3;
+  string avatar_url = 4;
+}
+
+message SearchUsersResponse {
+  repeated UserSummary users = 1;
+}
+
+message FollowUserRequest {
+  string follower_id = 1;
+  string following_id = 2;
+}
+
+message FollowUserResponse {
+  bool success = 1;
+  string message = 2;
+  bool is_mutual = 3;
+}
+
+message UnfollowUserRequest {
+  string follower_id = 1;
+  string following_id = 2;
+}
+
+message UnfollowUserResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetUserProfileRequest {
+  string username = 1;
+  string current_user_id = 2;
+}
+
+message GetUserProfileResponse {
+  bool success = 1;
+  string message = 2;
+  string user_id = 3;
+  string username = 4;
+  string created_at = 5;
+  int32 followers_count = 6;
+  int32 following_count = 7;
+  bool is_following = 8;
+  bool is_followed_by = 9;
+  bool is_mutual = 10;
+  string avatar_url = 11;
+  string four_pillars = 12;
+}
+
+message GetUserFollowsRequest {
+  string user_id = 1;
+  string follow_type = 2; // "followers" or "following"
+}
+
+message GetUserFollowsResponse {
+  repeated UserSummary users = 1;
+}
+
+message UpdateUserProfileRequest {
+  string user_id = 1;
+  string avatar_url = 2;
+  string four_pillars = 3;
+}
+
+message UpdateUserProfileResponse {
+  bool success = 1;
+  string message = 2;
+  string avatar_url = 3;
+  string four_pillars = 4;
+}
+
+

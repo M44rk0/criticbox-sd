@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { getMediaTypeLabel } from '../utils/media';
 import PosterQuickActions from './PosterQuickActions';
+import './MovieCarouselSection.css';
 
 export default function MovieCarouselSection({
   id,

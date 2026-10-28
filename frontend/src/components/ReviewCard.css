@@ -1,0 +1,959 @@
+/* ==========================================================================
+   REVIEW CARD COMPONENT & VARIANTS (EDITORIAL, DOSSIER, BACKDROP)
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+/* HOMEPAGE REVIEW CARDS (FIXED HEIGHT & CLAMPED) */
+.review-card-with-poster {
+  display: flex;
+  flex-direction: row;
+  height: 200px;
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.review-card-poster {
+  width: 120px;
+  min-width: 120px;
+  height: 200px;
+  background: #090b10;
+  border-right: 1px solid var(--gray-700);
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.review-card-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.25s ease;
+  display: block;
+}
+
+.review-card-poster:hover img {
+  transform: scale(1.06);
+}
+
+.review-card-poster-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  background: #11141d;
+  color: var(--gray-500);
+}
+
+@media (max-width: 600px) {
+  .review-card-with-poster {
+    height: 190px;
+    max-height: 190px;
+  }
+  .review-card-poster {
+    width: 85px;
+    min-width: 85px;
+    height: 190px;
+  }
+}
+
+.review-card-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.review-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.review-card-movie {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.review-card-movie:hover {
+  color: var(--accent);
+}
+
+.review-card-stars {
+  display: flex;
+  gap: 3px;
+  color: var(--accent);
+  font-size: 0.85rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.review-card-stars .off {
+  color: var(--gray-700);
+}
+
+.review-card-text {
+  font-size: 0.86rem;
+  color: var(--gray-300);
+  line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Clamping text for homepage cards with poster */
+.review-card-with-poster .review-card-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.review-card-with-poster .spoiler-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.review-card-with-poster .spoiler-wrap .review-card-text {
+  -webkit-line-clamp: 2;
+}
+
+.review-card-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--gray-800);
+  margin-top: auto;
+  flex-shrink: 0;
+  min-height: 32px;
+}
+
+.review-card-user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+
+.review-card-user-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.review-card-mini-avatar {
+  width: 22px;
+  height: 22px;
+  background: var(--gray-900);
+  border: 1px solid var(--gray-700);
+  border-radius: 0 !important;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.review-card-mini-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 0 !important;
+}
+
+.review-card-user-info:hover .review-card-mini-avatar,
+.movie-review-author-info:hover .review-card-mini-avatar,
+.editorial-author-tag:hover .review-card-mini-avatar {
+  border-color: var(--accent);
+}
+
+.review-card-avatar {
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  color: #000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.review-card-username {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gray-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-card-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--gray-500);
+  flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+
+/* REVIEW CARD - DETALHES PRIVADOS EM MINHA CAIXA */
+.review-card-private-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 153, 0, 0.12);
+  border: 1px solid rgba(255, 153, 0, 0.5);
+  color: var(--accent);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.review-card-session-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 0;
+  background: transparent;
+  border-left: none;
+  font-size: 0.74rem;
+  color: var(--gray-400);
+}
+
+.review-card-session-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.review-card-session-icon {
+  color: var(--gray-500);
+  flex-shrink: 0;
+}
+
+.review-card-session-dot {
+  color: var(--gray-600);
+  user-select: none;
+}
+
+.review-card-mention-link {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.review-card-mention-link:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.review-card-venue-text {
+  color: var(--gray-300);
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.74rem;
+}
+
+
+
+/* REVIEW DELETION BUTTONS & INLINE CONFIRMATION */
+.review-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+  border-radius: 0;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.review-delete-btn svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.review-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+/* FLUSH SEGMENTED CONFIRMATION WIDGET */
+.review-delete-confirm-box {
+  display: inline-flex;
+  align-items: stretch;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  background: #090a0f;
+  border: 1px solid #ef4444;
+  border-radius: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.review-delete-confirm-msg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 8px;
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.14);
+  border: none;
+  border-right: 1px solid #ef4444;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.review-delete-confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 10px;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  cursor: pointer;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.review-delete-confirm-btn.yes {
+  background: #ef4444;
+  color: #ffffff;
+  border-right: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+.review-delete-confirm-btn.yes:hover:not(:disabled) {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.review-delete-confirm-btn.yes:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.review-delete-confirm-btn.no {
+  background: transparent;
+  color: var(--gray-400);
+}
+
+.review-delete-confirm-btn.no:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+
+/* ==========================================================================
+   REVIEW CARD VARIANT A: DIÁRIO EDITORIAL
+   ========================================================================== */
+.review-card.variant-editorial {
+  display: flex;
+  flex-direction: row;
+  background: #090c12;
+  border: 1px solid var(--gray-800);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  min-height: 185px;
+}
+
+.review-card.variant-editorial:hover {
+  background: #0d1018;
+  border-color: var(--gray-700);
+}
+
+.editorial-poster-box {
+  width: 125px;
+  min-width: 125px;
+  position: relative;
+  background: #06070a;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-shrink: 0;
+  border-right: 1px solid var(--gray-800);
+}
+
+.editorial-poster-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  display: block;
+}
+
+.editorial-poster-box:hover img {
+  transform: scale(1.05);
+}
+
+.editorial-media-badge {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--gray-500);
+  text-transform: uppercase;
+}
+
+.editorial-footer-dot {
+  color: var(--gray-600);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.editorial-content-box {
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.editorial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.editorial-title-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.editorial-title-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  min-width: 0;
+}
+
+.editorial-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1.25;
+  margin: 0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.editorial-title.is-tv {
+  font-size: 0.94rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.editorial-title:hover {
+  color: var(--accent);
+}
+
+.editorial-scope-chip {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  padding: 1px 6px;
+}
+
+.editorial-episode-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-400);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.editorial-header .review-card-stars {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.editorial-score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 153, 0, 0.10);
+  border: 1px solid rgba(255, 153, 0, 0.45);
+  padding: 3px 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+}
+
+.editorial-score-star {
+  color: #fbbf24;
+  font-size: 0.85rem;
+  line-height: 1;
+  transform: translateY(-0.5px);
+}
+
+.editorial-comment-wrap {
+  flex: 1;
+}
+
+.editorial-comment-wrap .review-card-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.88rem;
+  color: #d1d5db;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.editorial-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: auto;
+}
+
+.editorial-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editorial-date-stamp {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--gray-500);
+  letter-spacing: 0.02em;
+}
+
+.editorial-author-tag {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  color: var(--gray-400);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s ease;
+}
+
+.editorial-author-tag:hover {
+  color: var(--white);
+}
+
+.editorial-author-tag .review-card-mini-avatar {
+  width: 18px;
+  height: 18px;
+  font-size: 0.6rem;
+}
+
+/* ==========================================================================
+   REVIEW CARD VARIANT B: DOSSIÊ ARQUITETURAL
+   ========================================================================== */
+.review-card.variant-dossier {
+  display: flex;
+  flex-direction: column;
+  background: #080a0f;
+  border: 1px solid var(--gray-800);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+  min-height: 185px;
+}
+
+.review-card.variant-dossier:hover {
+  border-color: rgba(255, 153, 0, 0.4);
+}
+
+.dossier-top-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--gray-800);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--gray-500);
+  letter-spacing: 0.06em;
+}
+
+.dossier-index {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.dossier-main-row {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+}
+
+.dossier-poster-col {
+  width: 110px;
+  min-width: 110px;
+  position: relative;
+  background: #050608;
+  cursor: pointer;
+  overflow: hidden;
+  border-right: 1px solid var(--gray-800);
+}
+
+.dossier-poster-col img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dossier-type-tag {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #000;
+  color: var(--gray-400);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-align: center;
+  padding: 3px 0;
+  border-top: 1px solid var(--gray-800);
+}
+
+.dossier-body-col {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dossier-heading-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.dossier-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dossier-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--white);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.dossier-title:hover {
+  color: var(--accent);
+}
+
+.dossier-score-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #10141e;
+  border: 1px solid var(--gray-700);
+  padding: 2px 8px;
+}
+
+.dossier-score-lbl {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--gray-500);
+  letter-spacing: 0.05em;
+}
+
+.dossier-score-num {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+.dossier-score-num .score-star {
+  color: #fbbf24;
+  font-size: 0.8rem;
+}
+
+.dossier-quote-box {
+  padding-left: 12px;
+  border-left: 2px solid var(--accent);
+  background: rgba(255, 153, 0, 0.02);
+  padding-top: 4px;
+  padding-bottom: 4px;
+  margin: 2px 0;
+}
+
+.dossier-quote-box .review-card-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--gray-300);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.dossier-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px dashed var(--gray-800);
+  margin-top: auto;
+}
+
+.dossier-sub-info {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  color: var(--gray-500);
+  letter-spacing: 0.03em;
+}
+
+/* ==========================================================================
+   REVIEW CARD VARIANT C: CINEMATIC BACKDROP
+   ========================================================================== */
+.review-card.variant-backdrop {
+  display: flex;
+  flex-direction: row;
+  background: #0a0d14;
+  border: 1px solid var(--gray-800);
+  position: relative;
+  overflow: hidden;
+  min-height: 185px;
+  transition: border-color 0.2s ease;
+}
+
+.review-card.variant-backdrop:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.backdrop-glow-layer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 60%;
+  background-size: cover;
+  background-position: center right;
+  opacity: 0.12;
+  filter: blur(2px);
+  mask-image: linear-gradient(to left, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.review-card.variant-backdrop:hover .backdrop-glow-layer {
+  opacity: 0.22;
+}
+
+.backdrop-poster-box {
+  width: 120px;
+  min-width: 120px;
+  position: relative;
+  background: #06080c;
+  cursor: pointer;
+  overflow: hidden;
+  z-index: 1;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.backdrop-poster-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.backdrop-poster-box:hover img {
+  transform: scale(1.05);
+}
+
+.backdrop-content-box {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.backdrop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.backdrop-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.backdrop-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--white);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.backdrop-title:hover {
+  color: var(--accent);
+}
+
+.backdrop-rating-pill {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 2px 10px;
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+
+.backdrop-comment-wrap .review-card-text {
+  font-size: 0.86rem;
+  color: var(--gray-300);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.backdrop-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: auto;
+}
+
+@media (max-width: 600px) {
+  .editorial-poster-box,
+  .dossier-poster-col,
+  .backdrop-poster-box {
+    width: 90px;
+    min-width: 90px;
+  }
+  .editorial-content-box,
+  .dossier-body-col,
+  .backdrop-content-box {
+    padding: 12px 14px;
+  }
+  .my-box-variant-picker {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, Sparkles, DollarSign, User, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatReleaseDate } from '../../utils/date';
 import { isEpisodic } from '../../utils/media';
+import './ProductionDossier.css';
 
 export default function ProductionDossier({
   movie,

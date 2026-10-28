@@ -56,6 +56,9 @@ def _build_review_item_pb(r: dict, default_title: str = "") -> r_pb2.ReviewItem:
         season_number=r.get("season_number", 0),
         episode_number=r.get("episode_number", 0),
         poster_url=poster,
+        custom_rating=int(r.get("custom_rating", 0) or 0),
+        watched_with=str(r.get("watched_with", "") or ""),
+        viewing_venue=str(r.get("viewing_venue", "") or ""),
     )
 
 
@@ -133,6 +136,10 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             poster_url = getattr(request, "poster_url", "") or ""
 
         username = getattr(request, "username", "") or ""
+        custom_rating = getattr(request, "custom_rating", 0) or 0
+        watched_with = getattr(request, "watched_with", "") or ""
+        viewing_venue = getattr(request, "viewing_venue", "") or ""
+
         res = database.add_review(
             tmdb_id=request.tmdb_id,
             user_id=request.user_id.strip(),
@@ -145,6 +152,9 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             movie_title=movie_title,
             poster_url=poster_url,
             username=username.strip(),
+            custom_rating=custom_rating,
+            watched_with=watched_with,
+            viewing_venue=viewing_venue,
         )
         return r_pb2.ReviewResponse(
             review_id=res["review_id"],
@@ -162,6 +172,9 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             episode_number=res.get("episode_number", 0),
             movie_title=res.get("movie_title") or movie_title,
             poster_url=res.get("poster_url") or poster_url,
+            custom_rating=res.get("custom_rating", 0) or 0,
+            watched_with=res.get("watched_with", "") or "",
+            viewing_venue=res.get("viewing_venue", "") or "",
         )
 
     @traced_rpc()

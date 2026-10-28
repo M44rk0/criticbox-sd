@@ -3,6 +3,7 @@ import { Tv, Tv2, Calendar, Star, Check } from 'lucide-react';
 import { formatReleaseDate } from '../../utils/date';
 import { useReviewModal } from '../../context/ReviewModalContext';
 import { isEpisodic } from '../../utils/media';
+import './SeriesEpisodeGuide.css';
 
 export default function SeriesEpisodeGuide({
   movie,

@@ -1,0 +1,412 @@
+/* ==========================================================================
+   EDIT PROFILE PAGE - CRITICBOX SD
+   Architectural cinema profile customization & 4 pillars curation
+   ========================================================================== */
+
+.edit-profile-page {
+  min-height: calc(100vh - 56px - 100px);
+  padding: 36px 32px 100px 32px;
+  max-width: 1140px;
+  margin: 0 auto;
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+.edit-profile-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.edit-profile-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 1px solid var(--gray-800);
+  color: var(--gray-400);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.edit-profile-back-link:hover {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+
+/* HEADER */
+.edit-profile-page-header {
+  border-bottom: 1px solid var(--gray-800);
+  padding-bottom: 24px;
+  margin-bottom: 36px;
+}
+
+.edit-profile-page-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(2rem, 3.8vw, 2.8rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.edit-profile-page-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.88rem;
+  color: var(--gray-400);
+  margin: 0;
+}
+
+/* CARDS / CONTAINERS */
+.edit-page-card {
+  background: #0a0c11;
+  border: 1px solid var(--gray-800);
+  padding: 28px 32px;
+  margin-bottom: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.edit-page-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--gray-800);
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+}
+
+.edit-page-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-page-card-desc {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* AVATAR SECTION */
+.edit-page-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.edit-page-avatar-preview {
+  width: 96px;
+  height: 96px;
+  background: #06070a;
+  border: 2px solid var(--gray-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--accent);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.edit-page-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edit-page-avatar-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+  min-width: 280px;
+}
+
+.edit-page-avatar-hint {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.84rem;
+  color: var(--gray-400);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.edit-page-avatar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* PILLARS SECTION */
+.edit-page-pillars-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.edit-page-slot-card {
+  position: relative;
+  background: #06070a;
+  border: 1px solid var(--gray-800);
+  aspect-ratio: 2/3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.edit-page-slot-card.filled {
+  border-color: var(--gray-700);
+}
+
+.edit-page-slot-card.filled:hover {
+  border-color: var(--accent);
+  box-shadow: 3px 3px 0px 0px var(--accent);
+}
+
+.edit-page-slot-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edit-page-slot-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #000000;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-right: 1px solid var(--accent);
+  border-bottom: 1px solid var(--accent);
+  z-index: 2;
+}
+
+.edit-page-slot-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.85);
+  border: none;
+  border-left: 1px solid #ef4444;
+  border-bottom: 1px solid #ef4444;
+  color: #ef4444;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.edit-page-slot-remove:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.edit-page-slot-meta {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.9);
+  padding: 8px 10px;
+  border-top: 1px solid var(--gray-800);
+}
+
+.edit-page-slot-meta-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.edit-page-slot-empty-content {
+  text-align: center;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-page-slot-empty-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* CURATION SELECTION PICKER */
+.edit-page-picker-box {
+  background: #06070a;
+  border: 1px solid var(--gray-800);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-page-picker-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--gray-800);
+  padding-bottom: 12px;
+}
+
+.edit-page-picker-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-page-picker-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--gray-800);
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.edit-page-picker-tab:hover {
+  color: #ffffff;
+  border-color: var(--gray-600);
+}
+
+.edit-page-picker-tab.active {
+  background: var(--accent);
+  color: #000000;
+  border-color: var(--accent);
+  font-weight: 800;
+}
+
+.edit-page-picker-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+  padding: 0 12px;
+  height: 34px;
+  min-width: 240px;
+}
+
+.edit-page-picker-search input {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.80rem;
+  outline: none;
+  width: 100%;
+}
+
+.edit-page-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 14px;
+}
+
+.edit-page-picker-item {
+  position: relative;
+  aspect-ratio: 2/3;
+  background: #090b10;
+  border: 1px solid var(--gray-800);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+
+.edit-page-picker-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 2px 2px 0px 0px var(--accent);
+}
+
+.edit-page-picker-item.selected-in-slot {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: var(--accent);
+}
+
+.edit-page-picker-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.edit-page-picker-item-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.88);
+  padding: 4px 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ACTIONS BAR */
+.edit-page-actions-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .edit-page-pillars-slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

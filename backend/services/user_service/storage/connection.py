@@ -99,6 +99,20 @@ def get_session() -> Generator[Session, None, None]:
 def init_db():
     engine = get_engine()
     UserBase.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        try:
+            if is_mysql():
+                conn.exec_driver_sql("ALTER TABLE users MODIFY COLUMN avatar_url MEDIUMTEXT")
+                conn.exec_driver_sql("ALTER TABLE users MODIFY COLUMN four_pillars MEDIUMTEXT")
+            else:
+                conn.exec_driver_sql("ALTER TABLE users ADD COLUMN avatar_url TEXT")
+        except Exception:
+            pass
+        try:
+            if not is_mysql():
+                conn.exec_driver_sql("ALTER TABLE users ADD COLUMN four_pillars TEXT")
+        except Exception:
+            pass
 
 
 def clear_db():

@@ -1,0 +1,97 @@
+/* ==========================================================================
+   SHARED BADGES, STATUS CHIPS & SPOILER BLUR
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+/* MEDIA TYPE BADGE (FILME / SÉRIE) */
+.media-type-chip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: rgba(6, 7, 10, 0.92);
+  color: var(--gray-300);
+  padding: 3px 7px;
+  border-left: 1px solid var(--gray-700);
+  border-bottom: 1px solid var(--gray-700);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  z-index: 2;
+}
+
+.media-type-chip.series {
+  color: #38bdf8;
+  border-left-color: rgba(56, 189, 248, 0.4);
+  border-bottom-color: rgba(56, 189, 248, 0.4);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+/* REVIEW SCOPE BADGE (E.G. T01E03) */
+.review-scope-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.review-episode-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  margin-left: 8px;
+  vertical-align: middle;
+  display: inline-block;
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* SPOILER BLUR */
+.spoiler-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spoiler-blurred {
+  filter: blur(5px);
+  user-select: none;
+  transition: filter 0.3s ease;
+}
+
+.spoiler-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  cursor: pointer;
+  padding: 3px 0;
+  transition: color 0.15s;
+}
+
+.spoiler-toggle:hover {
+  color: var(--accent);
+}
+
+.spoiler-toggle--hide:hover {
+  color: var(--gray-300);
+}

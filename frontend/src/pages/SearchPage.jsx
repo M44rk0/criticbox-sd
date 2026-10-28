@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, X, ChevronLeft, ChevronRight, Film, TrendingUp, Sparkles, Tv } from 'lucide-react';
+import { Search, X, ChevronLeft, ChevronRight, Film, TrendingUp, Sparkles, Tv, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getMediaTypeLabel } from '../utils/media';
 import {
@@ -10,7 +10,9 @@ import {
   getRecommendations,
   searchMovies,
 } from '../api/movies';
+import { searchUsers } from '../api/social';
 import PosterQuickActions from '../components/PosterQuickActions';
+import './SearchPage.css';
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ export default function SearchPage() {
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
   const [searchTerm, setSearchTerm] = useState(queryParam);
   const [results, setResults] = useState([]);
+  const [userResults, setUserResults] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -30,28 +33,41 @@ export default function SearchPage() {
     try {
       let data = null;
       if (q && q.trim()) {
-        data = await searchMovies(q.trim(), page);
-      } else if (filter === 'trending') {
-        data = await getTrendingMovies(page);
-      } else if (filter === 'now_playing') {
-        data = await getNowPlayingMovies(page);
-      } else if (filter === 'series') {
-        data = await getTrendingTV(page);
-      } else if (filter === 'recommended') {
-        if (!username) {
+        const [moviesData, usersData] = await Promise.allSettled([
+          searchMovies(q.trim(), page),
+          page === 1 ? searchUsers(q.trim(), 6) : Promise.resolve([]),
+        ]);
+        data = moviesData.status === 'fulfilled' ? moviesData.value : null;
+        if (usersData.status === 'fulfilled' && usersData.value) {
+          const list = Array.isArray(usersData.value) ? usersData.value : (usersData.value.users || []);
+          setUserResults(list);
+        } else {
+          setUserResults([]);
+        }
+      } else {
+        setUserResults([]);
+        if (filter === 'trending') {
+          data = await getTrendingMovies(page);
+        } else if (filter === 'now_playing') {
+          data = await getNowPlayingMovies(page);
+        } else if (filter === 'series') {
+          data = await getTrendingTV(page);
+        } else if (filter === 'recommended') {
+          if (!username) {
+            setResults([]);
+            setTotalPages(1);
+            setTotalResults(0);
+            setLoading(false);
+            return;
+          }
+          data = await getRecommendations(username, page);
+        } else {
           setResults([]);
           setTotalPages(1);
           setTotalResults(0);
           setLoading(false);
           return;
         }
-        data = await getRecommendations(username, page);
-      } else {
-        setResults([]);
-        setTotalPages(1);
-        setTotalResults(0);
-        setLoading(false);
-        return;
       }
 
       const list = (data.movies || []).filter((m) => m.poster_url && !m.poster_url.includes('placeholder'));
@@ -210,7 +226,7 @@ export default function SearchPage() {
               Digite o nome de um filme, série ou anime na barra de busca acima ou explore pelas seções de destaques na página inicial.
             </p>
           </div>
-        ) : results.length === 0 ? (
+        ) : results.length === 0 && userResults.length === 0 ? (
           <div className="detail-reviews-empty">
             <h3 className="detail-reviews-empty-title">
               {filterParam === 'recommended' && !username
@@ -228,7 +244,40 @@ export default function SearchPage() {
           </div>
         ) : (
           <>
-            <div className="movies-grid">
+            {userResults.length > 0 && (
+              <div className="search-users-shelf">
+                <div className="search-users-header">
+                  <Users size={16} color="var(--accent)" />
+                  <span className="search-users-title">
+                    Membros encontrados ({userResults.length})
+                  </span>
+                </div>
+                <div className="search-users-grid">
+                  {userResults.map((u) => (
+                    <div
+                      key={u.user_id}
+                      className="search-user-card"
+                      onClick={() => navigate(`/user/${u.username}`)}
+                    >
+                      <div className="search-user-avatar">
+                        {u.avatar_url ? (
+                          <img src={u.avatar_url} alt={u.username} />
+                        ) : (
+                          u.username[0]?.toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <div className="search-user-name">{u.username}</div>
+                        <div className="search-user-meta">Membro Criticbox</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {results.length > 0 && (
+              <div className="movies-grid">
               {results.map((m, idx) => (
                 <div
                   key={m.tmdb_id || m.id}
@@ -272,6 +321,7 @@ export default function SearchPage() {
                 </div>
               ))}
             </div>
+            )}
 
             {/* BARRA DE PAGINAÇÃO PADRONIZADA NO ESTILO REVIEWS */}
             {totalPages > 1 && (

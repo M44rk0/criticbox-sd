@@ -4,10 +4,11 @@ import os
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, or_, select
 
 from services.user_service.storage.connection import get_session
-from services.user_service.storage.models import User
+from services.user_service.storage.models import Follow, User
+
 
 
 def _hash_password(password: str) -> str:
@@ -78,3 +79,250 @@ def authenticate_user(username: str, password: str) -> dict:
             "user_id": user.id,
             "username": user.username,
         }
+
+
+def _resolve_user(session, user_id_or_username: str) -> User | None:
+    val = (user_id_or_username or "").strip()
+    if not val:
+        return None
+    val_clean = val.lstrip("@").strip()
+    return session.scalar(
+        select(User).where(
+            or_(
+                User.id == val,
+                User.id == val_clean,
+                func.lower(User.username) == val.lower(),
+                func.lower(User.username) == val_clean.lower(),
+            )
+        )
+    )
+
+
+def search_users(query: str, limit: int = 10) -> list[dict]:
+    q = (query or "").strip().lower()
+    if not q:
+        return []
+    limit = max(1, min(limit or 10, 50))
+    with get_session() as session:
+        stmt = (
+            select(User)
+            .where(func.lower(User.username).like(f"%{q}%"))
+            .order_by(User.username.asc())
+            .limit(limit)
+        )
+        users = session.scalars(stmt).all()
+        return [
+            {
+                "user_id": u.id,
+                "username": u.username,
+                "created_at": u.created_at,
+                "avatar_url": getattr(u, "avatar_url", "") or "",
+            }
+            for u in users
+        ]
+
+
+def follow_user(follower_id_or_name: str, following_id_or_name: str) -> dict:
+    with get_session() as session:
+        follower = _resolve_user(session, follower_id_or_name)
+        following = _resolve_user(session, following_id_or_name)
+
+        if not follower:
+            return {"success": False, "message": "Usuário seguidor não encontrado.", "is_mutual": False}
+        if not following:
+            return {"success": False, "message": "Usuário a seguir não encontrado.", "is_mutual": False}
+        if follower.id == following.id:
+            return {"success": False, "message": "Você não pode seguir a si mesmo.", "is_mutual": False}
+
+        # Verifica se já segue
+        existing = session.scalar(
+            select(Follow).where(
+                Follow.follower_id == follower.id,
+                Follow.following_id == following.id,
+            )
+        )
+        if not existing:
+            now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            follow_record = Follow(
+                id=str(uuid.uuid4()),
+                follower_id=follower.id,
+                following_id=following.id,
+                created_at=now_str,
+            )
+            session.add(follow_record)
+            session.flush()
+
+        # Verifica mutualidade (amigos)
+        mutual_rec = session.scalar(
+            select(Follow.id).where(
+                Follow.follower_id == following.id,
+                Follow.following_id == follower.id,
+            )
+        )
+        is_mutual = mutual_rec is not None
+
+        return {
+            "success": True,
+            "message": f"Você agora está seguindo @{following.username}!",
+            "is_mutual": is_mutual,
+        }
+
+
+def unfollow_user(follower_id_or_name: str, following_id_or_name: str) -> dict:
+    with get_session() as session:
+        follower = _resolve_user(session, follower_id_or_name)
+        following = _resolve_user(session, following_id_or_name)
+
+        if not follower or not following:
+            return {"success": False, "message": "Usuário não encontrado."}
+
+        session.execute(
+            delete(Follow).where(
+                Follow.follower_id == follower.id,
+                Follow.following_id == following.id,
+            )
+        )
+        return {
+            "success": True,
+            "message": f"Você deixou de seguir @{following.username}.",
+        }
+
+
+def get_user_profile(username_or_id: str, current_user_id_or_name: str = "") -> dict:
+    with get_session() as session:
+        target = _resolve_user(session, username_or_id)
+        if not target:
+            return {
+                "success": False,
+                "message": f"Usuário '{username_or_id}' não encontrado.",
+                "user_id": "",
+                "username": "",
+                "created_at": "",
+                "followers_count": 0,
+                "following_count": 0,
+                "is_following": False,
+                "is_followed_by": False,
+                "is_mutual": False,
+            }
+
+        followers_count = (
+            session.scalar(
+                select(func.count(Follow.id)).where(Follow.following_id == target.id)
+            )
+            or 0
+        )
+        following_count = (
+            session.scalar(
+                select(func.count(Follow.id)).where(Follow.follower_id == target.id)
+            )
+            or 0
+        )
+
+        is_following = False
+        is_followed_by = False
+        is_mutual = False
+
+        if current_user_id_or_name:
+            curr = _resolve_user(session, current_user_id_or_name)
+            if curr and curr.id != target.id:
+                is_following = (
+                    session.scalar(
+                        select(Follow.id).where(
+                            Follow.follower_id == curr.id,
+                            Follow.following_id == target.id,
+                        )
+                    )
+                    is not None
+                )
+                is_followed_by = (
+                    session.scalar(
+                        select(Follow.id).where(
+                            Follow.follower_id == target.id,
+                            Follow.following_id == curr.id,
+                        )
+                    )
+                    is not None
+                )
+                is_mutual = is_following and is_followed_by
+
+        return {
+            "success": True,
+            "message": "",
+            "user_id": target.id,
+            "username": target.username,
+            "created_at": target.created_at,
+            "avatar_url": getattr(target, "avatar_url", "") or "",
+            "four_pillars": getattr(target, "four_pillars", "") or "",
+            "followers_count": int(followers_count),
+            "following_count": int(following_count),
+            "is_following": is_following,
+            "is_followed_by": is_followed_by,
+            "is_mutual": is_mutual,
+        }
+
+
+def update_user_profile(user_id_or_username: str, avatar_url: str | None = None, four_pillars: str | None = None) -> dict:
+    with get_session() as session:
+        user = _resolve_user(session, user_id_or_username)
+        if not user:
+            return {"success": False, "message": "Usuário não encontrado."}
+        if avatar_url is not None:
+            user.avatar_url = avatar_url.strip()
+        if four_pillars is not None:
+            user.four_pillars = four_pillars.strip()
+        session.flush()
+        return {
+            "success": True,
+            "message": "Perfil atualizado com sucesso!",
+            "avatar_url": getattr(user, "avatar_url", "") or "",
+            "four_pillars": getattr(user, "four_pillars", "") or "",
+        }
+
+
+def get_user_followers(user_id_or_username: str) -> list[dict]:
+    with get_session() as session:
+        target = _resolve_user(session, user_id_or_username)
+        if not target:
+            return []
+
+        stmt = (
+            select(User)
+            .join(Follow, Follow.follower_id == User.id)
+            .where(Follow.following_id == target.id)
+            .order_by(Follow.created_at.desc())
+        )
+        users = session.scalars(stmt).all()
+        return [
+            {
+                "user_id": u.id,
+                "username": u.username,
+                "created_at": u.created_at,
+                "avatar_url": getattr(u, "avatar_url", "") or "",
+            }
+            for u in users
+        ]
+
+
+def get_user_following(user_id_or_username: str) -> list[dict]:
+    with get_session() as session:
+        target = _resolve_user(session, user_id_or_username)
+        if not target:
+            return []
+
+        stmt = (
+            select(User)
+            .join(Follow, Follow.following_id == User.id)
+            .where(Follow.follower_id == target.id)
+            .order_by(Follow.created_at.desc())
+        )
+        users = session.scalars(stmt).all()
+        return [
+            {
+                "user_id": u.id,
+                "username": u.username,
+                "created_at": u.created_at,
+                "avatar_url": getattr(u, "avatar_url", "") or "",
+            }
+            for u in users
+        ]
+

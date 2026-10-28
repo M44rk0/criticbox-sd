@@ -23,6 +23,7 @@ import {
   CACHE_TTL_MS,
   readSessionCache,
 } from '../utils/constants';
+import './HomePage.css';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -544,7 +545,7 @@ export default function HomePage() {
           <div className="cta-banner">
             <div className="cta-text">
               <h2>SUA VOZ NA CRÍTICA CINEMATOGRÁFICA.</h2>
-              <p>Junte-se à comunidade de cinéfilos. Registre seus votos, elabore ensaios e acompanhe os grandes lançamentos.</p>
+              <p>Junte-se à nossa comunidade de membros. Registre seus votos, elabore ensaios e acompanhe os grandes lançamentos.</p>
             </div>
             <button className="cta-btn" onClick={() => openAuth('register')}>
               CRIAR CONTA GRATUITA

@@ -30,6 +30,7 @@ import NotFoundPage from './NotFoundPage';
 import { formatReleaseDate, isUnreleased } from '../utils/date';
 import { SERIES_EPISODES_CACHE } from '../utils/constants';
 import { isAnime, isEpisodic, getMediaTypeLabel, saveCachedMediaMeta } from '../utils/media';
+import './MovieDetailPage.css';
 
 const INITIAL_CAST_COUNT = 6;
 

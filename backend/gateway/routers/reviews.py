@@ -69,6 +69,9 @@ def create_review(
         episode_number=payload.episode_number,
         movie_title=official_title,
         poster_url=official_poster,
+        custom_rating=payload.custom_rating,
+        watched_with=payload.watched_with or "",
+        viewing_venue=payload.viewing_venue or "",
     )
     if not res.get("success", False):
         raise HTTPException(
@@ -78,34 +81,89 @@ def create_review(
     return ReviewResponse(**res)
 
 
+_AVATAR_CACHE: dict[str, str] = {}
+
+
+def invalidate_avatar_cache(username: str, avatar_url: str):
+    """Atualiza ou invalida o cache em memória do avatar do usuário."""
+    if username:
+        _AVATAR_CACHE[username] = avatar_url or ""
+
+
+def _enrich_reviews_with_avatars(reviews: list[dict], grpc_manager) -> list[dict]:
+    """Preenche user_avatar em cada review buscando no UserService via gRPC com cache."""
+    needed = set()
+    for r in reviews:
+        uname = (r.get("username") or r.get("user_id") or "").strip()
+        if uname and uname not in _AVATAR_CACHE:
+            needed.add(uname)
+
+    for uname in needed:
+        try:
+            profile = grpc_manager.get_user_profile(username=uname)
+            if profile and profile.get("success"):
+                _AVATAR_CACHE[uname] = profile.get("avatar_url", "") or ""
+            else:
+                _AVATAR_CACHE[uname] = ""
+        except Exception as e:
+            logger.warning("Falha ao buscar avatar de @%s via gRPC: %s", uname, e)
+            _AVATAR_CACHE[uname] = ""
+
+    enriched = []
+    for r in reviews:
+        item = dict(r)
+        uname = (r.get("username") or r.get("user_id") or "").strip()
+        item["user_avatar"] = _AVATAR_CACHE.get(uname, "")
+        enriched.append(item)
+    return enriched
+
+
+def _sanitize_public_review(r: dict) -> dict:
+    """Oculta informações detalhadas da avaliação para exibição pública mantendo privacidade total."""
+    sanitized = dict(r)
+    sanitized["custom_rating"] = None
+    sanitized["watched_with"] = ""
+    sanitized["viewing_venue"] = ""
+    return sanitized
+
+
 @router.get("/me", response_model=list[ReviewListItem], summary="Listar críticas do próprio usuário logado (Protegido por JWT)")
 def list_my_reviews(current_user: dict = Depends(get_current_user)):
     author_user_id = current_user["user_id"]
     author_username = current_user.get("username", "")
     logger.info("Gateway GET /reviews/me -> Buscando reviews de @%s (id=%s)", author_username, author_user_id)
     grpc_manager = get_grpc_manager()
-    return grpc_manager.get_reviews_by_user(user_id=author_user_id, username=author_username)
+    # No "Minha caixa", o próprio usuário tem acesso a todas as suas notas e detalhes personalizados
+    reviews = grpc_manager.get_reviews_by_user(user_id=author_user_id, username=author_username)
+    return _enrich_reviews_with_avatars(reviews, grpc_manager)
 
 
 @router.get("", response_model=list[ReviewListItem], summary="Listar todas as críticas via gRPC")
 def list_reviews(limit: int = Query(default=50, ge=1, le=100)):
     logger.info("Gateway GET /reviews -> Chamando ReviewService gRPC (limit=%d)", limit)
     grpc_manager = get_grpc_manager()
-    return grpc_manager.get_all_reviews(limit=limit)
+    reviews = grpc_manager.get_all_reviews(limit=limit)
+    enriched = _enrich_reviews_with_avatars(reviews, grpc_manager)
+    return [_sanitize_public_review(r) for r in enriched]
 
 
 @router.get("/movie/{tmdb_id}", response_model=list[ReviewListItem], summary="Listar críticas de um filme via gRPC")
 def list_movie_reviews(tmdb_id: int = Path(..., ge=1, le=2_147_483_647, description="ID TMDb do filme")):
     logger.info("Gateway GET /reviews/movie/%d -> Chamando ReviewService gRPC", tmdb_id)
     grpc_manager = get_grpc_manager()
-    return grpc_manager.get_reviews_by_movie(tmdb_id)
+    reviews = grpc_manager.get_reviews_by_movie(tmdb_id)
+    enriched = _enrich_reviews_with_avatars(reviews, grpc_manager)
+    return [_sanitize_public_review(r) for r in enriched]
 
 
 @router.get("/user/{user_id}", response_model=list[ReviewListItem], summary="Listar críticas de um usuário via gRPC")
 def list_user_reviews(user_id: str = Path(...)):
     logger.info("Gateway GET /reviews/user/%s -> Chamando ReviewService gRPC", user_id)
     grpc_manager = get_grpc_manager()
-    return grpc_manager.get_reviews_by_user(user_id=user_id, username=user_id)
+    reviews = grpc_manager.get_reviews_by_user(user_id=user_id, username=user_id)
+    enriched = _enrich_reviews_with_avatars(reviews, grpc_manager)
+    return [_sanitize_public_review(r) for r in enriched]
+
 
 
 @router.delete(

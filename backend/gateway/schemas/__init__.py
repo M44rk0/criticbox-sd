@@ -1,8 +1,15 @@
 from gateway.schemas.auth import (
     AuthResponse,
     UserLoginRequest,
-    UserProfileResponse,
+    UserMeResponse,
     UserRegisterRequest,
+)
+from gateway.schemas.social import (
+    FollowActionResponse,
+    UpdateUserProfileRequest,
+    UpdateUserProfileResponse,
+    UserProfileResponse,
+    UserSummaryItem,
 )
 from gateway.schemas.common import (
     ValidationErrorItem,
@@ -35,7 +42,10 @@ __all__ = [
     "UserRegisterRequest",
     "UserLoginRequest",
     "AuthResponse",
+    "UserMeResponse",
     "UserProfileResponse",
+    "FollowActionResponse",
+    "UserSummaryItem",
     "ReviewCreateRequest",
     "ReviewResponse",
     "ReviewListItem",

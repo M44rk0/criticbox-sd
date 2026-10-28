@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nuser.proto\x12\x04user\"9\n\x13RegisterUserRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"[\n\x14RegisterUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x10\n\x08username\x18\x04 \x01(\t\"=\n\x17\x41uthenticateUserRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"_\n\x18\x41uthenticateUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x10\n\x08username\x18\x04 \x01(\t2\xa7\x01\n\x0bUserService\x12\x45\n\x0cRegisterUser\x12\x19.user.RegisterUserRequest\x1a\x1a.user.RegisterUserResponse\x12Q\n\x10\x41uthenticateUser\x12\x1d.user.AuthenticateUserRequest\x1a\x1e.user.AuthenticateUserResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nuser.proto\x12\x04user\"9\n\x13RegisterUserRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"[\n\x14RegisterUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x10\n\x08username\x18\x04 \x01(\t\"=\n\x17\x41uthenticateUserRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"_\n\x18\x41uthenticateUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x10\n\x08username\x18\x04 \x01(\t\"2\n\x12SearchUsersRequest\x12\r\n\x05query\x18\x01 \x01(\t\x12\r\n\x05limit\x18\x02 \x01(\x05\"X\n\x0bUserSummary\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x10\n\x08username\x18\x02 \x01(\t\x12\x12\n\ncreated_at\x18\x03 \x01(\t\x12\x12\n\navatar_url\x18\x04 \x01(\t\"7\n\x13SearchUsersResponse\x12 \n\x05users\x18\x01 \x03(\x0b\x32\x11.user.UserSummary\">\n\x11\x46ollowUserRequest\x12\x13\n\x0b\x66ollower_id\x18\x01 \x01(\t\x12\x14\n\x0c\x66ollowing_id\x18\x02 \x01(\t\"I\n\x12\x46ollowUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x11\n\tis_mutual\x18\x03 \x01(\x08\"@\n\x13UnfollowUserRequest\x12\x13\n\x0b\x66ollower_id\x18\x01 \x01(\t\x12\x14\n\x0c\x66ollowing_id\x18\x02 \x01(\t\"8\n\x14UnfollowUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"B\n\x15GetUserProfileRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x17\n\x0f\x63urrent_user_id\x18\x02 \x01(\t\"\x8e\x02\n\x16GetUserProfileResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x10\n\x08username\x18\x04 \x01(\t\x12\x12\n\ncreated_at\x18\x05 \x01(\t\x12\x17\n\x0f\x66ollowers_count\x18\x06 \x01(\x05\x12\x17\n\x0f\x66ollowing_count\x18\x07 \x01(\x05\x12\x14\n\x0cis_following\x18\x08 \x01(\x08\x12\x16\n\x0eis_followed_by\x18\t \x01(\x08\x12\x11\n\tis_mutual\x18\n \x01(\x08\x12\x12\n\navatar_url\x18\x0b \x01(\t\x12\x14\n\x0c\x66our_pillars\x18\x0c \x01(\t\"=\n\x15GetUserFollowsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x13\n\x0b\x66ollow_type\x18\x02 \x01(\t\":\n\x16GetUserFollowsResponse\x12 \n\x05users\x18\x01 \x03(\x0b\x32\x11.user.UserSummary\"U\n\x18UpdateUserProfileRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x12\n\navatar_url\x18\x02 \x01(\t\x12\x14\n\x0c\x66our_pillars\x18\x03 \x01(\t\"g\n\x19UpdateUserProfileResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x12\n\navatar_url\x18\x03 \x01(\t\x12\x14\n\x0c\x66our_pillars\x18\x04 \x01(\t2\xe3\x04\n\x0bUserService\x12\x45\n\x0cRegisterUser\x12\x19.user.RegisterUserRequest\x1a\x1a.user.RegisterUserResponse\x12Q\n\x10\x41uthenticateUser\x12\x1d.user.AuthenticateUserRequest\x1a\x1e.user.AuthenticateUserResponse\x12\x42\n\x0bSearchUsers\x12\x18.user.SearchUsersRequest\x1a\x19.user.SearchUsersResponse\x12?\n\nFollowUser\x12\x17.user.FollowUserRequest\x1a\x18.user.FollowUserResponse\x12\x45\n\x0cUnfollowUser\x12\x19.user.UnfollowUserRequest\x1a\x1a.user.UnfollowUserResponse\x12K\n\x0eGetUserProfile\x12\x1b.user.GetUserProfileRequest\x1a\x1c.user.GetUserProfileResponse\x12K\n\x0eGetUserFollows\x12\x1b.user.GetUserFollowsRequest\x1a\x1c.user.GetUserFollowsResponse\x12T\n\x11UpdateUserProfile\x12\x1e.user.UpdateUserProfileRequest\x1a\x1f.user.UpdateUserProfileResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -39,6 +39,32 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_AUTHENTICATEUSERREQUEST']._serialized_end=233
   _globals['_AUTHENTICATEUSERRESPONSE']._serialized_start=235
   _globals['_AUTHENTICATEUSERRESPONSE']._serialized_end=330
-  _globals['_USERSERVICE']._serialized_start=333
-  _globals['_USERSERVICE']._serialized_end=500
+  _globals['_SEARCHUSERSREQUEST']._serialized_start=332
+  _globals['_SEARCHUSERSREQUEST']._serialized_end=382
+  _globals['_USERSUMMARY']._serialized_start=384
+  _globals['_USERSUMMARY']._serialized_end=472
+  _globals['_SEARCHUSERSRESPONSE']._serialized_start=474
+  _globals['_SEARCHUSERSRESPONSE']._serialized_end=529
+  _globals['_FOLLOWUSERREQUEST']._serialized_start=531
+  _globals['_FOLLOWUSERREQUEST']._serialized_end=593
+  _globals['_FOLLOWUSERRESPONSE']._serialized_start=595
+  _globals['_FOLLOWUSERRESPONSE']._serialized_end=668
+  _globals['_UNFOLLOWUSERREQUEST']._serialized_start=670
+  _globals['_UNFOLLOWUSERREQUEST']._serialized_end=734
+  _globals['_UNFOLLOWUSERRESPONSE']._serialized_start=736
+  _globals['_UNFOLLOWUSERRESPONSE']._serialized_end=792
+  _globals['_GETUSERPROFILEREQUEST']._serialized_start=794
+  _globals['_GETUSERPROFILEREQUEST']._serialized_end=860
+  _globals['_GETUSERPROFILERESPONSE']._serialized_start=863
+  _globals['_GETUSERPROFILERESPONSE']._serialized_end=1133
+  _globals['_GETUSERFOLLOWSREQUEST']._serialized_start=1135
+  _globals['_GETUSERFOLLOWSREQUEST']._serialized_end=1196
+  _globals['_GETUSERFOLLOWSRESPONSE']._serialized_start=1198
+  _globals['_GETUSERFOLLOWSRESPONSE']._serialized_end=1256
+  _globals['_UPDATEUSERPROFILEREQUEST']._serialized_start=1258
+  _globals['_UPDATEUSERPROFILEREQUEST']._serialized_end=1343
+  _globals['_UPDATEUSERPROFILERESPONSE']._serialized_start=1345
+  _globals['_UPDATEUSERPROFILERESPONSE']._serialized_end=1448
+  _globals['_USERSERVICE']._serialized_start=1451
+  _globals['_USERSERVICE']._serialized_end=2062
 # @@protoc_insertion_point(module_scope)

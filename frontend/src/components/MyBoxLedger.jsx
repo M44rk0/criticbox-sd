@@ -1,4 +1,5 @@
 import React from 'react';
+import './MyBoxLedger.css';
 
 export default function MyBoxLedger({
   activeView = 'reviews',

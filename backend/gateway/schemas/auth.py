@@ -55,6 +55,6 @@ class AuthResponse(BaseModel):
     message: str = "Autenticação realizada com sucesso!"
 
 
-class UserProfileResponse(BaseModel):
+class UserMeResponse(BaseModel):
     user_id: str
     username: str

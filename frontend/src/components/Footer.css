@@ -1,0 +1,66 @@
+/* ==========================================================================
+   FOOTER COMPONENT STYLES
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+/* FOOTER */
+.footer {
+  border-top: 1px solid var(--gray-700);
+  background: #040507;
+  padding: 32px 40px;
+}
+
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-logo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--white);
+  letter-spacing: 0.05em;
+}
+
+.footer-copy {
+  font-size: 0.72rem;
+  color: var(--gray-600);
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+}
+
+.footer-links a {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+
+.footer-links a:hover {
+  color: var(--white);
+}
+
+.footer-tech {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--gray-600);
+}

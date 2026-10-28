@@ -30,6 +30,9 @@ message CreateReviewRequest {
   string movie_title = 9;
   string poster_url = 10;
   string username = 11;
+  int32 custom_rating = 12;
+  string watched_with = 13;
+  string viewing_venue = 14;
 }
 
 message ReviewResponse {
@@ -48,6 +51,9 @@ message ReviewResponse {
   string movie_title = 13;
   string poster_url = 14;
   string username = 15;
+  int32 custom_rating = 16;
+  string watched_with = 17;
+  string viewing_venue = 18;
 }
 
 message MovieStatsRequest {
@@ -95,6 +101,9 @@ message ReviewItem {
   int32 episode_number = 11;
   string poster_url = 12;
   string username = 13;
+  int32 custom_rating = 14;
+  string watched_with = 15;
+  string viewing_venue = 16;
 }
 
 message GetAllReviewsResponse {

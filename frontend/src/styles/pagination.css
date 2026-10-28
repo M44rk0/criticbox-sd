@@ -1,0 +1,95 @@
+/* ==========================================================================
+   SHARED PAGINATION CONTROLS
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+/* PAGINATION BAR */
+.pagination-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin: 36px 0 20px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+}
+
+.pagination-btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border: 1px solid var(--gray-700);
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: var(--gray-700);
+}
+
+.pagination-info {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--gray-300);
+}
+
+/* REVIEWS PAGINATION (SQUARES ONLY, NO BAR BACKGROUND) */
+.reviews-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0 10px;
+}
+
+.pagination-square-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  color: var(--white);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.pagination-square-btn:hover:not(:disabled):not(.active) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--gray-800);
+}
+
+.pagination-square-btn.active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  font-weight: 800;
+  cursor: default;
+}
+
+.pagination-square-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  border-color: var(--gray-800);
+  color: var(--gray-600);
+}

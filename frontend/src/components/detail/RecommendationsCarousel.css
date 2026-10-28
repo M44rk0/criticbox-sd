@@ -1,0 +1,117 @@
+/* ==========================================================================
+   RECOMMENDATIONS CAROUSEL COMPONENT
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+/* CONTROLES DE CARROSSEL */
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.carousel-ctrl-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.carousel-ctrl-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg-body);
+}
+
+.carousel-ctrl-btn:active {
+  transform: scale(0.95);
+}
+
+/* RECOMENDAÇÕES CARROSSEL */
+.recommendations-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.recommendations-carousel {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 12px;
+  width: 100%;
+}
+
+.recommendations-carousel::-webkit-scrollbar {
+  height: 5px;
+}
+
+.recommendations-carousel::-webkit-scrollbar-track {
+  background: var(--bg-card);
+}
+
+.recommendations-carousel::-webkit-scrollbar-thumb {
+  background: var(--gray-700);
+}
+
+.recommendations-carousel::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+.rec-card {
+  min-width: 160px;
+  max-width: 160px;
+  background: var(--bg-card);
+  border: 1px solid var(--gray-700);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.rec-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+}
+
+.rec-poster {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  background: #090b10;
+  display: block;
+}
+
+.rec-info {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rec-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--gray-400);
+}

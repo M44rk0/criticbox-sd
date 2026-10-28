@@ -49,16 +49,27 @@ export function computeActivityStats(items = []) {
     }
   });
 
-  return { total, moviesCount, tvCount, animeCount, reviewedCount };
+  const unreviewedCount = total - reviewedCount;
+  return { total, moviesCount, tvCount, animeCount, reviewedCount, unreviewedCount };
 }
 
 /**
- * Predicado puro para filtragem por categoria ('all' | 'movie' | 'tv' | 'anime') e busca textual.
+ * Predicado puro para filtragem por categoria ('all' | 'movie' | 'tv' | 'anime'),
+ * busca textual e status de avaliação ('all' | 'unreviewed' | 'reviewed').
  */
-export function filterActivityItems(items = [], activeCategory = 'all', searchQuery = '') {
+export function filterActivityItems(
+  items = [],
+  activeCategory = 'all',
+  searchQuery = '',
+  reviewFilter = 'all'
+) {
   const query = searchQuery.trim().toLowerCase();
 
   return items.filter((item) => {
+    // Filtro de status de avaliação (exclusivo para aba assistidos)
+    if (reviewFilter === 'unreviewed' && item.has_review) return false;
+    if (reviewFilter === 'reviewed' && !item.has_review) return false;
+
     const isAnimeItem = isAnime(item);
     const isEpisodicItem = isEpisodic(item);
 

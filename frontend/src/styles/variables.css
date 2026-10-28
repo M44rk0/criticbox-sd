@@ -1,0 +1,26 @@
+/* ==========================================================================
+   DESIGN SYSTEM TOKENS & CSS VARIABLES
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+:root {
+  --bg-body: #06070a;
+  --bg-card: #0a0c11;
+  --bg-elevated: #11141d;
+  --accent: #ff9900;
+  --accent-hover: #ffaa22;
+  --accent-dim: rgba(255, 153, 0, 0.08);
+  --accent-border: rgba(255, 153, 0, 0.25);
+  --white: #ffffff;
+  --gray-100: #f3f4f6;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #2a2f3d;
+  --gray-800: #1b1f2b;
+  --gray-900: #0f121a;
+  --border-subtle: 1px solid #1c202c;
+  --border-medium: 1px solid #2a2f3d;
+  --shadow-elevation: 0 16px 40px rgba(0, 0, 0, 0.65);
+}

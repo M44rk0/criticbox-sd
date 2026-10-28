@@ -105,6 +105,18 @@ def init_db():
     engine = get_engine()
     ReviewBase.metadata.create_all(bind=engine)
 
+    # Migração automática segura para colunas adicionadas recentemente
+    with engine.begin() as conn:
+        for col_name, col_type in [
+            ("custom_rating", "INTEGER DEFAULT 0"),
+            ("watched_with", "TEXT DEFAULT ''"),
+            ("viewing_venue", "TEXT DEFAULT ''"),
+        ]:
+            try:
+                conn.exec_driver_sql(f"ALTER TABLE reviews ADD COLUMN {col_name} {col_type}")
+            except Exception:
+                pass  # Coluna já existe ou banco já atualizado
+
 
 def clear_db():
     with get_session() as session:

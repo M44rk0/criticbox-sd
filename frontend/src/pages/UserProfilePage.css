@@ -1,0 +1,695 @@
+/* ==========================================================================
+   USER PROFILE PAGE - THE CRITIC DOSSIER (DOSSIÊ DO USUÁRIO)
+   Criticbox SD - Exclusive Cinephile Portfolio & Public Archive
+   ========================================================================== */
+
+.user-profile-page {
+  min-height: calc(100vh - 56px - 100px);
+  padding: 36px 32px 80px 32px;
+  max-width: 1240px;
+  margin: 0 auto;
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+/* ==========================================================================
+   1. CRITIC MASTHEAD (CABEÇALHO EDITORIAL DO DOSSIÊ)
+   ========================================================================== */
+
+.profile-masthead {
+  padding: 0 0 28px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--gray-800);
+}
+
+.profile-masthead-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-identity-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.profile-identity-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+.profile-avatar-wrap {
+  width: 68px;
+  height: 68px;
+  background: #06070a;
+  border: 2px solid var(--gray-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: var(--accent);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.profile-avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-identity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.profile-username {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0;
+}
+
+.profile-avatar-self {
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.profile-avatar-self:hover {
+  border-color: var(--accent);
+}
+
+.pillar-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pillar-empty-btn:hover {
+  background: var(--accent);
+  color: #000000;
+  border-style: solid;
+}
+
+.profile-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.70rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(255, 153, 0, 0.12);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 0 !important;
+}
+
+.profile-pill-badge.follows-you {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--gray-700);
+  color: var(--gray-300);
+}
+
+.profile-bio-sub {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  letter-spacing: 0.02em;
+}
+
+/* ==========================================================================
+   2. DOSSIER VIEW NAVIGATION (ABAS DE NAVEGAÇÃO DO PERFIL)
+   ========================================================================== */
+
+.profile-nav-bar {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+  margin-bottom: 32px;
+}
+
+.profile-nav-tab {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--gray-800);
+  color: var(--gray-400);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.profile-nav-tab:last-child {
+  border-right: none;
+}
+
+.profile-nav-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+}
+
+.profile-nav-tab.active {
+  background: var(--accent);
+  color: #000000;
+  font-weight: 800;
+}
+
+.profile-nav-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gray-400);
+}
+
+.profile-nav-tab.active .profile-nav-count {
+  background: rgba(0, 0, 0, 0.25);
+  color: #000000;
+}
+
+/* ==========================================================================
+   3. OS QUATRO PILARES (SIGNATURE 4 FAVORITES SHOWCASE)
+   ========================================================================== */
+
+.profile-pillars-section {
+  margin-bottom: 44px;
+}
+
+.profile-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--gray-800);
+  padding-bottom: 10px;
+}
+
+.profile-section-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-section-title-accent {
+  color: var(--accent);
+}
+
+.profile-section-desc {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.profile-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.pillar-card {
+  position: relative;
+  background: #0a0c11;
+  border: 1px solid var(--gray-800);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.pillar-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 4px 4px 0px 0px var(--accent);
+}
+
+.pillar-rank-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #000000;
+  color: var(--accent);
+  padding: 4px 8px;
+  border-right: 1px solid var(--accent);
+  border-bottom: 1px solid var(--accent);
+}
+
+.pillar-poster-wrap {
+  width: 100%;
+  aspect-ratio: 2/3;
+  overflow: hidden;
+  background: #06070a;
+}
+
+.pillar-poster-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.pillar-card:hover .pillar-poster-wrap img {
+  transform: scale(1.03);
+}
+
+.pillar-info {
+  padding: 12px 14px;
+  background: #0a0c11;
+  border-top: 1px solid var(--gray-800);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.pillar-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pillar-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.70rem;
+  color: var(--gray-500);
+}
+
+.pillar-empty-card {
+  border: 1px dashed var(--gray-800);
+  background: rgba(255, 255, 255, 0.01);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 2/3;
+  padding: 20px;
+  text-align: center;
+  gap: 8px;
+  color: var(--gray-600);
+}
+
+.pillar-empty-icon {
+  font-size: 1.2rem;
+}
+
+.pillar-empty-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   4. TWO-COLUMN ASYMMETRIC DOSSIER LAYOUT (LAYOUT PRINCIPAL DO DOSSIÊ)
+   ========================================================================== */
+
+.profile-editorial-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 36px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .profile-editorial-layout {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+}
+
+/* ==========================================================================
+   5. PRIMARY COLUMN: CADERNO DE CRÍTICAS (CRITIQUE FEED)
+   ========================================================================== */
+
+.profile-critique-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-critique-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.profile-format-filters {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+}
+
+.profile-format-btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.70rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--gray-800);
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-format-btn:last-child {
+  border-right: none;
+}
+
+.profile-format-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.profile-format-btn.active {
+  background: var(--accent);
+  color: #000000;
+}
+
+.profile-critiques-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ==========================================================================
+   6. SIDEBAR COLUMN: RADIOGRAFIA DO CRÍTICO (SIDEBAR METRICS & DIARY)
+   ========================================================================== */
+
+.profile-sidebar-column {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.profile-sidebar-card {
+  background: #0a0c11;
+  border: 1px solid var(--gray-800);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--gray-800);
+  padding-bottom: 10px;
+}
+
+.profile-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+.profile-card-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.70rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* RATING SPECTRUM / HISTOGRAMA */
+.profile-spectrum-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-spectrum-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 24px;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-spectrum-star {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gray-400);
+  white-space: nowrap;
+}
+
+.profile-spectrum-bar-track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--gray-800);
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-spectrum-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.profile-spectrum-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--gray-400);
+  text-align: right;
+}
+
+/* DIÁRIO RECENTE (MINI POSTER STRIP) */
+.profile-recent-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.profile-mini-poster {
+  aspect-ratio: 2/3;
+  background: #06070a;
+  border: 1px solid var(--gray-800);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-mini-poster:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.profile-mini-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-sidebar-view-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+  color: var(--gray-300);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-sidebar-view-all:hover {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+
+/* ==========================================================================
+   7. SOCIAL NETWORKING (SEGUIDORES / SEGUINDO)
+   ========================================================================== */
+
+.user-social-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.user-social-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0a0c11;
+  border: 1px solid var(--gray-800);
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.user-social-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 2px 2px 0px 0px var(--accent);
+}
+
+.user-social-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.user-social-card-avatar {
+  width: 38px;
+  height: 38px;
+  background: #06070a;
+  border: 1px solid var(--gray-700);
+  color: var(--accent);
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.user-social-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.user-social-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.user-social-card-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.90rem;
+  font-weight: 700;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-social-card-role {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.user-social-card-arrow {
+  color: var(--gray-600);
+  font-size: 1rem;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.user-social-card:hover .user-social-card-arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+
+@media (max-width: 768px) {
+  .profile-pillars-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .profile-identity-strip {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .profile-masthead-ledger {
+    width: 100%;
+    overflow-x: auto;
+  }
+}

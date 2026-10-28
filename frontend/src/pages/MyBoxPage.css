@@ -1,0 +1,417 @@
+/* ==========================================================================
+   MINHA CAIXA PAGE LAYOUT, FILTERS, TOOLBAR & VIEWS
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+/* ============================================================
+   MINHA CAIXA (MY BOX) PAGE STYLES & REVIEW DELETION
+   ============================================================ */
+
+
+/* MINHA CAIXA PAGE LAYOUT */
+.my-box-page {
+  min-height: calc(100vh - 56px - 100px);
+  padding: 40px 32px 80px 32px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* ARCHITECTURAL HEADER (QUIETER & UNBOXED) */
+.my-box-header {
+  padding: 0 0 24px 0;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--gray-800);
+  background: transparent;
+}
+
+.my-box-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.my-box-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.8rem, 3.2vw, 2.3rem);
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.my-box-subtitle {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  margin: 0;
+  line-height: 1.4;
+}
+
+
+/* MINHA CAIXA TOOLBAR (SEGMENTED TABS & SEARCH) */
+.my-box-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.my-box-filters-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.my-box-segmented-tabs {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+}
+
+.my-box-status-tabs {
+  border-color: rgba(251, 191, 36, 0.25);
+}
+
+.my-box-status-tabs .my-box-seg-btn.active {
+  background: #fbbf24;
+  color: #000000;
+}
+
+.my-box-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--gray-800);
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.my-box-seg-btn:last-child {
+  border-right: none;
+}
+
+.my-box-seg-btn:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.my-box-seg-btn.active {
+  background: var(--accent);
+  color: #000000;
+  font-weight: 800;
+}
+
+.my-box-tab-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gray-400);
+}
+
+.my-box-seg-btn.active .my-box-tab-count {
+  background: rgba(0, 0, 0, 0.2);
+  color: #000000;
+}
+
+/* SEARCH FIELD */
+.my-box-search-field {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+  padding: 0 12px;
+  height: 36px;
+  gap: 8px;
+  min-width: 280px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.my-box-search-field:focus-within {
+  border-color: var(--gray-600);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.my-box-search-icon {
+  color: var(--gray-500);
+  flex-shrink: 0;
+}
+
+.my-box-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--white);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.82rem;
+  width: 100%;
+}
+
+.my-box-search-input::placeholder {
+  color: var(--gray-500);
+}
+
+.my-box-search-clear {
+  background: transparent;
+  border: none;
+  color: var(--gray-500);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  transition: color 0.12s ease;
+}
+
+.my-box-search-clear:hover {
+  color: var(--white);
+}
+
+/* REVIEWS GRID */
+.my-box-reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 960px) {
+  .my-box-reviews-grid {
+    grid-template-columns: 1fr;
+  }
+  .my-box-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .my-box-search-field {
+    min-width: 100%;
+  }
+}
+
+/* LOADING STATE */
+.my-box-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 20px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--gray-400);
+}
+
+.my-box-loading-indicator {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  animation: pulse 1s infinite alternate;
+}
+
+/* EMPTY STATES (REFINED & QUIET) */
+.my-box-empty-card {
+  padding: 56px 28px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--gray-800);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.my-box-empty-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--gray-800);
+  color: var(--gray-400);
+  margin-bottom: 16px;
+}
+
+.my-box-empty-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--white);
+  text-transform: uppercase;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.01em;
+}
+
+.my-box-empty-desc {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.86rem;
+  color: var(--gray-400);
+  max-width: 420px;
+  line-height: 1.55;
+  margin: 0 0 20px 0;
+}
+
+.my-box-auth-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+
+/* ==========================================================================
+   TOOLBAR VARIANT SELECTOR & ACTIONS
+   ========================================================================== */
+.my-box-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.my-box-variant-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(12, 15, 22, 0.75);
+  border: 1px solid var(--gray-800);
+  padding: 3px 5px;
+}
+
+.variant-picker-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  letter-spacing: 0.06em;
+  padding: 0 6px 0 4px;
+}
+
+.variant-pill-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--gray-400);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.variant-pill-btn:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.variant-pill-btn.active {
+  background: rgba(255, 153, 0, 0.14);
+  color: var(--accent);
+  border-color: rgba(255, 153, 0, 0.4);
+  font-weight: 800;
+}
+
+.review-expand-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 4px;
+  display: inline;
+  transition: opacity 0.15s ease;
+}
+
+.review-expand-btn:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+
+/* ==========================================================================
+   MINHA CAIXA: TOP LEVEL VIEW SELECTOR (CRÍTICAS / ASSISTIDOS / FAVORITOS)
+   ========================================================================== */
+.my-box-view-selector {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+  padding: 0;
+  overflow: visible;
+  scrollbar-width: none;
+}
+
+.my-box-view-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.my-box-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--gray-800);
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.my-box-view-btn:last-child {
+  border-right: none;
+}
+
+.my-box-view-btn:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.my-box-view-btn.active {
+  background: var(--accent);
+  color: #000000;
+  font-weight: 800;
+}
+
+.my-box-view-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gray-300);
+}
+
+.my-box-view-btn.active .my-box-view-badge {
+  background: rgba(0, 0, 0, 0.22);
+  color: #000000;
+  font-weight: 800;
+}
