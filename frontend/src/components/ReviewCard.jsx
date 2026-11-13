@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, StarHalf, Film, Trash2, Users, Tv, MapPin } from 'lucide-react';
+import { Star, StarHalf, Film, Trash2, Users, Tv, MapPin, Pencil } from 'lucide-react';
 import ReviewComment from './ReviewComment';
 import { formatReviewDate } from '../utils/date';
 import { isAnime as isAnimeUtil, isEpisodic, getCachedMediaMeta } from '../utils/media';
@@ -197,7 +197,7 @@ export default function ReviewCard({
   const navigate = useNavigate();
   const { isLoggedIn, username: authUsername, userId: authUserId } = useAuth();
   const { showToast } = useToast();
-  const { triggerReviewUpdate } = useReviewModal();
+  const { triggerReviewUpdate, openReviewModal } = useReviewModal();
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -211,6 +211,22 @@ export default function ReviewCard({
   );
 
   const isMyBox = context === 'my-box';
+
+  const handleEditReview = (e) => {
+    e?.stopPropagation();
+    openReviewModal({
+      tmdb_id: review.tmdb_id,
+      media_type: review.media_type || 'movie',
+      title: review.movie_title || review.title,
+      poster_url: posterUrl || review.poster_url,
+      rating: Number(review.rating),
+      comment: review.comment,
+      contains_spoilers: Boolean(review.contains_spoilers),
+      custom_rating: review.custom_rating,
+      watched_with: review.watched_with,
+      viewing_venue: review.viewing_venue,
+    });
+  };
 
   const handleConfirmDelete = async (e) => {
     e?.stopPropagation();
@@ -404,12 +420,23 @@ export default function ReviewCard({
             <div className="review-card-user-meta">
               <span className="review-card-date">{formatReviewDate(review.created_at)}</span>
               {isAuthor && (
-                <DeleteActionWidget
-                  showConfirm={showConfirm}
-                  setShowConfirm={setShowConfirm}
-                  isDeleting={isDeleting}
-                  onConfirm={handleConfirmDelete}
-                />
+                <div className="review-author-actions">
+                  <button
+                    type="button"
+                    className="review-edit-btn"
+                    title="Editar sua avaliação"
+                    aria-label="Editar sua avaliação"
+                    onClick={handleEditReview}
+                  >
+                    <Pencil size={11} strokeWidth={2} />
+                  </button>
+                  <DeleteActionWidget
+                    showConfirm={showConfirm}
+                    setShowConfirm={setShowConfirm}
+                    isDeleting={isDeleting}
+                    onConfirm={handleConfirmDelete}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -462,12 +489,23 @@ export default function ReviewCard({
         <div className="movie-review-footer">
           <span className="review-card-date">{formatReviewDate(review.created_at)}</span>
           {isAuthor && (
-            <DeleteActionWidget
-              showConfirm={showConfirm}
-              setShowConfirm={setShowConfirm}
-              isDeleting={isDeleting}
-              onConfirm={handleConfirmDelete}
-            />
+            <div className="review-author-actions">
+              <button
+                type="button"
+                className="review-edit-btn"
+                title="Editar sua avaliação"
+                aria-label="Editar sua avaliação"
+                onClick={handleEditReview}
+              >
+                <Pencil size={11} strokeWidth={2} />
+              </button>
+              <DeleteActionWidget
+                showConfirm={showConfirm}
+                setShowConfirm={setShowConfirm}
+                isDeleting={isDeleting}
+                onConfirm={handleConfirmDelete}
+              />
+            </div>
           )}
         </div>
       </div>

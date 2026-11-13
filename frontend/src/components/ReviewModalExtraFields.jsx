@@ -15,14 +15,31 @@ export function useReviewFormState(resetTrigger) {
 
   useEffect(() => {
     if (!resetTrigger) return;
-    setModalRating(5.0);
+    const initialRating =
+      typeof resetTrigger.rating === 'number'
+        ? resetTrigger.rating
+        : typeof resetTrigger.user_rating === 'number' && resetTrigger.user_rating > 0
+        ? resetTrigger.user_rating
+        : 5.0;
+    const initialComment = resetTrigger.comment || resetTrigger.user_comment || '';
+    const initialSpoilers = Boolean(resetTrigger.contains_spoilers);
+    const initialCustom = resetTrigger.custom_rating ? String(resetTrigger.custom_rating) : '';
+    let initialWatchedWith = [];
+    if (Array.isArray(resetTrigger.watched_with)) {
+      initialWatchedWith = resetTrigger.watched_with;
+    } else if (typeof resetTrigger.watched_with === 'string' && resetTrigger.watched_with.trim()) {
+      initialWatchedWith = resetTrigger.watched_with.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    const initialVenue = resetTrigger.viewing_venue || resetTrigger.venue || '';
+
+    setModalRating(initialRating);
     setHoverRating(null);
-    setModalComment('');
-    setModalSpoilers(false);
-    setIsDetailed(false);
-    setCustomRating('');
-    setWatchedWith([]);
-    setVenue('');
+    setModalComment(initialComment);
+    setModalSpoilers(initialSpoilers);
+    setIsDetailed(Boolean(initialCustom || initialWatchedWith.length > 0 || initialVenue));
+    setCustomRating(initialCustom);
+    setWatchedWith(initialWatchedWith);
+    setVenue(initialVenue);
   }, [resetTrigger]);
 
   return {

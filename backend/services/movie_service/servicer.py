@@ -26,6 +26,7 @@ REVIEW_PORT = os.getenv("REVIEW_SERVICE_PORT", "50052")
 
 _review_channel = None
 _review_stub = None
+_DETAILS_EXECUTOR = futures.ThreadPoolExecutor(max_workers=8, thread_name_prefix="movie-details")
 
 
 def _get_review_stub() -> r_pb2_grpc.ReviewServiceStub:
@@ -146,11 +147,10 @@ class MovieServiceServicer(m_pb2_grpc.MovieServiceServicer):
     def GetMovieDetails(self, request, context):
         media_type = getattr(request, "media_type", "") or ""
         logger.info("GetMovieDetails -> ID: %d (media_type: %s)", request.tmdb_id, media_type)
-        with futures.ThreadPoolExecutor(max_workers=2) as executor:
-            fut_details = executor.submit(tmdb_service.get_movie_details, request.tmdb_id, media_type=media_type)
-            fut_stats = executor.submit(_fetch_movie_stats_via_grpc, request.tmdb_id)
-            details = fut_details.result()
-            avg_rating, total_count = fut_stats.result()
+        fut_details = _DETAILS_EXECUTOR.submit(tmdb_service.get_movie_details, request.tmdb_id, media_type=media_type)
+        fut_stats = _DETAILS_EXECUTOR.submit(_fetch_movie_stats_via_grpc, request.tmdb_id)
+        details = fut_details.result()
+        avg_rating, total_count = fut_stats.result()
 
         if not details:
             return m_pb2.MovieDetailsResponse(tmdb_id=request.tmdb_id, found=False)

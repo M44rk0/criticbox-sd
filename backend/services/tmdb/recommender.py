@@ -9,6 +9,8 @@ from services.tmdb.extractors import _fmt
 
 logger = logging.getLogger("criticbox-tmdb-recommender")
 
+_RECS_EXECUTOR = ThreadPoolExecutor(max_workers=8, thread_name_prefix="tmdb-recs")
+
 
 def _fetch_seed_recommendations(seed_id: int, media_type: str, page: int = 1) -> list[dict]:
     """Busca recomendações de uma seed individual com cache próprio."""
@@ -54,15 +56,7 @@ def get_recommendations_for_user(
     reviewed_ids = set()
     genre_scores: dict[int, float] = {}
 
-    if user_reviews is None and user_id and str(user_id).strip():
-        try:
-            # Fallback seguro para execuções isoladas de testes unitários locais
-            from services.review_service import storage as database
-
-            user_reviews = database.get_reviews_by_user(str(user_id).strip())
-        except Exception:
-            user_reviews = []
-    elif user_reviews is None:
+    if user_reviews is None:
         user_reviews = []
 
     if user_reviews:
@@ -95,22 +89,21 @@ def get_recommendations_for_user(
                         seed_genre_ids = cached_detail.get("genre_ids", [])
                     return seed, recs, seed_genre_ids
 
-                with ThreadPoolExecutor(max_workers=min(len(top_seeds), 8)) as executor:
-                    futures = [executor.submit(_fetch_for_seed, s) for s in top_seeds]
-                    for fut in futures:
-                        try:
-                            seed, items, seed_gids = fut.result(timeout=4.0)
-                            if items:
-                                seed_recs_lists.append(items)
-                            rating = seed.get("rating", 3.0)
-                            for gid in seed_gids:
-                                genre_scores[gid] = genre_scores.get(gid, 0) + rating
-                            if not seed_gids and items:
-                                for item in items[:3]:
-                                    for gid in item.get("genre_ids", []):
-                                        genre_scores[gid] = genre_scores.get(gid, 0) + (rating * 0.3)
-                        except Exception:
-                            pass
+                futures = [_RECS_EXECUTOR.submit(_fetch_for_seed, s) for s in top_seeds]
+                for fut in futures:
+                    try:
+                        seed, items, seed_gids = fut.result(timeout=4.0)
+                        if items:
+                            seed_recs_lists.append(items)
+                        rating = seed.get("rating", 3.0)
+                        for gid in seed_gids:
+                            genre_scores[gid] = genre_scores.get(gid, 0) + rating
+                        if not seed_gids and items:
+                            for item in items[:3]:
+                                for gid in item.get("genre_ids", []):
+                                    genre_scores[gid] = genre_scores.get(gid, 0) + (rating * 0.3)
+                    except Exception:
+                        pass
 
         except Exception as e:
             logger.warning("Falha ao calcular recomendações para user %s: %s", user_id, e)

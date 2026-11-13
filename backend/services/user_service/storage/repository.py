@@ -279,50 +279,35 @@ def update_user_profile(user_id_or_username: str, avatar_url: str | None = None,
         }
 
 
+def _get_social_connections(session, target_id: str, as_followers: bool) -> list[dict]:
+    join_col = Follow.follower_id if as_followers else Follow.following_id
+    filter_col = Follow.following_id if as_followers else Follow.follower_id
+    stmt = (
+        select(User)
+        .join(Follow, join_col == User.id)
+        .where(filter_col == target_id)
+        .order_by(Follow.created_at.desc())
+    )
+    users = session.scalars(stmt).all()
+    return [
+        {
+            "user_id": u.id,
+            "username": u.username,
+            "created_at": u.created_at,
+            "avatar_url": getattr(u, "avatar_url", "") or "",
+        }
+        for u in users
+    ]
+
+
 def get_user_followers(user_id_or_username: str) -> list[dict]:
     with get_session() as session:
         target = _resolve_user(session, user_id_or_username)
-        if not target:
-            return []
-
-        stmt = (
-            select(User)
-            .join(Follow, Follow.follower_id == User.id)
-            .where(Follow.following_id == target.id)
-            .order_by(Follow.created_at.desc())
-        )
-        users = session.scalars(stmt).all()
-        return [
-            {
-                "user_id": u.id,
-                "username": u.username,
-                "created_at": u.created_at,
-                "avatar_url": getattr(u, "avatar_url", "") or "",
-            }
-            for u in users
-        ]
+        return _get_social_connections(session, target.id, as_followers=True) if target else []
 
 
 def get_user_following(user_id_or_username: str) -> list[dict]:
     with get_session() as session:
         target = _resolve_user(session, user_id_or_username)
-        if not target:
-            return []
-
-        stmt = (
-            select(User)
-            .join(Follow, Follow.following_id == User.id)
-            .where(Follow.follower_id == target.id)
-            .order_by(Follow.created_at.desc())
-        )
-        users = session.scalars(stmt).all()
-        return [
-            {
-                "user_id": u.id,
-                "username": u.username,
-                "created_at": u.created_at,
-                "avatar_url": getattr(u, "avatar_url", "") or "",
-            }
-            for u in users
-        ]
+        return _get_social_connections(session, target.id, as_followers=False) if target else []
 

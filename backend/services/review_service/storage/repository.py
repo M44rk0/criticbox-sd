@@ -9,14 +9,23 @@ from services.review_service.storage.models import FavoriteItem, Review, Watched
 
 
 def _user_condition(model, user_id: str, username: str = ""):
+    """Gera cláusula de filtro flexível para buscar registros por user_id ou username.
+
+    Suporta identificadores canônicos (UUID), normalização case-insensitive e
+    compatibilidade com registros legados onde o identificador pode ser o username.
+    """
     conds = []
-    if user_id:
-        conds.append(model.user_id == user_id)
-        conds.append(func.lower(model.user_id) == user_id.lower())
-    if username:
-        conds.append(func.lower(model.username) == username.lower())
-    if user_id and not username:
-        conds.append(func.lower(model.username) == user_id.lower())
+    uid = (user_id or "").strip()
+    uname = (username or "").strip()
+
+    if uid:
+        conds.append(model.user_id == uid)
+        conds.append(func.lower(model.user_id) == uid.lower())
+    if uname:
+        conds.append(func.lower(model.username) == uname.lower())
+    if uid and not uname:
+        conds.append(func.lower(model.username) == uid.lower())
+
     return or_(*conds) if conds else and_()
 
 
@@ -487,7 +496,7 @@ def get_user_watched(user_id: str, username: str = "") -> list[dict]:
             k = (int(w.tmdb_id), str(w.media_type or "movie"))
             combined[k] = _format_activity_item(w, review_map.get(k))
 
-        # Adiciona e persiste filmes avaliados que ainda não constavam na tabela watched
+        # Constrói itens em memória para filmes avaliados que ainda não constavam na tabela watched (sem mutação no GET)
         for k, r in review_map.items():
             if k not in combined:
                 w_item = _build_watched_item(
@@ -499,7 +508,6 @@ def get_user_watched(user_id: str, username: str = "") -> list[dict]:
                     poster_url=r.poster_url,
                     created_at=r.created_at,
                 )
-                session.add(w_item)
                 combined[k] = _format_activity_item(w_item, r)
 
         items = list(combined.values())

@@ -125,14 +125,11 @@ class ReviewServiceServicer(r_pb2_grpc.ReviewServiceServicer):
             logger.warning("Falha ao verificar estreia do título %d: %s", request.tmdb_id, e)
 
         if details:
-            movie_title = details.get("title") or tmdb_service.get_movie_title(request.tmdb_id, media_type=media_type) or ""
-            poster_url = details.get("poster_url") or ""
+            movie_title = details.get("title") or getattr(request, "movie_title", "") or ""
+            poster_url = details.get("poster_url") or getattr(request, "poster_url", "") or ""
             media_type = details.get("media_type") or media_type
         else:
-            try:
-                movie_title = tmdb_service.get_movie_title(request.tmdb_id, media_type=media_type)
-            except Exception:
-                movie_title = getattr(request, "movie_title", "") or ""
+            movie_title = getattr(request, "movie_title", "") or ""
             poster_url = getattr(request, "poster_url", "") or ""
 
         username = getattr(request, "username", "") or ""

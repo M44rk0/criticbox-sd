@@ -7,6 +7,9 @@
 .movies-carousel-wrap {
   position: relative;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .movies-carousel {
@@ -14,9 +17,13 @@
   gap: 16px;
   overflow-x: auto;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
   padding-top: 4px;
   padding-bottom: 14px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: var(--gray-700) var(--bg-card);
 }
@@ -46,8 +53,21 @@
 }
 
 @media (max-width: 768px) {
+  .movies-carousel {
+    gap: 12px;
+  }
   .movies-carousel .movie-card {
-    min-width: 165px;
-    max-width: 165px;
+    min-width: 160px;
+    max-width: 160px;
+  }
+}
+
+@media (max-width: 480px) {
+  .movies-carousel {
+    gap: 10px;
+  }
+  .movies-carousel .movie-card {
+    min-width: 140px;
+    max-width: 140px;
   }
 }

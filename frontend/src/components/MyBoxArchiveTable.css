@@ -1,0 +1,362 @@
+/* ==========================================================================
+   MY BOX ARCHIVE TABLE (FICHÁRIO ARQUITETURAL BRUTALISTA)
+   Criticbox SD - Component Stylesheet
+   ========================================================================== */
+
+.my-box-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--gray-800);
+  background: var(--bg-card, #0a0c11);
+  margin-top: 12px;
+}
+
+.my-box-archive-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.82rem;
+}
+
+/* TABLE HEADER */
+.my-box-archive-table thead {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 2px solid var(--gray-700);
+}
+
+.my-box-archive-table th {
+  padding: 12px 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-400);
+  border-right: 1px solid var(--gray-800);
+  white-space: nowrap;
+}
+
+.my-box-archive-table th:last-child {
+  border-right: none;
+}
+
+/* TABLE ROWS */
+.my-box-table-row {
+  border-bottom: 1px solid var(--gray-800);
+  transition: background-color 0.12s ease;
+}
+
+.my-box-table-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.my-box-table-row:last-child {
+  border-bottom: none;
+}
+
+.my-box-archive-table td {
+  padding: 10px 14px;
+  vertical-align: middle;
+  border-right: 1px solid var(--gray-800);
+}
+
+.my-box-archive-table td:last-child {
+  border-right: none;
+}
+
+/* COLUMN SPECIFICS */
+.col-poster {
+  width: 52px;
+  text-align: center;
+}
+
+.table-poster-thumb {
+  width: 34px;
+  height: 48px;
+  flex-shrink: 0;
+  background: #000;
+  border: 1px solid var(--gray-700);
+  overflow: hidden;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+}
+
+.table-poster-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.table-poster-thumb:hover {
+  border-color: var(--accent);
+}
+
+/* TITLE WRAPPER */
+.col-title {
+  min-width: 200px;
+}
+
+.table-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.table-title-link {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--white);
+  cursor: pointer;
+  transition: color 0.12s ease;
+  line-height: 1.25;
+}
+
+.table-title-link:hover {
+  color: var(--accent);
+}
+
+.table-title-year {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--gray-500);
+  line-height: 1;
+}
+
+/* FORMAT TAG */
+.col-format {
+  width: 80px;
+}
+
+.table-format-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--gray-700);
+  color: var(--gray-400);
+  white-space: nowrap;
+}
+
+.table-format-tag.anime {
+  border-color: rgba(236, 72, 153, 0.35);
+  color: #f472b6;
+}
+
+.table-format-tag.tv {
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #60a5fa;
+}
+
+.table-format-tag.movie {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--white);
+}
+
+/* DATE */
+.col-date {
+  width: 100px;
+  white-space: nowrap;
+}
+
+.table-date-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--gray-400);
+}
+
+/* RATING & PENDING BADGE */
+.col-rating {
+  width: 110px;
+  white-space: nowrap;
+}
+
+.table-score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  background: rgba(255, 153, 0, 0.1);
+  border: 1px solid rgba(255, 153, 0, 0.35);
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.table-score-star {
+  color: #fbbf24;
+  font-size: 0.75rem;
+}
+
+.table-pending-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: rgba(255, 153, 0, 0.08);
+  border: 1px dashed rgba(255, 153, 0, 0.5);
+  color: var(--accent);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.table-empty-cell {
+  color: var(--gray-600);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+
+/* REVIEW SNIPPET */
+.col-review {
+  max-width: 240px;
+}
+
+.table-comment-snippet {
+  display: block;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--gray-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 230px;
+}
+
+/* ACTIONS */
+.col-actions {
+  width: 140px;
+  white-space: nowrap;
+}
+
+.table-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.table-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 5px 9px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.table-btn-accent {
+  background: var(--accent);
+  color: #000000;
+  font-weight: 800;
+}
+
+.table-btn-accent:hover {
+  background: var(--white);
+  color: #000000;
+}
+
+.table-btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--gray-800);
+  color: var(--gray-300);
+}
+
+.table-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--gray-600);
+  color: var(--white);
+}
+
+.table-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--gray-800);
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.table-icon-btn:hover:not(:disabled) {
+  border-color: var(--gray-600);
+  color: var(--white);
+}
+
+.table-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.table-icon-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+}
+
+.table-icon-fav {
+  color: #ff3366;
+}
+
+.table-icon-fav:hover {
+  background: rgba(255, 51, 102, 0.1);
+  border-color: rgba(255, 51, 102, 0.5);
+}
+
+/* INLINE DELETE CONFIRM BOX */
+.table-delete-confirm-box {
+  display: inline-flex;
+  align-items: stretch;
+  height: 26px;
+  background: #000000;
+  border: 1px solid #ef4444;
+}
+
+.table-delete-confirm-btn {
+  border: none;
+  background: transparent;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.table-delete-confirm-btn.yes {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.table-delete-confirm-btn.yes:hover {
+  background: #dc2626;
+}
+
+.table-delete-confirm-btn.no {
+  color: var(--gray-400);
+}
+
+.table-delete-confirm-btn.no:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}

@@ -23,7 +23,9 @@
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 20px 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .auth-modal-overlay.active {
@@ -41,6 +43,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin: auto;
   animation: authModalPop 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -534,4 +537,37 @@
   text-align: center;
   width: 100%;
   grid-column: 1 / -1;
+}
+
+
+/* ==========================================================================
+   AUTH MODAL MOBILE RESPONSIVE ADAPTATIONS
+   ========================================================================== */
+@media (max-width: 480px) {
+  .auth-modal-overlay {
+    padding: 12px;
+  }
+
+  .auth-card {
+    padding: 20px 16px;
+    width: 100%;
+    max-width: 100%;
+    box-shadow: 4px 4px 0 0 var(--accent);
+    gap: 14px;
+  }
+
+  .auth-input {
+    font-size: 1rem; /* 16px prevents iOS zoom */
+    height: 44px;
+  }
+
+  .auth-submit-btn {
+    height: 48px;
+    font-size: 0.88rem;
+  }
+
+  .auth-tab-btn {
+    padding: 8px 12px;
+    font-size: 0.78rem;
+  }
 }

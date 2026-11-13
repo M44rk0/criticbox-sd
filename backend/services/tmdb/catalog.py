@@ -7,16 +7,21 @@ import tmdbsimple as tmdb
 from services.tmdb.cache import _get_from_cache, _set_cache
 from services.tmdb.client import API_KEY, TMDB_IMAGE_BASE
 from services.tmdb.extractors import (
+    _extract_cast,
     _extract_certification,
+    _extract_countries_and_languages,
     _extract_crew,
     _extract_photos_and_logo,
     _extract_recommendations,
+    _extract_trailer,
     _extract_watch_providers,
     _fmt,
     is_anime,
 )
 
 logger = logging.getLogger("criticbox-tmdb-catalog")
+
+_CATALOG_EXECUTOR = ThreadPoolExecutor(max_workers=10, thread_name_prefix="tmdb-catalog")
 
 
 def _format_and_cache_page(data: dict, results: list, cache_key: str) -> dict:
@@ -160,42 +165,13 @@ def get_movie_details(tmdb_id: int, media_type: str = "") -> dict | None:
         directors = list(dict.fromkeys(directors))
         crew_details = _extract_crew(crew)
 
-        cast_list = []
-        for c in data.get("credits", {}).get("cast", []):
-            if not c.get("name"):
-                continue
-            profile_path = c.get("profile_path")
-            cast_list.append(
-                {
-                    "name": c.get("name", ""),
-                    "character": c.get("character", ""),
-                    "profile_url": f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "",
-                }
-            )
-
-        videos = data.get("videos", {}).get("results", [])
-        trailer_url = ""
-        for v in videos:
-            if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
-                if v.get("iso_639_1") == "pt":
-                    trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
-                    break
-        if not trailer_url:
-            for v in videos:
-                if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
-                    trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
-                    break
-
+        cast_list = _extract_cast(data)
+        trailer_url = _extract_trailer(data)
         logo_url, photos = _extract_photos_and_logo(data.get("images", {}))
         cert = _extract_certification(data, is_movie=True)
         wp = _extract_watch_providers(data.get("watch/providers", {}))
         recs = _extract_recommendations(data.get("recommendations", {}), default_media_type="movie")
-        countries = [c.get("name", "") for c in data.get("production_countries", []) if c.get("name")]
-        spoken = [
-            lang.get("name") or lang.get("english_name", "")
-            for lang in data.get("spoken_languages", [])
-            if (lang.get("name") or lang.get("english_name"))
-        ]
+        countries, spoken = _extract_countries_and_languages(data)
 
         res.update(
             {
@@ -267,31 +243,8 @@ def _get_tv_details(tmdb_id: int) -> dict | None:
         crew = data.get("credits", {}).get("crew", [])
         crew_details = _extract_crew(crew)
 
-        cast_list = []
-        for c in data.get("credits", {}).get("cast", []):
-            if not c.get("name"):
-                continue
-            profile_path = c.get("profile_path")
-            cast_list.append(
-                {
-                    "name": c.get("name", ""),
-                    "character": c.get("character", ""),
-                    "profile_url": f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "",
-                }
-            )
-
-        videos = data.get("videos", {}).get("results", [])
-        trailer_url = ""
-        for v in videos:
-            if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
-                if v.get("iso_639_1") == "pt":
-                    trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
-                    break
-        if not trailer_url:
-            for v in videos:
-                if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
-                    trailer_url = f"https://www.youtube.com/watch?v={v['key']}"
-                    break
+        cast_list = _extract_cast(data)
+        trailer_url = _extract_trailer(data)
 
         raw_seasons = data.get("seasons", [])
         seasons = [
@@ -312,12 +265,7 @@ def _get_tv_details(tmdb_id: int) -> dict | None:
         cert = _extract_certification(data, is_movie=False)
         wp = _extract_watch_providers(data.get("watch/providers", {}))
         recs = _extract_recommendations(data.get("recommendations", {}), default_media_type="tv")
-        countries = [c.get("name", "") for c in data.get("production_countries", []) if c.get("name")]
-        spoken = [
-            lang.get("name") or lang.get("english_name", "")
-            for lang in data.get("spoken_languages", [])
-            if (lang.get("name") or lang.get("english_name"))
-        ]
+        countries, spoken = _extract_countries_and_languages(data)
 
         networks = []
         for n in data.get("networks", []):
@@ -509,11 +457,10 @@ def get_all_series_episodes(tmdb_id: int, seasons_hint: list | None = None) -> d
             return s_num, get_season_episodes(tmdb_id, s_num)
 
         result: dict[str, list[dict]] = {}
-        with ThreadPoolExecutor(max_workers=min(len(season_numbers), 10)) as executor:
-            futures = [executor.submit(fetch_season, s_num) for s_num in season_numbers]
-            for fut in futures:
-                s_num, s_data = fut.result()
-                result[str(s_num)] = s_data.get("episodes", [])
+        futures = [_CATALOG_EXECUTOR.submit(fetch_season, s_num) for s_num in season_numbers]
+        for fut in futures:
+            s_num, s_data = fut.result()
+            result[str(s_num)] = s_data.get("episodes", [])
 
         _set_cache(cache_key, result)
         return result

@@ -10,6 +10,9 @@ import {
   Eye,
   Heart,
   MessageSquare,
+  ArrowUpRight,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useReviewModal } from '../context/ReviewModalContext';
@@ -27,6 +30,7 @@ import {
 import ReviewCard from '../components/ReviewCard';
 import MediaActivityGrid from '../components/MediaActivityGrid';
 import MyBoxLedger from '../components/MyBoxLedger';
+import MyBoxArchiveTable from '../components/MyBoxArchiveTable';
 import './MyBoxPage.css';
 
 // Cache em memória de "Minha Caixa" para navegações instantâneas (0ms) na SPA
@@ -49,6 +53,9 @@ export default function MyBoxPage() {
 
   // Visão Ativa: 'reviews' | 'watched' | 'favorites'
   const [activeView, setActiveView] = useState('reviews');
+
+  // Modo de Exibição do Acervo: 'grid' (grade) | 'table' (fichário)
+  const [viewMode, setViewMode] = useState('grid');
 
   // Limpeza de cache se o usuário autenticado mudou ou deslogou
   if (!isLoggedIn || (username && globalMyBoxCache.lastLoadedUser && globalMyBoxCache.lastLoadedUser !== username)) {
@@ -326,6 +333,12 @@ export default function MyBoxPage() {
     [favoritesList, activeCategory, searchQuery]
   );
 
+  const activeFilteredItems = useMemo(() => {
+    if (activeView === 'reviews') return filteredReviews;
+    if (activeView === 'watched') return filteredWatched;
+    return filteredFavorites;
+  }, [activeView, filteredReviews, filteredWatched, filteredFavorites]);
+
   // Contagem de títulos não avaliados por categoria para a aba assistidos
   const unreviewedCategoryCounts = useMemo(() => {
     let all = 0, movie = 0, tv = 0, anime = 0;
@@ -377,8 +390,23 @@ export default function MyBoxPage() {
       {/* CABEÇALHO DA MINHA CAIXA */}
       <header className="my-box-header">
         <div className="my-box-header-main">
-          <h1 className="my-box-title">MINHA CAIXA</h1>
-          <p className="my-box-subtitle">Seu arquivo pessoal de avaliações, obras assistidas e títulos favoritos.</p>
+          <div className="my-box-title-row">
+            <h1 className="my-box-title">MINHA CAIXA</h1>
+            {isLoggedIn && username && (
+              <button
+                type="button"
+                className="my-box-dossier-link-btn"
+                onClick={() => navigate(`/user/${username}`)}
+                title="Ver como a comunidade enxerga suas avaliações, 4 pilares e seu dossiê público"
+              >
+                <span>VER MEU DOSSIÊ PÚBLICO</span>
+                <ArrowUpRight size={13} />
+              </button>
+            )}
+          </div>
+          <p className="my-box-subtitle">
+            Sua bancada operacional: faça triagem de pendências, edite notas e consulte seu fichário arquivístico.
+          </p>
         </div>
 
         {/* LEDGER ARQUITETURAL DINÂMICO CONFORME A VISÃO ATIVA */}
@@ -439,7 +467,7 @@ export default function MyBoxPage() {
               className={`my-box-view-btn ${activeView === 'reviews' ? 'active' : ''}`}
               onClick={() => handleViewChange('reviews')}
             >
-              <MessageSquare size={16} />
+              <MessageSquare size={15} />
               <span>CRÍTICAS</span>
               <span className="my-box-view-badge">{reviews.length}</span>
             </button>
@@ -451,7 +479,7 @@ export default function MyBoxPage() {
               className={`my-box-view-btn ${activeView === 'watched' ? 'active' : ''}`}
               onClick={() => handleViewChange('watched')}
             >
-              <Eye size={16} />
+              <Eye size={15} />
               <span>ASSISTIDOS</span>
               <span className="my-box-view-badge">{watchedList.length}</span>
             </button>
@@ -463,13 +491,13 @@ export default function MyBoxPage() {
               className={`my-box-view-btn ${activeView === 'favorites' ? 'active' : ''}`}
               onClick={() => handleViewChange('favorites')}
             >
-              <Heart size={16} />
+              <Heart size={15} />
               <span>FAVORITOS</span>
               <span className="my-box-view-badge">{favoritesList.length}</span>
             </button>
           </div>
 
-          {/* BARRA DE FERRAMENTAS: CATEGORIA (TODAS/FILMES/SÉRIES/ANIMES) + BUSCA TEXTUAL */}
+          {/* BARRA DE FERRAMENTAS: CATEGORIA (TODAS/FILMES/SÉRIES/ANIMES) + BUSCA + SELETOR DE MODO */}
           <div className="my-box-toolbar">
             <div className="my-box-filters-group">
               {/* SEGMENTAÇÃO DE FORMATO */}
@@ -545,32 +573,56 @@ export default function MyBoxPage() {
               )}
             </div>
 
-            <div className="my-box-search-field">
-              <Search size={14} className="my-box-search-icon" />
-              <input
-                type="text"
-                className="my-box-search-input"
-                placeholder={
-                  activeView === 'reviews'
-                    ? 'Filtrar críticas por obra ou texto...'
-                    : activeView === 'watched'
-                    ? 'Buscar nos seus assistidos...'
-                    : 'Buscar nos seus favoritos...'
-                }
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
+            <div className="my-box-toolbar-right">
+              <div className="my-box-search-field">
+                <Search size={14} className="my-box-search-icon" />
+                <input
+                  type="text"
+                  className="my-box-search-input"
+                  placeholder={
+                    activeView === 'reviews'
+                      ? 'Filtrar críticas por obra ou texto...'
+                      : activeView === 'watched'
+                      ? 'Buscar nos seus assistidos...'
+                      : 'Buscar nos seus favoritos...'
+                  }
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="my-box-search-clear"
+                    onClick={() => setSearchQuery('')}
+                    title="Limpar busca"
+                    aria-label="Limpar busca"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* ALTERNADOR DE VISUALIZAÇÃO: GRADE VS FICHÁRIO */}
+              <div className="my-box-view-mode-toggle" role="group" aria-label="Modo de visualização">
                 <button
                   type="button"
-                  className="my-box-search-clear"
-                  onClick={() => setSearchQuery('')}
-                  title="Limpar busca"
-                  aria-label="Limpar busca"
+                  className={`my-box-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                  onClick={() => setViewMode('grid')}
+                  title="Modo Grade (Pôsteres)"
+                  aria-label="Modo Grade"
                 >
-                  <X size={13} />
+                  <LayoutGrid size={15} />
                 </button>
-              )}
+                <button
+                  type="button"
+                  className={`my-box-mode-btn ${viewMode === 'table' ? 'active' : ''}`}
+                  onClick={() => setViewMode('table')}
+                  title="Modo Fichário (Tabela Arquivística)"
+                  aria-label="Modo Fichário"
+                >
+                  <List size={15} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -594,6 +646,13 @@ export default function MyBoxPage() {
                   setActiveCategory('all');
                   setSearchQuery('');
                 }}
+              />
+            ) : viewMode === 'table' ? (
+              <MyBoxArchiveTable
+                items={filteredReviews}
+                activeView="reviews"
+                posters={posters}
+                onDeleteReview={handleDeleteReview}
               />
             ) : (
               <div className="my-box-reviews-grid">
@@ -651,6 +710,12 @@ export default function MyBoxPage() {
                   setSearchQuery('');
                 }}
               />
+            ) : viewMode === 'table' ? (
+              <MyBoxArchiveTable
+                items={filteredWatched}
+                activeView="watched"
+                posters={posters}
+              />
             ) : (
               <MediaActivityGrid
                 items={filteredWatched}
@@ -682,6 +747,12 @@ export default function MyBoxPage() {
                   setActiveCategory('all');
                   setSearchQuery('');
                 }}
+              />
+            ) : viewMode === 'table' ? (
+              <MyBoxArchiveTable
+                items={filteredFavorites}
+                activeView="favorites"
+                posters={posters}
               />
             ) : (
               <MediaActivityGrid

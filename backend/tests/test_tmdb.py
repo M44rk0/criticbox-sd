@@ -203,7 +203,8 @@ class TestTMDBModule(unittest.TestCase):
                 {"id": 991, "title": "Rec For 550", "poster_path": "/r1.jpg", "genre_ids": [28, 18]},
                 {"id": 992, "title": "Rec For 680", "poster_path": "/r2.jpg", "genre_ids": [18, 53]},
             ]
-            res = get_recommendations_for_user(user_id="cinephile_test", page=1)
+            user_revs = review_storage.get_reviews_by_user("cinephile_test")
+            res = get_recommendations_for_user(user_id="cinephile_test", page=1, user_reviews=user_revs)
             self.assertIn("results", res)
             ids = [r["id"] for r in res["results"]]
             self.assertNotIn(550, ids)
@@ -305,7 +306,8 @@ class TestTMDBModule(unittest.TestCase):
                 {"id": 202, "title": "Romance", "poster_path": "/ro.jpg", "genre_ids": [10749]},
             ]
             with patch("tmdbsimple.Movies.top_rated", side_effect=Exception("Top rated failure")):
-                res = get_recommendations_for_user("cine_user_affinity", page=1)
+                user_revs = review_storage.get_reviews_by_user("cine_user_affinity")
+                res = get_recommendations_for_user("cine_user_affinity", page=1, user_reviews=user_revs)
                 self.assertIn("results", res)
                 self.assertGreaterEqual(len(res["results"]), 1)
                 self.assertEqual(res["results"][0]["id"], 201)

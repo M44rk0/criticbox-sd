@@ -23,6 +23,7 @@
 @import './components/detail/SeriesEpisodeGuide.css';
 @import './components/detail/ProductionDossier.css';
 @import './components/detail/RecommendationsCarousel.css';
+@import './components/detail/MovieDetailSkeleton.css';
 
 /* 3. Page Level Styles */
 @import './pages/HomePage.css';

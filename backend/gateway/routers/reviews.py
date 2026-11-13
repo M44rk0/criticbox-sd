@@ -1,9 +1,12 @@
+from collections import OrderedDict
+from concurrent import futures
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 
 from gateway.auth import get_current_user
 from gateway.grpc_clients import get_grpc_manager
+from gateway.routers.helpers import resolve_canonical_media_metadata
 from gateway.schemas.reviews import (
     ReviewCreateRequest,
     ReviewDeleteResponse,
@@ -30,22 +33,11 @@ def create_review(
     author_username = current_user.get("username", "")
     grpc_manager = get_grpc_manager()
 
-    # Consulta os metadados oficiais no MovieService via gRPC
-    # para que ninguém possa enviar títulos, posters ou tipos arbitrários
-    movie_details = None
-    try:
-        movie_details = grpc_manager.get_movie_details(payload.tmdb_id, media_type=payload.media_type or "")
-    except Exception as e:
-        logger.warning("Falha ao consultar MovieService para tmdb_id=%d: %s", payload.tmdb_id, e)
-
-    if movie_details:
-        official_title = movie_details.get("title") or ""
-        official_poster = movie_details.get("poster_url") or ""
-        official_media_type = movie_details.get("media_type") or (payload.media_type or "movie")
-    else:
-        official_title = ""
-        official_poster = ""
-        official_media_type = payload.media_type or "movie"
+    official_title, official_poster, official_media_type = resolve_canonical_media_metadata(
+        tmdb_id=payload.tmdb_id,
+        media_type=payload.media_type or "",
+        grpc_manager=grpc_manager,
+    )
 
     logger.info(
         "Gateway POST /reviews -> Despachando via gRPC: @%s (UUID: %s) | ID: %d (%s - '%s') | Nota: %.1f",
@@ -81,33 +73,46 @@ def create_review(
     return ReviewResponse(**res)
 
 
-_AVATAR_CACHE: dict[str, str] = {}
+_MAX_AVATAR_CACHE = 2048
+_AVATAR_CACHE: OrderedDict[str, str] = OrderedDict()
+_AVATAR_EXECUTOR = futures.ThreadPoolExecutor(max_workers=8, thread_name_prefix="avatar-fetch")
+
+
+def _cache_set_avatar(username: str, avatar_url: str):
+    if not username:
+        return
+    if username in _AVATAR_CACHE:
+        _AVATAR_CACHE.move_to_end(username)
+    _AVATAR_CACHE[username] = avatar_url or ""
+    if len(_AVATAR_CACHE) > _MAX_AVATAR_CACHE:
+        _AVATAR_CACHE.popitem(last=False)
 
 
 def invalidate_avatar_cache(username: str, avatar_url: str):
     """Atualiza ou invalida o cache em memória do avatar do usuário."""
-    if username:
-        _AVATAR_CACHE[username] = avatar_url or ""
+    _cache_set_avatar(username, avatar_url)
 
 
 def _enrich_reviews_with_avatars(reviews: list[dict], grpc_manager) -> list[dict]:
-    """Preenche user_avatar em cada review buscando no UserService via gRPC com cache."""
+    """Preenche user_avatar em cada review buscando no UserService via gRPC em paralelo com cache."""
     needed = set()
     for r in reviews:
         uname = (r.get("username") or r.get("user_id") or "").strip()
         if uname and uname not in _AVATAR_CACHE:
             needed.add(uname)
 
-    for uname in needed:
-        try:
-            profile = grpc_manager.get_user_profile(username=uname)
-            if profile and profile.get("success"):
-                _AVATAR_CACHE[uname] = profile.get("avatar_url", "") or ""
-            else:
-                _AVATAR_CACHE[uname] = ""
-        except Exception as e:
-            logger.warning("Falha ao buscar avatar de @%s via gRPC: %s", uname, e)
-            _AVATAR_CACHE[uname] = ""
+    if needed:
+        def _fetch_avatar(uname: str) -> tuple[str, str]:
+            try:
+                profile = grpc_manager.get_user_profile(username=uname)
+                if profile and profile.get("success"):
+                    return uname, (profile.get("avatar_url", "") or "")
+            except Exception as e:
+                logger.warning("Falha ao buscar avatar de @%s via gRPC: %s", uname, e)
+            return uname, ""
+
+        for uname, avatar_url in _AVATAR_EXECUTOR.map(_fetch_avatar, needed):
+            _cache_set_avatar(uname, avatar_url)
 
     enriched = []
     for r in reviews:

@@ -13,6 +13,7 @@
   min-height: calc(100vh - 56px - 100px);
   padding: 40px 32px 80px 32px;
   max-width: 1240px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -33,6 +34,38 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.my-box-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.my-box-dossier-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--gray-700);
+  color: var(--gray-300);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.70rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 0 !important;
+}
+
+.my-box-dossier-link-btn:hover {
+  background: rgba(255, 153, 0, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 2px 2px 0 0 rgba(255, 153, 0, 0.2);
 }
 
 .my-box-title {
@@ -184,6 +217,53 @@
 
 .my-box-search-clear:hover {
   color: var(--white);
+}
+
+/* TOOLBAR RIGHT & VIEW MODE TOGGLE (GRADE VS FICHÁRIO) */
+.my-box-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.my-box-view-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gray-800);
+  height: 36px;
+  border-radius: 0 !important;
+}
+
+.my-box-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--gray-800);
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 0 !important;
+  padding: 0;
+}
+
+.my-box-mode-btn:last-child {
+  border-right: none;
+}
+
+.my-box-mode-btn:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.my-box-mode-btn.active {
+  background: rgba(255, 153, 0, 0.12);
+  color: var(--accent);
 }
 
 /* REVIEWS GRID */
@@ -414,4 +494,95 @@
   background: rgba(0, 0, 0, 0.22);
   color: #000000;
   font-weight: 800;
+}
+
+
+/* ==========================================================================
+   MINHA CAIXA MOBILE RESPONSIVE ADAPTATIONS
+   ========================================================================== */
+@media (max-width: 768px) {
+  .my-box-page {
+    padding: 24px 16px 64px 16px;
+  }
+
+  .my-box-header {
+    margin-bottom: 20px;
+  }
+
+  .my-box-view-selector {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+  }
+
+  .my-box-view-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 8px;
+    font-size: 0.72rem;
+    min-height: 44px;
+    gap: 6px;
+  }
+
+  .my-box-filters-group {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .my-box-segmented-tabs {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .my-box-seg-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 8px;
+    font-size: 0.68rem;
+    min-height: 42px;
+  }
+
+  .my-box-toolbar-actions {
+    width: 100%;
+  }
+
+  .my-box-toolbar-right {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .my-box-toolbar-right .my-box-search-field {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .my-box-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .my-box-variant-picker {
+    width: 100%;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .my-box-page {
+    padding: 18px 12px 48px 12px;
+  }
+
+  .my-box-title {
+    font-size: 1.8rem;
+  }
 }

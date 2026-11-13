@@ -35,29 +35,31 @@ class TestCriticboxDistributedAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        os.environ["USER_SERVICE_PORT"] = "50057"
-        os.environ["MOVIE_SERVICE_PORT"] = "50055"
-        os.environ["REVIEW_SERVICE_PORT"] = "50056"
-        os.environ["API_PORT"] = "8000"
-        # Reset gRPC manager instance to use the test ports
         GatewayGRPCManager._instance = None
 
         cls.user_server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         u_pb2_grpc.add_UserServiceServicer_to_server(UserServiceServicer(), cls.user_server)
-        cls.user_server.add_insecure_port("0.0.0.0:50057")
+        user_port = cls.user_server.add_insecure_port("127.0.0.1:0")
         cls.user_server.start()
 
         cls.review_server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         r_pb2_grpc.add_ReviewServiceServicer_to_server(ReviewServiceServicer(), cls.review_server)
-        cls.review_server.add_insecure_port("0.0.0.0:50056")
+        review_port = cls.review_server.add_insecure_port("127.0.0.1:0")
         cls.review_server.start()
 
         cls.movie_server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         m_pb2_grpc.add_MovieServiceServicer_to_server(MovieServiceServicer(), cls.movie_server)
-        cls.movie_server.add_insecure_port("0.0.0.0:50055")
+        movie_port = cls.movie_server.add_insecure_port("127.0.0.1:0")
         cls.movie_server.start()
 
-        time.sleep(0.5)
+        os.environ["USER_SERVICE_PORT"] = str(user_port)
+        os.environ["REVIEW_SERVICE_PORT"] = str(review_port)
+        os.environ["MOVIE_SERVICE_PORT"] = str(movie_port)
+        os.environ["API_PORT"] = "8000"
+        # Reset gRPC manager instance to use the dynamic test ports
+        GatewayGRPCManager._instance = None
+
+        time.sleep(0.3)
 
     @classmethod
     def tearDownClass(cls):

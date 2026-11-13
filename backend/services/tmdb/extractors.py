@@ -174,3 +174,41 @@ def _extract_recommendations(recs_data: dict, default_media_type: str = "movie")
     raw_results = recs_data.get("results", [])
     filtered = [m for m in raw_results if m.get("poster_path") and str(m.get("poster_path")).strip()]
     return [_fmt(m, default_media_type=default_media_type) for m in filtered[:12]]
+
+
+def _extract_cast(data: dict) -> list[dict]:
+    cast_list = []
+    for c in data.get("credits", {}).get("cast", []):
+        if not c.get("name"):
+            continue
+        profile_path = c.get("profile_path")
+        cast_list.append(
+            {
+                "name": c.get("name", ""),
+                "character": c.get("character", ""),
+                "profile_url": f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "",
+            }
+        )
+    return cast_list
+
+
+def _extract_trailer(data: dict) -> str:
+    videos = data.get("videos", {}).get("results", [])
+    for v in videos:
+        if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
+            if v.get("iso_639_1") == "pt":
+                return f"https://www.youtube.com/watch?v={v['key']}"
+    for v in videos:
+        if v.get("site") == "YouTube" and v.get("type") in ("Trailer", "Teaser") and v.get("key"):
+            return f"https://www.youtube.com/watch?v={v['key']}"
+    return ""
+
+
+def _extract_countries_and_languages(data: dict) -> tuple[list[str], list[str]]:
+    countries = [c.get("name", "") for c in data.get("production_countries", []) if c.get("name")]
+    spoken = [
+        lang.get("name") or lang.get("english_name", "")
+        for lang in data.get("spoken_languages", [])
+        if (lang.get("name") or lang.get("english_name"))
+    ]
+    return countries, spoken

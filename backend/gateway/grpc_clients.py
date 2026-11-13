@@ -31,6 +31,13 @@ MOVIE_PORT = os.getenv("MOVIE_SERVICE_PORT", "50051")
 REVIEW_HOST = os.getenv("REVIEW_SERVICE_HOST", "localhost")
 REVIEW_PORT = os.getenv("REVIEW_SERVICE_PORT", "50052")
 
+_MAX_INT32 = 2_147_483_647
+
+
+def _is_valid_int32(val: int) -> bool:
+    """Verifica se um número inteiro é um ID positivo válido para campos int32 do Protobuf."""
+    return isinstance(val, int) and 0 < val <= _MAX_INT32
+
 
 def _pb_to_movie_dict(m) -> dict:
     return {
@@ -191,7 +198,7 @@ class GatewayGRPCManager:
         }
 
     def get_movie_details(self, tmdb_id: int, media_type: str = "") -> dict | None:
-        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+        if not _is_valid_int32(tmdb_id):
             return None
         try:
             req = m_pb2.MovieDetailsRequest(tmdb_id=tmdb_id, media_type=media_type)
@@ -330,7 +337,7 @@ class GatewayGRPCManager:
         watched_with: str = "",
         viewing_venue: str = "",
     ) -> dict:
-        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+        if not _is_valid_int32(tmdb_id):
             return {"success": False, "message": "ID do filme fora do intervalo permitido."}
         try:
             req = r_pb2.CreateReviewRequest(
@@ -379,7 +386,7 @@ class GatewayGRPCManager:
         return [_pb_to_review_dict(r) for r in res.reviews]
 
     def get_reviews_by_movie(self, tmdb_id: int) -> list[dict]:
-        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+        if not _is_valid_int32(tmdb_id):
             return []
         try:
             req = r_pb2.MovieReviewsRequest(tmdb_id=tmdb_id)
@@ -414,7 +421,7 @@ class GatewayGRPCManager:
         movie_title: str = "",
         poster_url: str = "",
     ) -> dict:
-        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+        if not _is_valid_int32(tmdb_id):
             return {"success": False, "message": "ID TMDb inválido", "active": False}
         req = r_pb2.ToggleActivityRequest(
             tmdb_id=tmdb_id,
@@ -436,7 +443,7 @@ class GatewayGRPCManager:
         movie_title: str = "",
         poster_url: str = "",
     ) -> dict:
-        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+        if not _is_valid_int32(tmdb_id):
             return {"success": False, "message": "ID TMDb inválido", "active": False}
         req = r_pb2.ToggleActivityRequest(
             tmdb_id=tmdb_id,
@@ -460,7 +467,7 @@ class GatewayGRPCManager:
         return [_pb_to_activity_dict(it) for it in res.items]
 
     def get_media_status(self, tmdb_id: int, user_id: str = "", username: str = "", media_type: str = "movie") -> dict:
-        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+        if not _is_valid_int32(tmdb_id):
             return {
                 "tmdb_id": tmdb_id,
                 "media_type": media_type,
@@ -488,7 +495,7 @@ class GatewayGRPCManager:
         }
 
     def get_season_episodes(self, tmdb_id: int, season_number: int) -> dict:
-        if tmdb_id <= 0 or tmdb_id > 2_147_483_647 or season_number <= 0 or season_number > 2_147_483_647:
+        if not _is_valid_int32(tmdb_id) or not _is_valid_int32(season_number):
             return {"episodes": []}
         try:
             req = m_pb2.SeasonEpisodesRequest(tmdb_id=tmdb_id, season_number=season_number)
@@ -511,7 +518,7 @@ class GatewayGRPCManager:
         }
 
     def get_all_episodes(self, tmdb_id: int) -> dict:
-        if tmdb_id <= 0 or tmdb_id > 2_147_483_647:
+        if not _is_valid_int32(tmdb_id):
             return {}
         try:
             req = m_pb2.AllEpisodesRequest(tmdb_id=tmdb_id)

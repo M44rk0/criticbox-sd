@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 
 from gateway.auth import get_current_user, get_optional_current_user
 from gateway.grpc_clients import get_grpc_manager
+from gateway.routers.helpers import resolve_canonical_media_metadata
 from gateway.schemas.activity import (
     ActivityItemResponse,
     MediaStatusResponse,
@@ -14,28 +15,6 @@ from gateway.schemas.activity import (
 logger = logging.getLogger("criticbox-gateway-activity")
 
 router = APIRouter(prefix="/activity", tags=["Atividade do Usuário (Assistidos e Favoritos)"])
-
-
-def _resolve_media_metadata(payload: ToggleActivityRequest, grpc_manager) -> tuple[str, str, str]:
-    title = (payload.movie_title or "").strip()
-    poster = (payload.poster_url or "").strip()
-    media_type = payload.media_type or "movie"
-
-    # Consulta MovieService somente se título ou pôster não foram informados
-    if not title or not poster:
-        try:
-            movie_details = grpc_manager.get_movie_details(payload.tmdb_id, media_type=media_type)
-            if movie_details:
-                if not title:
-                    title = movie_details.get("title") or ""
-                if not poster:
-                    poster = movie_details.get("poster_url") or ""
-                if not media_type:
-                    media_type = movie_details.get("media_type") or "movie"
-        except Exception as e:
-            logger.warning("Falha ao consultar MovieService para tmdb_id=%d: %s", payload.tmdb_id, e)
-
-    return title, poster, media_type
 
 
 @router.post(
@@ -51,7 +30,13 @@ def toggle_watched(
     username = current_user.get("username", "")
     grpc_manager = get_grpc_manager()
 
-    official_title, official_poster, official_media_type = _resolve_media_metadata(payload, grpc_manager)
+    official_title, official_poster, official_media_type = resolve_canonical_media_metadata(
+        tmdb_id=payload.tmdb_id,
+        media_type=payload.media_type or "",
+        grpc_manager=grpc_manager,
+        fallback_title=payload.movie_title or "",
+        fallback_poster=payload.poster_url or "",
+    )
 
     logger.info(
         "Gateway POST /activity/watched/toggle -> @%s (ID: %d, %s)",
@@ -90,7 +75,13 @@ def toggle_favorite(
     username = current_user.get("username", "")
     grpc_manager = get_grpc_manager()
 
-    official_title, official_poster, official_media_type = _resolve_media_metadata(payload, grpc_manager)
+    official_title, official_poster, official_media_type = resolve_canonical_media_metadata(
+        tmdb_id=payload.tmdb_id,
+        media_type=payload.media_type or "",
+        grpc_manager=grpc_manager,
+        fallback_title=payload.movie_title or "",
+        fallback_poster=payload.poster_url or "",
+    )
 
     logger.info(
         "Gateway POST /activity/favorites/toggle -> @%s (ID: %d, %s)",

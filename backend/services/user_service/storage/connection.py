@@ -121,6 +121,11 @@ def clear_db():
 
 
 class DBClient:
+    """Adaptador de compatibilidade para consultas SQL raw (legado/Entrega 2).
+
+    O código de produção canônico utiliza exclusivamente `get_session()` com SQLAlchemy ORM.
+    """
+
     def __init__(self, conn: Any, is_mysql_conn: bool):
         self.conn = conn
         self.is_mysql = is_mysql_conn
@@ -149,6 +154,10 @@ def _create_sqlite_conn() -> sqlite3.Connection:
 
 @contextlib.contextmanager
 def get_connection():
+    """Gerenciador de contexto legado para conexões SQL brutas (Entrega 2).
+
+    Preferir `get_session()` para operações da aplicação.
+    """
     if is_mysql():
         conn = pymysql.connect(
             host=os.getenv("USER_DB_HOST") or os.getenv("DB_HOST", "localhost"),

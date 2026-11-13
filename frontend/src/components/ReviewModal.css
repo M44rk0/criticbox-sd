@@ -840,3 +840,79 @@
   color: var(--gray-400);
   line-height: 1.35;
 }
+
+
+/* ==========================================================================
+   REVIEW MODAL MOBILE RESPONSIVE ADAPTATIONS
+   ========================================================================== */
+@media (max-width: 768px) {
+  .review-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .v1-card {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 92vh;
+    border-bottom: none;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.9);
+  }
+
+  .v1-poster-col {
+    display: none;
+  }
+
+  .v1-content-col {
+    padding: 18px 16px;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 12px;
+  }
+
+  .v1-movie-title {
+    font-size: 1.15rem;
+  }
+
+  .v1-close-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .v1-textarea {
+    font-size: 1rem; /* 16px to prevent iOS auto-zoom */
+    min-height: 100px;
+  }
+
+  .v1-rating-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .star-glyph svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .v1-detailed-fields {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .v1-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .v1-submit-btn {
+    width: 100%;
+    height: 48px;
+    justify-content: center;
+  }
+}

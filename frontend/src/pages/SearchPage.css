@@ -87,23 +87,8 @@
 }
 
 @media (max-width: 820px) {
-  .movie-detail-content {
-    grid-template-columns: 1fr;
-    padding: 32px 20px;
-  }
-  .movie-detail-title {
-    font-size: 2rem;
-  }
   .genres-strip {
     grid-template-columns: repeat(2, 1fr);
-  }
-  .v1-card {
-    grid-template-columns: 1fr;
-    height: auto;
-    max-height: 90vh;
-  }
-  .v1-poster-col {
-    display: none;
   }
 }
 
@@ -260,4 +245,78 @@
   font-size: 0.72rem;
   color: var(--gray-400);
   font-family: 'JetBrains Mono', monospace;
+}
+
+
+/* ==========================================================================
+   SEARCH PAGE MOBILE ADAPTATIONS
+   ========================================================================== */
+.search-user-card,
+.search-user-avatar {
+  border-radius: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .search-page-header {
+    padding: 24px 16px 20px;
+  }
+
+  .search-input-big-wrap {
+    height: 44px;
+    padding: 0 12px;
+    margin-top: 14px;
+  }
+
+  .search-input-big {
+    font-size: 0.92rem;
+  }
+
+  .genres-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .genre-card {
+    padding: 12px 10px;
+    gap: 6px;
+  }
+
+  .genre-name {
+    font-size: 0.78rem;
+  }
+
+  .search-genre-section {
+    padding: 16px 14px;
+    margin-top: 16px;
+  }
+
+  .search-genre-chips {
+    gap: 6px;
+  }
+
+  .search-genre-chip {
+    padding: 8px 12px;
+    font-size: 0.72rem;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .search-users-grid {
+    flex-direction: column;
+  }
+
+  .search-user-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-page-header {
+    padding: 20px 12px 16px;
+  }
+
+  .genres-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

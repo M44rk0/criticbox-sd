@@ -1210,3 +1210,72 @@
   background: #e11d48;
   color: #ffffff;
 }
+
+
+/* ==========================================================================
+   MOVIE DETAIL PAGE RESPONSIVE ADAPTATIONS
+   ========================================================================== */
+@media (max-width: 860px) {
+  .movie-detail-content {
+    grid-template-columns: 1fr;
+    padding: 24px 16px;
+    gap: 24px;
+  }
+
+  .movie-detail-poster-col {
+    max-width: 240px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .movie-detail-title {
+    font-size: clamp(1.8rem, 7.5vw, 2.8rem);
+  }
+
+  .movie-detail-ledger {
+    width: 100%;
+    justify-content: space-around;
+    padding: 10px 14px;
+    box-sizing: border-box;
+  }
+
+  .movie-detail-back-btn {
+    min-height: 38px;
+    padding: 8px 14px;
+  }
+
+  .movie-detail-eval-btn {
+    height: 48px;
+  }
+
+  .movie-detail-synopsis {
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .movie-ext-badge {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .movie-detail-content {
+    padding: 20px 12px;
+    gap: 18px;
+  }
+
+  .detail-ledger-item {
+    gap: 8px;
+  }
+
+  .detail-ledger-score {
+    font-size: 1.15rem;
+    padding: 4px 8px;
+  }
+
+  .movie-detail-ledger {
+    gap: 10px;
+    padding: 8px 10px;
+  }
+}

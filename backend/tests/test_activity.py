@@ -182,12 +182,12 @@ class TestActivityAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._orig_env = os.environ.get("REVIEW_SERVICE_PORT")
-        os.environ["REVIEW_SERVICE_PORT"] = "50066"
         GatewayGRPCManager._instance = None
         cls.review_server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         r_pb2_grpc.add_ReviewServiceServicer_to_server(ReviewServiceServicer(), cls.review_server)
-        cls.review_server.add_insecure_port("0.0.0.0:50066")
+        review_port = cls.review_server.add_insecure_port("127.0.0.1:0")
         cls.review_server.start()
+        os.environ["REVIEW_SERVICE_PORT"] = str(review_port)
         time.sleep(0.3)
 
     @classmethod

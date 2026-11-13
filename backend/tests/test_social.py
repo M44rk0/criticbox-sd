@@ -1,5 +1,6 @@
 import os
 import sys
+import tempfile
 import time
 import unittest
 from concurrent import futures
@@ -9,9 +10,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-os.environ["USER_SERVICE_PORT"] = "50063"
-os.environ["MOVIE_SERVICE_PORT"] = "50061"
-os.environ["REVIEW_SERVICE_PORT"] = "50062"
+if not os.environ.get("USER_DATABASE_PATH"):
+    _ufd, _upath = tempfile.mkstemp(prefix="criticbox_social_user_test_", suffix=".db")
+    os.close(_ufd)
+    os.environ["USER_DATABASE_PATH"] = _upath
+
+if not os.environ.get("REVIEW_DATABASE_PATH"):
+    _rfd, _rpath = tempfile.mkstemp(prefix="criticbox_social_review_test_", suffix=".db")
+    os.close(_rfd)
+    os.environ["REVIEW_DATABASE_PATH"] = _rpath
+
 os.environ["API_PORT"] = "8000"
 
 from fastapi.testclient import TestClient
@@ -36,26 +44,28 @@ class TestSocialAndDetailedReview(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        os.environ["USER_SERVICE_PORT"] = "50063"
-        os.environ["MOVIE_SERVICE_PORT"] = "50061"
-        os.environ["REVIEW_SERVICE_PORT"] = "50062"
-        os.environ["API_PORT"] = "8000"
         GatewayGRPCManager._instance = None
 
         cls.user_server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         u_pb2_grpc.add_UserServiceServicer_to_server(UserServiceServicer(), cls.user_server)
-        cls.user_server.add_insecure_port("0.0.0.0:50063")
+        user_port = cls.user_server.add_insecure_port("127.0.0.1:0")
         cls.user_server.start()
 
         cls.review_server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         r_pb2_grpc.add_ReviewServiceServicer_to_server(ReviewServiceServicer(), cls.review_server)
-        cls.review_server.add_insecure_port("0.0.0.0:50062")
+        review_port = cls.review_server.add_insecure_port("127.0.0.1:0")
         cls.review_server.start()
 
         cls.movie_server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         m_pb2_grpc.add_MovieServiceServicer_to_server(MovieServiceServicer(), cls.movie_server)
-        cls.movie_server.add_insecure_port("0.0.0.0:50061")
+        movie_port = cls.movie_server.add_insecure_port("127.0.0.1:0")
         cls.movie_server.start()
+
+        os.environ["USER_SERVICE_PORT"] = str(user_port)
+        os.environ["REVIEW_SERVICE_PORT"] = str(review_port)
+        os.environ["MOVIE_SERVICE_PORT"] = str(movie_port)
+        os.environ["API_PORT"] = "8000"
+        GatewayGRPCManager._instance = None
 
         time.sleep(0.3)
         cls.client = TestClient(app)

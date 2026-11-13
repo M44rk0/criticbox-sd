@@ -26,6 +26,7 @@ import ReviewCard from '../components/ReviewCard';
 import SeriesEpisodeGuide from '../components/detail/SeriesEpisodeGuide';
 import ProductionDossier from '../components/detail/ProductionDossier';
 import RecommendationsCarousel from '../components/detail/RecommendationsCarousel';
+import MovieDetailSkeleton from '../components/detail/MovieDetailSkeleton';
 import NotFoundPage from './NotFoundPage';
 import { formatReleaseDate, isUnreleased } from '../utils/date';
 import { SERIES_EPISODES_CACHE } from '../utils/constants';
@@ -164,7 +165,7 @@ export default function MovieDetailPage() {
   }, [id, mediaType]);
 
   if (loading) {
-    return <div className="loading-pulse" style={{ marginTop: '100px' }}>Carregando catálogo e ficha técnica...</div>;
+    return <MovieDetailSkeleton />;
   }
 
   if (error || !movie) {

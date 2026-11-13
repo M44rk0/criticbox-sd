@@ -38,6 +38,10 @@
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .recommendations-carousel {
@@ -47,6 +51,9 @@
   scroll-behavior: smooth;
   padding-bottom: 12px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .recommendations-carousel::-webkit-scrollbar {
@@ -114,4 +121,26 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
   color: var(--gray-400);
+}
+
+
+/* Recommendations Carousel Mobile Adaptations */
+@media (max-width: 600px) {
+  .recommendations-carousel {
+    gap: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .rec-card {
+    min-width: 135px;
+    max-width: 135px;
+  }
+
+  .rec-info {
+    padding: 8px;
+  }
+
+  .rec-title {
+    font-size: 0.74rem;
+  }
 }

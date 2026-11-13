@@ -51,8 +51,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin: 24px 0 10px;
+  padding: 0 8px;
 }
 
 .pagination-square-btn {
@@ -71,6 +73,31 @@
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
+}
+
+@media (max-width: 480px) {
+  .reviews-pagination {
+    gap: 6px;
+    padding: 0 4px;
+  }
+
+  .pagination-square-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    font-size: 0.78rem;
+  }
+
+  .pagination-bar {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 10px;
+  }
+
+  .pagination-btn {
+    padding: 8px 12px;
+    font-size: 0.76rem;
+  }
 }
 
 .pagination-square-btn:hover:not(:disabled):not(.active) {

@@ -7,6 +7,7 @@
   min-height: calc(100vh - 56px - 100px);
   padding: 36px 32px 100px 32px;
   max-width: 1140px;
+  width: 100%;
   margin: 0 auto;
   animation: fadeIn 0.15s ease-in-out;
 }
@@ -408,5 +409,70 @@
 @media (max-width: 768px) {
   .edit-page-pillars-slots {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+/* ==========================================================================
+   EDIT PROFILE MOBILE RESPONSIVE ADAPTATIONS
+   ========================================================================== */
+@media (max-width: 768px) {
+  .edit-profile-page {
+    padding: 24px 16px 64px 16px;
+  }
+
+  .edit-page-card {
+    padding: 20px 16px;
+    margin-bottom: 24px;
+  }
+
+  .edit-page-avatar-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .edit-page-avatar-controls {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .edit-page-avatar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .edit-page-avatar-actions button,
+  .edit-page-avatar-actions label {
+    flex: 1;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .edit-page-actions-bar {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .edit-page-actions-bar button {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .edit-profile-page {
+    padding: 18px 12px 48px 12px;
+  }
+
+  .edit-page-card {
+    padding: 16px 12px;
+  }
+
+  .edit-page-pillars-slots {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 }

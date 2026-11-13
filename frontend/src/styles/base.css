@@ -10,6 +10,22 @@
   border-radius: 0 !important;
 }
 
+html {
+  overflow-x: hidden;
+  max-width: 100vw;
+  -webkit-text-size-adjust: 100%;
+  /* Keep the layout width stable when pages toggle vertical scrolling */
+  scrollbar-gutter: stable;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 body {
   background: var(--bg-body);
   color: var(--white);

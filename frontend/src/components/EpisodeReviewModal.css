@@ -140,7 +140,7 @@
   .ep-modal-card {
     grid-template-columns: 1fr;
     height: auto;
-    max-height: 90vh;
+    max-height: 92vh;
   }
 
   .ep-visual-col {
@@ -150,10 +150,39 @@
   }
 
   .ep-still-container {
-    height: 200px;
+    height: 160px;
   }
 
   .ep-sidebar-details {
-    padding: 14px 16px;
+    padding: 12px 16px;
+  }
+
+  .ep-sidebar-meta-list {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .review-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .ep-modal-card {
+    width: 100%;
+    max-width: 100%;
+    border-bottom: none;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.9);
+  }
+
+  .ep-visual-col {
+    display: none;
+  }
+
+  .ep-modal-card .v1-content-col {
+    padding: 18px 16px;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

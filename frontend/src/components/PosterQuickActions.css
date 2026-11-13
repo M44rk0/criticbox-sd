@@ -147,3 +147,26 @@
   background: #e11d48;
   color: #ffffff;
 }
+
+/* Touch devices & Mobile behavior */
+@media (hover: none), (max-width: 768px) {
+  /* Mantém ações sempre disponíveis ou visíveis quando ativas */
+  .poster-rating-badge {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .movie-card:has(.poster-action-btn.active) .poster-quick-actions {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .poster-action-btn {
+    height: 38px;
+    min-height: 38px;
+    font-size: 0.68rem;
+    padding: 0 6px;
+  }
+}
